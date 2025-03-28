@@ -4,7 +4,7 @@ plugins {
 
 android {
     namespace = "edu.northeastern.guildly"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "edu.northeastern.guildly"
