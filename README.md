@@ -17,4 +17,4 @@ Guildly makes habit-building fun, social, and rewarding by combining personal ha
 
 🎭 Community Challenges – Join challenges like 75 Hard or create custom groups with friends
 
-💬 Direct Messaging – Message friends to share progress and stay on track (future update!)
+💬 Direct Messaging – Message friends to share progress
