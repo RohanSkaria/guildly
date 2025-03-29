@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">Guildly</string>
+    <string name="welcome_user1">Welcome User1!</string>
+    <string name="habits">Habits</string>
+    <string name="add_habit">Add Habit</string>
+    <string name="leaderboard">Leaderboard</string>
+    <string name="connections_amp_friends"><![CDATA[Connections & Friends]]></string>
 </resources>
