@@ -33,6 +33,7 @@ public class MainActivity extends AppCompatActivity {
         // TODO: need to add username set text here
         habitList = new ArrayList<>();
         habitList.add(new Habit("Drink 64oz of water"));
+        habitList.add(new Habit("Workout for 30mins"));
 
         habitAdapter = new HabitAdapter(habitList);
         HabitList.setLayoutManager(new LinearLayoutManager(this));
