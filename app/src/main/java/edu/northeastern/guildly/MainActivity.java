@@ -1,43 +1,48 @@
 package edu.northeastern.guildly;
 
 import android.os.Bundle;
-import android.widget.Button;
-import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
+import androidx.fragment.app.Fragment;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public class MainActivity extends AppCompatActivity {
-    private TextView UserName;
-    private Button btnAddHabit;
-    private RecyclerView HabitList, Leaderboard;
-
-    // add testing
-    private List<Habit> habitList;
-    private HabitAdapter habitAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        UserName = findViewById(R.id.user_name);
-        btnAddHabit = findViewById(R.id.btn_add_habit);
-        HabitList = findViewById(R.id.habit_list);
-        Leaderboard = findViewById(R.id.leaderboard);
+        BottomNavigationView bottomNavigationView = findViewById(R.id.bottomNavigationView);
 
-        // TODO: need to add username set text here
-        habitList = new ArrayList<>();
-        habitList.add(new Habit("Drink 64oz of water"));
-        habitList.add(new Habit("Workout for 30mins"));
+        if (savedInstanceState == null) {
+            getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.flFragment, new HomeFragment())
+                    .commit();
+        }
 
-        habitAdapter = new HabitAdapter(habitList);
-        HabitList.setLayoutManager(new LinearLayoutManager(this));
-        HabitList.setAdapter(habitAdapter);
+        bottomNavigationView.setOnItemSelectedListener(item -> {
+            Fragment selectedFragment = null;
+            int id = item.getItemId();
 
+            if (id == R.id.home) {
+                selectedFragment = new HomeFragment();
+            } else if (id == R.id.profile) {
+                selectedFragment = new ProfileFragment();
+            } else if (id == R.id.connections) {
+                selectedFragment = new ConnectionsFragment();
+            }
+
+            if (selectedFragment != null) {
+                getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.flFragment, selectedFragment)
+                        .commit();
+            }
+
+            return true;
+        });
+
+        bottomNavigationView.setSelectedItemId(R.id.home);
     }
 }
