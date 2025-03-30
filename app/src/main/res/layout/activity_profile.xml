@@ -66,6 +66,6 @@
         android:layout_height="56dp"
         android:layout_gravity="bottom"
         android:background="@android:color/white"
-        app:menu="@menu/bottom_navigation_menu" />
+        app:menu="@menu/bottom_nav_menu" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
