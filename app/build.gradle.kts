@@ -1,5 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
+    // Add this line to apply Google Services plugin to this module
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -41,4 +43,14 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
+
+
+
+    implementation(platform("com.google.firebase:firebase-bom:33.9.0"))
+
+    // Firebase Realtime Database
+    implementation("com.google.firebase:firebase-database-ktx")
+
+    //Firebase Auth
+    implementation("com.google.firebase:firebase-auth-ktx")
     }
