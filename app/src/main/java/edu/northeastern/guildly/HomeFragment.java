@@ -17,17 +17,32 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 public class HomeFragment extends Fragment {
     private TextView UserName;
     private Button btnAddHabit;
     private RecyclerView HabitList;
+    private RecyclerView leaderboardRecyclerView;
     private List<Habit> habitList;
+    private List<Friend> friendsList;
     private HabitAdapter habitAdapter;
+    private LeaderboardAdapter leaderboardAdapter;
+
+    private List<Habit> predefinedHabits = Arrays.asList(
+            new Habit("Drink 64oz of water", R.drawable.ic_water),
+            new Habit("Workout for 30 mins", R.drawable.ic_workout),
+            new Habit("Do homework", R.drawable.ic_homework),
+            new Habit("Read a book", R.drawable.ic_book),
+            new Habit("Meditate for 10 minutes", R.drawable.ic_meditation),
+            new Habit("Save money today", R.drawable.ic_savemoney),
+            new Habit("Eat vegetables", R.drawable.ic_vegetable),
+            new Habit("No phone after 10PM", R.drawable.ic_phonebanned)
+    );
 
     public HomeFragment() {
-        // Required empty public constructor
     }
 
     @Nullable
@@ -38,8 +53,8 @@ public class HomeFragment extends Fragment {
         UserName = view.findViewById(R.id.user_name);
         btnAddHabit = view.findViewById(R.id.btn_add_habit);
         HabitList = view.findViewById(R.id.habit_list);
+        leaderboardRecyclerView = view.findViewById(R.id.leaderboard);
 
-        // Initialize Habit List
         habitList = new ArrayList<>();
         habitList.add(new Habit("Drink 64oz of water", R.drawable.ic_water));
         habitList.add(new Habit("Workout for 30 mins", R.drawable.ic_workout));
@@ -70,17 +85,27 @@ public class HomeFragment extends Fragment {
             dialog.show();
         });
 
+        initializeLeaderboard();
+
         return view;
     }
 
-    private List<Habit> predefinedHabits = Arrays.asList(
-            new Habit("Drink 64oz of water", R.drawable.ic_water),
-            new Habit("Workout for 30 mins", R.drawable.ic_workout),
-            new Habit("Do homework", R.drawable.ic_homework),
-            new Habit("Read a book", R.drawable.ic_book),
-            new Habit("Meditate for 10 minutes", R.drawable.ic_meditation),
-            new Habit("Save money today", R.drawable.ic_savemoney),
-            new Habit("Eat vegetables", R.drawable.ic_vegetable),
-            new Habit("No phone after 10PM", R.drawable.ic_phonebanned)
-    );
+    private void initializeLeaderboard() {
+        friendsList = new ArrayList<>();
+
+        friendsList.add(new Friend("RohanS3", 90, R.drawable.gamer));
+        friendsList.add(new Friend("ParwazS98", 70, R.drawable.man));
+        friendsList.add(new Friend("PMadisen43", 50, R.drawable.girl));
+
+        Collections.sort(friendsList, new Comparator<Friend>() {
+            @Override
+            public int compare(Friend f1, Friend f2) {
+                return Integer.compare(f2.getStreakCount(), f1.getStreakCount());
+            }
+        });
+
+        leaderboardAdapter = new LeaderboardAdapter(friendsList);
+        leaderboardRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+        leaderboardRecyclerView.setAdapter(leaderboardAdapter);
+    }
 }
