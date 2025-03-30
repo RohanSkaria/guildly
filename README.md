@@ -1,4 +1,5 @@
 # 🏆 Guildly - Build Better Habits Together!
+
 ## “Celebrate the Little Wins, Every Day”
 
 ### 📜 About Guildly
