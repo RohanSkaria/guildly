@@ -10,4 +10,5 @@
     <string name="profile">Profile</string>
     <string name="home">Home</string>
     <string name="connections">Connections</string>
+    <string name="global_leaderboard">Global Leaderboard</string>
 </resources>
