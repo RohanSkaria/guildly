@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "966592859124",
+    "firebase_url": "https://final-project-android-d8ac0-default-rtdb.firebaseio.com",
+    "project_id": "final-project-android-d8ac0",
+    "storage_bucket": "final-project-android-d8ac0.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:966592859124:android:dcf891b55ae9595f1247a1",
+        "android_client_info": {
+          "package_name": "edu.northeastern.guildly"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDSySvgUc7wohRB1O531e-c4shhnTtX-zk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
