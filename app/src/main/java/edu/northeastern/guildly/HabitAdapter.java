@@ -4,6 +4,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -30,7 +31,7 @@ public class HabitAdapter extends RecyclerView.Adapter<HabitAdapter.HabitViewHol
         Habit habit = habitList.get(position);
         holder.habit_name.setText(habit.getName());
         // need to set checkbox state here
-
+        holder.habit_image.setImageResource(habit.getIconResId());
     }
 
     @Override
@@ -41,11 +42,13 @@ public class HabitAdapter extends RecyclerView.Adapter<HabitAdapter.HabitViewHol
     public static class HabitViewHolder extends RecyclerView.ViewHolder {
         CheckBox habit_checkbox;
         TextView habit_name;
+        ImageView habit_image;
 
         public HabitViewHolder(@NonNull View itemVeiw) {
             super(itemVeiw);
             habit_name = itemVeiw.findViewById(R.id.habit_name);
             habit_checkbox= itemVeiw.findViewById(R.id.habit_item);
+            habit_image = itemView.findViewById(R.id.habit_image);
         }
     }
 }
