@@ -15,6 +15,8 @@ import androidx.appcompat.widget.Toolbar;
 import java.util.Arrays;
 import java.util.List;
 
+import de.hdodenhof.circleimageview.CircleImageView;
+
 
 public class ProfileActivity extends AppCompatActivity {
 
@@ -54,12 +56,40 @@ public class ProfileActivity extends AppCompatActivity {
         profileUsername.setText("Yunmu57");
         streakDescription.setText("You have drank 64oz Water for 31 days straight!!!");
         updateHabitImages();
+        updateFriendImages();
     }
 
     private void setupClickListeners() {
+
         habitsViewMore.setOnClickListener(v -> {
             showHabitsDialog();
         });
+
+        friendsViewMore.setOnClickListener(v -> {
+            showFriendsDialog();
+        });
+    }
+
+
+    private void showFriendsDialog() {
+        List<Friend> friendsList = Arrays.asList(
+                new Friend("RohanS3", 90, R.drawable.gamer),
+                new Friend("ParwazS98", 70, R.drawable.man),
+                new Friend("PMadisen43", 50, R.drawable.girl)
+        );
+
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_view_friends, null);
+        ListView listView = dialogView.findViewById(R.id.friends_list_view);
+
+        FriendChoiceAdapter adapter = new FriendChoiceAdapter(this, friendsList);
+        listView.setAdapter(adapter);
+
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setTitle("My Friends")
+                .setView(dialogView)
+                .create();
+
+        dialog.show();
     }
 
     private void showHabitsDialog() {
@@ -89,6 +119,18 @@ public class ProfileActivity extends AppCompatActivity {
         dialog.show();
     }
 
+
+    private void updateFriendImages() {
+
+        CircleImageView friendOne = findViewById(R.id.friend_one);
+        CircleImageView friendTwo = findViewById(R.id.friend_two);
+        CircleImageView friendThree = findViewById(R.id.friend_three);
+
+
+        friendOne.setImageResource(R.drawable.gamer);
+        friendTwo.setImageResource(R.drawable.man);
+        friendThree.setImageResource(R.drawable.girl);
+    }
     private void updateHabitImages() {
         ImageView habitWorkout = findViewById(R.id.habit_workout);
         ImageView habitMeditation = findViewById(R.id.habit_meditation);
