@@ -17,6 +17,8 @@ import androidx.fragment.app.Fragment;
 import java.util.Arrays;
 import java.util.List;
 
+import de.hdodenhof.circleimageview.CircleImageView;
+
 public class ProfileFragment extends Fragment {
 
     private TextView profileUsername;
@@ -72,15 +74,17 @@ public class ProfileFragment extends Fragment {
 
 
         updateHabitImages();
+        updateFriendImages();
     }
 
     private void setupClickListeners() {
-
         habitsViewMore.setOnClickListener(v -> {
-
             showHabitsDialog();
         });
 
+        friendsViewMore.setOnClickListener(v -> {
+            showFriendsDialog();
+        });
     }
 
     private void showHabitsDialog() {
@@ -110,6 +114,40 @@ public class ProfileFragment extends Fragment {
         dialog.show();
     }
 
+
+    private void showFriendsDialog() {
+        List<Friend> friendsList = Arrays.asList(
+                new Friend("RohanS3", 90, R.drawable.gamer),
+                new Friend("ParwazS98", 70, R.drawable.man),
+                new Friend("PMadisen43", 50, R.drawable.girl)
+        );
+
+        View dialogView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_view_friends, null);
+        ListView listView = dialogView.findViewById(R.id.friends_list_view);
+
+        FriendChoiceAdapter adapter = new FriendChoiceAdapter(getContext(), friendsList);
+        listView.setAdapter(adapter);
+
+        AlertDialog dialog = new AlertDialog.Builder(getContext())
+                .setTitle("My Friends")
+                .setView(dialogView)
+                .create();
+
+        dialog.show();
+    }
+
+
+    private void updateFriendImages() {
+
+        CircleImageView friendOne = getView().findViewById(R.id.friend_one);
+        CircleImageView friendTwo = getView().findViewById(R.id.friend_two);
+        CircleImageView friendThree = getView().findViewById(R.id.friend_three);
+
+
+        friendOne.setImageResource(R.drawable.gamer);
+        friendTwo.setImageResource(R.drawable.man);
+        friendThree.setImageResource(R.drawable.girl);
+    }
     private void updateHabitImages() {
 
         ImageView habitWorkout = getView().findViewById(R.id.habit_workout);
