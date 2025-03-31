@@ -6,10 +6,11 @@ import java.util.Map;
 /**
  * Represents a user in the system.
  * Includes:
- * - Basic profile info (username, email, password, etc.)
- * - Habits array
- * - Friends (list of user keys who are confirmed friends)
- * - Friend requests (map of user keys to a status: "pending", "accepted", or "rejected")
+ *  - Basic profile info (username, email, password, etc.)
+ *  - Habits array
+ *  - Friends (list of user keys who are confirmed friends)
+ *  - Friend requests (map of user keys to a status: "pending", "accepted", or "rejected")
+ *  - (Optional) chats: references to chat IDs this user is part of
  */
 public class User {
 
@@ -31,21 +32,26 @@ public class User {
      */
     public Map<String, String> friendRequests;
 
+    /**
+     * (Optional) A map of chatId -> true, for references to the chats a user is in.
+     * Example: { "-N32AbCdEfG": true, "-N67XyZ...": true }
+     */
+    public Map<String, Boolean> chats;
+
     // Default constructor required by Firebase
     public User() {
     }
 
-    // Full constructor
-    public User(
-            String username,
-            String email,
-            String password,
-            String profilePicUrl,
-            String aboutMe,
-            List<String> habits,
-            List<String> friends,
-            Map<String, String> friendRequests
-    ) {
+    // Full constructor with all fields (including new 'chats')
+    public User(String username,
+                String email,
+                String password,
+                String profilePicUrl,
+                String aboutMe,
+                List<String> habits,
+                List<String> friends,
+                Map<String, String> friendRequests,
+                Map<String, Boolean> chats) {
         this.username = username;
         this.email = email;
         this.password = password;
@@ -54,5 +60,6 @@ public class User {
         this.habits = habits;
         this.friends = friends;
         this.friendRequests = friendRequests;
+        this.chats = chats;
     }
 }

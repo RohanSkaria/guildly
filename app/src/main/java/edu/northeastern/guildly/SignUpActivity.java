@@ -122,6 +122,7 @@ public class SignUpActivity extends AppCompatActivity {
             // Initialize empty lists/maps for new user
             List<String> newFriends = new ArrayList<>();               // no friends initially
             Map<String, String> newFriendRequests = new HashMap<>();   // no requests initially
+            Map<String, Boolean> newChats = new HashMap<>();           // no chats initially
 
             // Setup Firebase reference
             FirebaseDatabase database = FirebaseDatabase.getInstance();
@@ -138,8 +139,9 @@ public class SignUpActivity extends AppCompatActivity {
                     selectedImageUriString,  // profilePicUrl
                     aboutMe,
                     selectedHabits,
-                    newFriends,             // empty
-                    newFriendRequests       // empty
+                    newFriends,
+                    newFriendRequests,
+                    newChats   // The new field for 'chats'
             );
 
             // Save to DB

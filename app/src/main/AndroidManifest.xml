@@ -27,14 +27,23 @@
         <!-- SignUpActivity -->
         <activity
             android:name=".SignUpActivity"
-            android:exported="true"/>
+            android:exported="true" />
 
         <!-- MainActivity (no launcher intent) -->
         <activity
             android:name=".MainActivity"
             android:exported="true">
-            <!-- Removed the LAUNCHER intent-filter -->
         </activity>
+
+        <!-- NEW: ChatListActivity -->
+        <activity
+            android:name=".ChatListActivity"
+            android:exported="true" />
+
+        <!-- NEW: ChatDetailActivity -->
+        <activity
+            android:name=".ChatDetailActivity"
+            android:exported="true" />
 
     </application>
 

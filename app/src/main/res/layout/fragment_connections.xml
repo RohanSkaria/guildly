@@ -14,16 +14,37 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <!-- 1) CONNECTIONS HEADER -->
-        <TextView
-            android:id="@+id/connections_header"
-            android:layout_width="wrap_content"
+        <!-- 1) TOP ROW: "Connections" TEXT + ENVELOPE ICON ON THE RIGHT -->
+        <LinearLayout
+            android:id="@+id/connectionsHeaderContainer"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Connections"
-            android:textSize="24sp"
-            android:textStyle="bold"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingTop="16dp"
+            android:paddingBottom="8dp"
             android:paddingStart="32dp"
-            android:paddingTop="16dp" />
+            android:paddingEnd="32dp">
+
+            <!-- Title text on the left -->
+            <TextView
+                android:id="@+id/connections_header"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Connections"
+                android:textSize="24sp"
+                android:textStyle="bold" />
+
+            <!-- Envelope icon on the right -->
+            <ImageView
+                android:id="@+id/buttonOpenChatList"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_envelope"
+                android:contentDescription="Open Chat List"
+                android:padding="8dp"/>
+        </LinearLayout>
 
         <!-- 2) INPUT FIELD FOR FRIEND USERNAME (Centered, 80% width, light purple with white text) -->
         <LinearLayout
@@ -32,6 +53,7 @@
             android:layout_height="wrap_content"
             android:gravity="center_horizontal"
             android:layout_marginTop="16dp">
+
             <EditText
                 android:id="@+id/editTextFriendUsername"
                 android:layout_width="0dp"
@@ -52,21 +74,25 @@
             android:orientation="horizontal"
             android:gravity="center_horizontal"
             android:layout_marginTop="16dp">
+
             <Button
                 android:id="@+id/buttonAddFriend"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Add Friend" />
+
             <!-- Wrap Friend Requests button in a FrameLayout to show a badge -->
             <FrameLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp">
+
                 <Button
                     android:id="@+id/buttonFriendRequests"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Friend Requests" />
+
                 <TextView
                     android:id="@+id/friendRequestsBadge"
                     android:layout_width="wrap_content"
@@ -119,5 +145,6 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:paddingTop="16dp"/>
+
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>

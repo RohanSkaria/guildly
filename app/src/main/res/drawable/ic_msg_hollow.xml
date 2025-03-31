@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- Example: outline mail icon -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="
+            M21,3H3c-1.11,0 -2,0.89 -2,2v14c0,1.11 0.89,2 2,2h18c1.11,0 2,-0.89 2,-2v-14c0,-1.11 -0.89,-2 -2,-2z
+            M21,5l-9,7l-9,-7v-0l9,6l9,-6v0z
+            M3,19v-10l9,6 9,-6v10H3z"
+        />
+</vector>

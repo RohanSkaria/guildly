@@ -1,5 +1,6 @@
 package edu.northeastern.guildly;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -7,6 +8,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -62,51 +64,48 @@ public class ConnectionsFragment extends Fragment {
 
         View root = inflater.inflate(R.layout.fragment_connections, container, false);
 
-        // 1) Grab references from layout
+        // 1) Envelope Icon
+        ImageView envelopeIcon = root.findViewById(R.id.buttonOpenChatList);
+        envelopeIcon.setOnClickListener(v -> {
+            // Start ChatListActivity
+            Intent intent = new Intent(getContext(), ChatListActivity.class);
+            startActivity(intent);
+        });
+
+        // The rest of your existing code:
         friendInput = root.findViewById(R.id.editTextFriendUsername);
         connectionsRecyclerView = root.findViewById(R.id.connections_list);
         buttonAddFriend = root.findViewById(R.id.buttonAddFriend);
         buttonFriendRequests = root.findViewById(R.id.buttonFriendRequests);
         friendRequestsBadge = root.findViewById(R.id.friendRequestsBadge);
 
-        // 2) Determine which user is logged in (from MainActivity)
-        //    If no user is logged in, we can show an error or fallback.
         myEmail = MainActivity.currentUserEmail;
         if (myEmail == null) {
-            // If somehow no one is logged in, you can show a Toast or do some fallback:
             Toast.makeText(requireContext(),
                     "No logged-in user. Please log in first.",
                     Toast.LENGTH_LONG).show();
-            // Optionally navigate away or disable features...
         }
 
-        myUserKey = myEmail != null
-                ? myEmail.replace(".", ",")
-                : "NO_USER_KEY"; // fallback if null
+        myUserKey = (myEmail != null) ? myEmail.replace(".", ",") : "NO_USER_KEY";
 
-        // 3) Setup RecyclerView
         connectionsRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         myFriendsList = new ArrayList<>();
         connectionsAdapter = new ConnectionsAdapter(myFriendsList);
         connectionsRecyclerView.setAdapter(connectionsAdapter);
 
-        // 4) Get Firebase reference
         usersRef = FirebaseDatabase.getInstance().getReference("users");
 
-        // 5) Load my existing friends (if we have a valid user)
         if (myEmail != null) {
             loadMyFriends();
         }
 
-        // 6) Set up "Add Friend" button (reads friendInput)
         setupInputListener();
-
-        // 7) Set up "Friend Requests" button & the badge
         setupFriendRequestsButton();
         updateFriendRequestsBadge();
 
         return root;
     }
+
 
     /**
      * Loads the current user's 'friends' list from DB and updates the RecyclerView.
