@@ -75,17 +75,16 @@ public class ProfileFragment extends Fragment {
     }
 
     private void setupClickListeners() {
-        // When "View More" in habits section is clicked
+
         habitsViewMore.setOnClickListener(v -> {
-            // Show dialog instead of launching an activity
+
             showHabitsDialog();
         });
 
-        // Other click listeners can be added here as needed
     }
 
     private void showHabitsDialog() {
-        // Get the list of habits similar to HomeFragment
+
         List<Habit> userHabits = Arrays.asList(
                 new Habit("Drink 64oz of water", R.drawable.ic_water),
                 new Habit("Workout for 30 mins", R.drawable.ic_workout),
