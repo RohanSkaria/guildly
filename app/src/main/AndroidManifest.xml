@@ -45,6 +45,10 @@
             android:name=".ChatDetailActivity"
             android:exported="true" />
 
+        <activity
+            android:name=".ViewHabitsActivity"
+            android:exported="false" />
+
     </application>
 
 </manifest>

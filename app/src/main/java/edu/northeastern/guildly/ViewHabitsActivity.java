@@ -1,7 +1,6 @@
 package edu.northeastern.guildly;
 
 import android.os.Bundle;
-import android.widget.ListView;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
