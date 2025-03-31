@@ -16,7 +16,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
-import edu.northeastern.guildly.model.User; // Import your User model
+import edu.northeastern.guildly.data.User; // Import your User model
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -69,7 +69,10 @@ public class LoginActivity extends AppCompatActivity {
                                         "Login successful!",
                                         Toast.LENGTH_SHORT).show();
 
-                                // Go to MainActivity
+                                // 1) Store the logged-in user's email globally
+                                MainActivity.currentUserEmail = email;
+
+                                // 2) Go to MainActivity
                                 Intent intent = new Intent(LoginActivity.this, MainActivity.class);
                                 startActivity(intent);
                                 finish();

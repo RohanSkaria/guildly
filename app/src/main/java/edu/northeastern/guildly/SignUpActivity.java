@@ -18,9 +18,11 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-import edu.northeastern.guildly.model.User;
+import edu.northeastern.guildly.data.User;
 
 public class SignUpActivity extends AppCompatActivity {
 
@@ -117,6 +119,10 @@ public class SignUpActivity extends AppCompatActivity {
             if (checkBoxEatingHealthy.isChecked()) selectedHabits.add("Eating Healthy");
             if (checkBoxNoPhoneAfter10.isChecked())selectedHabits.add("No Phone After 10");
 
+            // Initialize empty lists/maps for new user
+            List<String> newFriends = new ArrayList<>();               // no friends initially
+            Map<String, String> newFriendRequests = new HashMap<>();   // no requests initially
+
             // Setup Firebase reference
             FirebaseDatabase database = FirebaseDatabase.getInstance();
             DatabaseReference usersRef = database.getReference("users");
@@ -124,14 +130,16 @@ public class SignUpActivity extends AppCompatActivity {
             // Replace '.' with ',' to use email as the DB key
             String sanitizedEmailKey = email.replace(".", ",");
 
-            // Build a User object (aboutMe, profilePicUrl, habits are optional)
+            // Build a new User object
             User user = new User(
                     username,
                     email,
-                    password,       // not secure in real apps
-                    selectedImageUriString,
+                    password,
+                    selectedImageUriString,  // profilePicUrl
                     aboutMe,
-                    selectedHabits
+                    selectedHabits,
+                    newFriends,             // empty
+                    newFriendRequests       // empty
             );
 
             // Save to DB
@@ -155,7 +163,7 @@ public class SignUpActivity extends AppCompatActivity {
             // If we came from LoginActivity, just finish.
             finish();
 
-            // OR you could do:
+            // OR explicitly:
             // Intent intent = new Intent(SignUpActivity.this, LoginActivity.class);
             // startActivity(intent);
             // finish();

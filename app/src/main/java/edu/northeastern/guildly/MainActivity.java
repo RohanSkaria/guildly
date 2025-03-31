@@ -7,12 +7,13 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-
-// 1) Import Firebase Realtime Database references
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
 public class MainActivity extends AppCompatActivity {
+
+    // 1) A public static field to track the current user's email
+    public static String currentUserEmail = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

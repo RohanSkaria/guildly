@@ -1,75 +1,123 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.core.widget.NestedScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nestedScrollView"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ConnectionsFragment">
-
-    <androidx.appcompat.widget.SearchView
-        android:id="@+id/search_bar"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:queryHint="Search connections..."
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:iconifiedByDefault="false"
-        android:background="?android:attr/windowBackground"
-        android:padding="16dp"/>
-
-    <TextView
-        android:id="@+id/connections_header"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/connections"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        app:layout_constraintTop_toBottomOf="@id/search_bar"
-        app:layout_constraintStart_toStartOf="parent"
-        android:paddingStart="32dp"
-        tools:ignore="RtlSymmetry" />
-
-    <!-- RecyclerView for Connections List -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/connections_list"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:paddingTop="16dp"
-        android:paddingStart="32dp"
-        app:layout_constraintTop_toBottomOf="@id/connections_header"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        tools:ignore="RtlSymmetry" />
+    android:fillViewport="true">
 
     <LinearLayout
-        android:id="@+id/leaderboard_container"
+        android:id="@+id/linearContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:background="@drawable/rounded_background"
-        android:layout_margin="16dp"
-        android:padding="16dp"
-        app:layout_constraintTop_toBottomOf="@id/connections_list"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        android:padding="16dp">
 
+        <!-- 1) CONNECTIONS HEADER -->
+        <TextView
+            android:id="@+id/connections_header"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Connections"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:paddingStart="32dp"
+            android:paddingTop="16dp" />
+
+        <!-- 2) INPUT FIELD FOR FRIEND USERNAME (Centered, 80% width, light purple with white text) -->
+        <LinearLayout
+            android:id="@+id/inputContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:layout_marginTop="16dp">
+            <EditText
+                android:id="@+id/editTextFriendUsername"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.8"
+                android:hint="Type a friend's username to add them"
+                android:textColor="@android:color/white"
+                android:textColorHint="@android:color/white"
+                android:background="#B39DDB"
+                android:padding="8dp"/>
+        </LinearLayout>
+
+        <!-- 3) HORIZONTAL CONTAINER FOR BUTTONS -->
+        <LinearLayout
+            android:id="@+id/topButtonContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_horizontal"
+            android:layout_marginTop="16dp">
+            <Button
+                android:id="@+id/buttonAddFriend"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Add Friend" />
+            <!-- Wrap Friend Requests button in a FrameLayout to show a badge -->
+            <FrameLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp">
+                <Button
+                    android:id="@+id/buttonFriendRequests"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Friend Requests" />
+                <TextView
+                    android:id="@+id/friendRequestsBadge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/badge_background"
+                    android:textColor="@android:color/white"
+                    android:padding="4dp"
+                    android:textSize="12sp"
+                    android:visibility="gone"
+                    android:layout_gravity="end|top"
+                    android:translationX="8dp"
+                    android:translationY="-4dp" />
+            </FrameLayout>
+        </LinearLayout>
+
+        <!-- 4) HEADER FOR FRIENDS LIST -->
+        <TextView
+            android:id="@+id/friends_list_header"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Your Friends List"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:paddingStart="32dp"
+            android:paddingTop="16dp"
+            android:paddingBottom="8dp"/>
+
+        <!-- 5) RECYCLERVIEW FOR FRIENDS LIST -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/connections_list"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:nestedScrollingEnabled="false"
+            android:paddingStart="32dp"/>
+
+        <!-- 6) HEADER FOR GLOBAL LEADERBOARD -->
         <TextView
             android:id="@+id/global_header"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/global_leaderboard"
+            android:text="Global Leaderboard"
             android:textSize="24sp"
             android:textStyle="bold"
-            app:layout_constraintTop_toBottomOf="@id/connections_list"
-            app:layout_constraintStart_toStartOf="parent" />
+            android:paddingStart="32dp"
+            android:paddingTop="16dp"/>
 
-
+        <!-- 7) RECYCLERVIEW FOR LEADERBOARD -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/leaderboard"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:paddingTop="16dp"/>
     </LinearLayout>
-
-</androidx.constraintlayout.widget.ConstraintLayout>
+</androidx.core.widget.NestedScrollView>
