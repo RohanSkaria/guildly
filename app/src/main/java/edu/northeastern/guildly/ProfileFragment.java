@@ -1,4 +1,5 @@
 package edu.northeastern.guildly;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -30,6 +31,8 @@ public class ProfileFragment extends Fragment {
     private String myUserKey;
     private TextView profileAboutMe;
     private ImageView aboutMeEditButton;
+
+    private ImageView settingsButton;
 
     public ProfileFragment() {
     }
@@ -78,6 +81,7 @@ public class ProfileFragment extends Fragment {
         friendsViewMore = view.findViewById(R.id.friends_view_more);
         profileAboutMe = view.findViewById(R.id.profile_about_me);
         aboutMeEditButton = view.findViewById(R.id.about_me_edit_button);
+        settingsButton = view.findViewById(R.id.settings_button);
     }
 
     private void setUserData() {
@@ -122,6 +126,11 @@ public class ProfileFragment extends Fragment {
 
         aboutMeEditButton.setOnClickListener(v -> {
             showEditAboutMeDialog();
+        });
+
+        settingsButton.setOnClickListener(v -> {
+            Intent intent = new Intent(getActivity(), SettingsActivity.class);
+            startActivity(intent);
         });
     }
 
