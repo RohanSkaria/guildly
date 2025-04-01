@@ -28,7 +28,7 @@ public class ProfileFragment extends Fragment {
     private TextView friendsViewMore;
     private DatabaseReference userRef;
     private String myUserKey;
-    private EditText profileAboutMe;
+    private TextView profileAboutMe;
     private ImageView aboutMeEditButton;
 
     public ProfileFragment() {
@@ -115,36 +115,52 @@ public class ProfileFragment extends Fragment {
             showSelectAvatarDialog();
         });
 
+        View aboutMeCard = getView().findViewById(R.id.about_me_card);
+        aboutMeCard.setOnClickListener(v -> {
+            showEditAboutMeDialog();
+        });
+
         aboutMeEditButton.setOnClickListener(v -> {
-            toggleAboutMeEditing();
+            showEditAboutMeDialog();
         });
     }
 
-    private void toggleAboutMeEditing() {
+    private void showEditAboutMeDialog() {
 
-        if (!profileAboutMe.isEnabled()) {
-            profileAboutMe.setEnabled(true);
-            profileAboutMe.setFocusableInTouchMode(true);
-            profileAboutMe.requestFocus();
-            profileAboutMe.setSelection(profileAboutMe.getText().length());
+        View dialogView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_edit_about_me, null);
+        EditText editAboutMe = dialogView.findViewById(R.id.edit_about_me);
 
 
-            aboutMeEditButton.setImageResource(android.R.drawable.ic_menu_save);
-        } else {
-
-            String newAboutMe = profileAboutMe.getText().toString().trim();
-            userRef.child("aboutMe").setValue(newAboutMe)
-                    .addOnSuccessListener(aVoid -> {
-                        Toast.makeText(getContext(), "Bio updated", Toast.LENGTH_SHORT).show();
-                    })
-                    .addOnFailureListener(e -> {
-                        Toast.makeText(getContext(), "Failed to update bio", Toast.LENGTH_SHORT).show();
-                    });
-            profileAboutMe.setEnabled(false);
-
-            aboutMeEditButton.setImageResource(R.drawable.ic_edit);
+        String currentAboutMe = profileAboutMe.getText().toString();
+        if (!currentAboutMe.equals("Add a bio...")) {
+            editAboutMe.setText(currentAboutMe);
         }
+
+
+        AlertDialog dialog = new AlertDialog.Builder(getContext())
+                .setView(dialogView)
+                .setPositiveButton("Save", (dialogInterface, i) -> {
+                    String newAboutMe = editAboutMe.getText().toString().trim();
+                    if (!newAboutMe.isEmpty()) {
+
+                        profileAboutMe.setText(newAboutMe);
+
+
+                        userRef.child("aboutMe").setValue(newAboutMe)
+                                .addOnSuccessListener(aVoid -> {
+                                    Toast.makeText(getContext(), "Bio updated", Toast.LENGTH_SHORT).show();
+                                })
+                                .addOnFailureListener(e -> {
+                                    Toast.makeText(getContext(), "Failed to update bio", Toast.LENGTH_SHORT).show();
+                                });
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .create();
+
+        dialog.show();
     }
+
 
     private void toggleUsernameEditing() {
 
