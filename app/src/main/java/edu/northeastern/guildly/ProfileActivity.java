@@ -31,6 +31,9 @@ public class ProfileActivity extends AppCompatActivity {
     private DatabaseReference userRef;
     private String myUserKey;
 
+    private EditText profileAboutMe;
+    private ImageView aboutMeEditButton;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -54,6 +57,8 @@ public class ProfileActivity extends AppCompatActivity {
         streakDescription = findViewById(R.id.streak_description);
         habitsViewMore = findViewById(R.id.habits_view_more);
         friendsViewMore = findViewById(R.id.friends_view_more);
+        profileAboutMe = findViewById(R.id.profile_about_me);
+        aboutMeEditButton = findViewById(R.id.about_me_edit_button);
     }
 
     private void setUserData() {
@@ -62,6 +67,8 @@ public class ProfileActivity extends AppCompatActivity {
 
 
         streakDescription.setText("You have drank 64oz Water for 31 days straight!!!");
+
+        profileAboutMe.setText("Habit enthusiast and aspiring developer!");
 
 
         updateHabitImages();
@@ -89,8 +96,39 @@ public class ProfileActivity extends AppCompatActivity {
         profileImage.setOnClickListener(v -> {
             showSelectAvatarDialog();
         });
+
+        aboutMeEditButton.setOnClickListener(v -> {
+            toggleAboutMeEditing();
+        });
     }
 
+    private void toggleAboutMeEditing() {
+
+        if (!profileAboutMe.isEnabled()) {
+            profileAboutMe.setEnabled(true);
+            profileAboutMe.setFocusableInTouchMode(true);
+            profileAboutMe.requestFocus();
+            profileAboutMe.setSelection(profileAboutMe.getText().length());
+
+
+            aboutMeEditButton.setImageResource(android.R.drawable.ic_menu_save);
+        } else {
+
+            String newAboutMe = profileAboutMe.getText().toString().trim();
+
+            userRef.child("aboutMe").setValue(newAboutMe)
+                    .addOnSuccessListener(aVoid -> {
+                        Toast.makeText(this, "Bio updated", Toast.LENGTH_SHORT).show();
+                    })
+                    .addOnFailureListener(e -> {
+                        Toast.makeText(this, "Failed to update bio", Toast.LENGTH_SHORT).show();
+                    });
+
+
+            profileAboutMe.setEnabled(false);
+            aboutMeEditButton.setImageResource(R.drawable.ic_edit);
+        }
+    }
     private void toggleUsernameEditing() {
 
         if (!profileUsername.isEnabled()) {
