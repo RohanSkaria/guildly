@@ -110,7 +110,7 @@ public class MultiStepSignUpActivity extends AppCompatActivity {
         }
 
         // Update button visibility
-        btnBack.setVisibility(currentStep == 1 ? View.INVISIBLE : View.VISIBLE);
+        btnBack.setVisibility(View.VISIBLE);
     }
 
     private void loadFragment(Fragment fragment) {
