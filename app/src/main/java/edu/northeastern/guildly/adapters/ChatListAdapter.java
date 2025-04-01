@@ -43,6 +43,8 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ViewHo
 
         holder.textFriendUsername.setText(item.friendUsername);
         holder.textLastMessage.setText(item.lastMessage);
+        holder.textTimestamp.setText(item.timestamp);
+        holder.imageFriendAvatar.setImageResource(R.drawable.unknown_profile);
 
         if (item.lastMessageIconRes > 0) {
             holder.imageLastMessageStatus.setVisibility(View.VISIBLE);
@@ -64,14 +66,16 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ViewHo
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
-        TextView textFriendUsername, textLastMessage;
-        ImageView imageLastMessageStatus;
+        TextView textFriendUsername, textLastMessage, textTimestamp;
+        ImageView imageLastMessageStatus, imageFriendAvatar;
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
             textFriendUsername = itemView.findViewById(R.id.textFriendUsername);
             textLastMessage = itemView.findViewById(R.id.textLastMessage);
+            textTimestamp = itemView.findViewById(R.id.textTimestamp);
             imageLastMessageStatus = itemView.findViewById(R.id.imageLastMessageStatus);
+            imageFriendAvatar = itemView.findViewById(R.id.imageFriendAvatar);
         }
     }
 }
