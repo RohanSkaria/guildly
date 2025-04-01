@@ -2,96 +2,89 @@
 <androidx.core.widget.NestedScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/nestedScrollView"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true">
+    android:fillViewport="true"
+    android:background="#FAF5FF">
 
     <LinearLayout
-        android:id="@+id/linearContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:padding="16dp">
 
-        <!-- 1) TOP ROW: "Connections" TEXT + ENVELOPE ICON ON THE RIGHT -->
+        <!-- Title and Chat Icon -->
         <LinearLayout
-            android:id="@+id/connectionsHeaderContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:paddingTop="16dp"
-            android:paddingBottom="8dp"
-            android:paddingStart="32dp"
-            android:paddingEnd="32dp">
+            android:paddingVertical="8dp">
 
-            <!-- Title text on the left -->
             <TextView
-                android:id="@+id/connections_header"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="Connections"
                 android:textSize="24sp"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                android:textColor="#333" />
 
-            <!-- Envelope icon on the right -->
             <ImageView
                 android:id="@+id/buttonOpenChatList"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:src="@drawable/ic_envelope"
                 android:contentDescription="Open Chat List"
-                android:padding="8dp"/>
+                android:padding="8dp" />
         </LinearLayout>
 
-        <!-- 2) INPUT FIELD FOR FRIEND USERNAME (Centered, 80% width, light purple with white text) -->
-        <LinearLayout
-            android:id="@+id/inputContainer"
+        <!-- Input Field with Card -->
+        <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center_horizontal"
-            android:layout_marginTop="16dp">
+            app:cardElevation="4dp"
+            app:cardCornerRadius="12dp"
+            android:layout_marginTop="12dp">
 
             <EditText
                 android:id="@+id/editTextFriendUsername"
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="0.8"
                 android:hint="Type a friend's username to add them"
-                android:textColor="@android:color/white"
-                android:textColorHint="@android:color/white"
-                android:background="#B39DDB"
-                android:padding="8dp"/>
-        </LinearLayout>
+                android:padding="12dp"
+                android:background="@android:color/transparent"
+                android:textColorHint="#888" />
+        </androidx.cardview.widget.CardView>
 
-        <!-- 3) HORIZONTAL CONTAINER FOR BUTTONS -->
+        <!-- Buttons Row -->
         <LinearLayout
-            android:id="@+id/topButtonContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:gravity="center_horizontal"
-            android:layout_marginTop="16dp">
+            android:gravity="center"
+            android:layout_marginTop="12dp">
 
             <Button
                 android:id="@+id/buttonAddFriend"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Add Friend" />
+                android:text="Add Friend"
+                android:backgroundTint="#7E57C2"
+                android:textColor="@android:color/white"
+                android:layout_marginEnd="16dp" />
 
-            <!-- Wrap Friend Requests button in a FrameLayout to show a badge -->
             <FrameLayout
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="16dp">
+                android:layout_height="wrap_content">
 
                 <Button
                     android:id="@+id/buttonFriendRequests"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Friend Requests" />
+                    android:text="Friend Requests"
+                    android:backgroundTint="#9575CD"
+                    android:textColor="@android:color/white" />
 
                 <TextView
                     android:id="@+id/friendRequestsBadge"
@@ -108,43 +101,39 @@
             </FrameLayout>
         </LinearLayout>
 
-        <!-- 4) HEADER FOR FRIENDS LIST -->
+        <!-- Friends Header -->
         <TextView
-            android:id="@+id/friends_list_header"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Your Friends List"
-            android:textSize="20sp"
+            android:text="Your Friends"
+            android:textSize="18sp"
             android:textStyle="bold"
-            android:paddingStart="32dp"
-            android:paddingTop="16dp"
-            android:paddingBottom="8dp"/>
+            android:paddingTop="24dp"
+            android:paddingBottom="8dp" />
 
-        <!-- 5) RECYCLERVIEW FOR FRIENDS LIST -->
+        <!-- Friends List -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/connections_list"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:nestedScrollingEnabled="false"
-            android:paddingStart="32dp"/>
+            android:nestedScrollingEnabled="false" />
 
-        <!-- 6) HEADER FOR GLOBAL LEADERBOARD -->
+        <!-- Leaderboard Header -->
         <TextView
             android:id="@+id/global_header"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Global Leaderboard"
-            android:textSize="24sp"
+            android:textSize="18sp"
             android:textStyle="bold"
-            android:paddingStart="32dp"
-            android:paddingTop="16dp"/>
+            android:paddingTop="24dp"
+            android:paddingBottom="8dp" />
 
-        <!-- 7) RECYCLERVIEW FOR LEADERBOARD -->
+        <!-- Leaderboard List -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/leaderboard"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingTop="16dp"/>
+            android:layout_height="wrap_content" />
 
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>
