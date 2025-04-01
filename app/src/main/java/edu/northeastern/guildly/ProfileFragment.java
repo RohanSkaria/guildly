@@ -28,9 +28,14 @@ public class ProfileFragment extends Fragment {
     private TextView friendsViewMore;
     private DatabaseReference userRef;
     private String myUserKey;
+    private EditText profileAboutMe;
+    private ImageView aboutMeEditButton;
 
     public ProfileFragment() {
     }
+
+
+
 
     @Nullable
     @Override
@@ -71,6 +76,8 @@ public class ProfileFragment extends Fragment {
 
 
         friendsViewMore = view.findViewById(R.id.friends_view_more);
+        profileAboutMe = view.findViewById(R.id.profile_about_me);
+        aboutMeEditButton = view.findViewById(R.id.about_me_edit_button);
     }
 
     private void setUserData() {
@@ -79,6 +86,7 @@ public class ProfileFragment extends Fragment {
 
 
         streakDescription.setText("You have drank 64oz Water for 31 days straight!!!");
+        profileAboutMe.setText("Habit enthusiast and aspiring developer!");
 
 
         updateHabitImages();
@@ -106,6 +114,36 @@ public class ProfileFragment extends Fragment {
         profileImage.setOnClickListener(v -> {
             showSelectAvatarDialog();
         });
+
+        aboutMeEditButton.setOnClickListener(v -> {
+            toggleAboutMeEditing();
+        });
+    }
+
+    private void toggleAboutMeEditing() {
+
+        if (!profileAboutMe.isEnabled()) {
+            profileAboutMe.setEnabled(true);
+            profileAboutMe.setFocusableInTouchMode(true);
+            profileAboutMe.requestFocus();
+            profileAboutMe.setSelection(profileAboutMe.getText().length());
+
+
+            aboutMeEditButton.setImageResource(android.R.drawable.ic_menu_save);
+        } else {
+
+            String newAboutMe = profileAboutMe.getText().toString().trim();
+            userRef.child("aboutMe").setValue(newAboutMe)
+                    .addOnSuccessListener(aVoid -> {
+                        Toast.makeText(getContext(), "Bio updated", Toast.LENGTH_SHORT).show();
+                    })
+                    .addOnFailureListener(e -> {
+                        Toast.makeText(getContext(), "Failed to update bio", Toast.LENGTH_SHORT).show();
+                    });
+            profileAboutMe.setEnabled(false);
+
+            aboutMeEditButton.setImageResource(R.drawable.ic_edit);
+        }
     }
 
     private void toggleUsernameEditing() {
