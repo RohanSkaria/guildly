@@ -44,6 +44,7 @@ dependencies {
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
 
+    runtimeOnly("com.google.android.material:material:1.13.0-alpha12")
 
 
     implementation(platform("com.google.firebase:firebase-bom:33.9.0"))

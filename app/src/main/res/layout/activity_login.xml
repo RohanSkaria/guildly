@@ -64,7 +64,7 @@
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="376dp"
+            android:layout_height="match_parent"
             android:orientation="vertical"
             android:padding="24dp">
 
@@ -164,8 +164,13 @@
             android:layout_height="wrap_content"
             android:text="Sign Up"
             android:textSize="16sp"
+            android:minHeight="48dp"
+            android:paddingTop="12dp"
+            android:paddingBottom="12dp"
             android:textStyle="bold"
-            android:textColor="#5C6BC0" />
+            android:textColor="#5C6BC0"
+            android:clickable="true"
+            android:focusable="true" />
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

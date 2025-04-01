@@ -8,6 +8,7 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.firebase.database.DataSnapshot;
@@ -17,11 +18,13 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import edu.northeastern.guildly.data.User; // Import your User model
+import edu.northeastern.guildly.signUpFragments.MultiStepSignUpActivity;
 
 public class LoginActivity extends AppCompatActivity {
 
     private EditText editTextEmail, editTextPassword;
-    private Button buttonLogin, buttonGoToSignUp;
+    private Button buttonLogin;
+    private TextView buttonGoToSignUp;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -101,7 +104,7 @@ public class LoginActivity extends AppCompatActivity {
 
         // On "Go to Sign Up" button click
         buttonGoToSignUp.setOnClickListener(view -> {
-            Intent intent = new Intent(LoginActivity.this, SignUpActivity.class);
+            Intent intent = new Intent(LoginActivity.this, MultiStepSignUpActivity.class);
             startActivity(intent);
         });
     }
