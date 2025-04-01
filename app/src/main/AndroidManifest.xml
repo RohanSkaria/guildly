@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+<manifest
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
     <application
@@ -11,7 +12,9 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Guildly"
-        tools:targetApi="31">        <!-- LoginActivity as LAUNCHER -->
+        tools:targetApi="31">
+
+        <!-- LoginActivity as LAUNCHER -->
         <activity
             android:name=".LoginActivity"
             android:exported="true">
@@ -19,23 +22,29 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity>        <!-- MainActivity (no launcher intent) -->
+        </activity>
+
+        <!-- SignUpActivity -->
+        <activity
+            android:name=".SignUpActivity"
+            android:exported="true" />
+
+        <!-- MainActivity (no launcher intent) -->
         <activity
             android:name=".MainActivity"
-            android:exported="true"></activity>        <!-- NEW: ChatListActivity -->
+            android:exported="true">
+        </activity>
+
+        <!-- NEW: ChatListActivity -->
         <activity
             android:name=".ChatListActivity"
-            android:exported="true" />        <!-- NEW: ChatDetailActivity -->
+            android:exported="true" />
+
+        <!-- NEW: ChatDetailActivity -->
         <activity
             android:name=".ChatDetailActivity"
             android:exported="true" />
-        <activity
-            android:name=".signUpFragments.MultiStepSignUpActivity"
-            android:label="Create Account"
-            android:parentActivityName=".LoginActivity">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value=".LoginActivity" />
-        </activity>
+
     </application>
+
 </manifest>
