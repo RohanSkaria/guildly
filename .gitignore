@@ -28,6 +28,15 @@ render.experimental.xml
 
 # Google Services (e.g. APIs or Firebase)
 
-
 # Android Profiling
 *.hprof
+
+# macOS system files
+.DS_Store
+**/.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
