@@ -18,7 +18,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <TextView
+    <EditText
         android:id="@+id/profile_username"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -27,6 +27,8 @@
         android:textColor="@android:color/black"
         android:textSize="20sp"
         android:textStyle="bold"
+        android:background="@null"
+        android:enabled="false"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/profile_image" />
@@ -42,4 +44,41 @@
         app:layout_constraintStart_toEndOf="@+id/profile_username"
         app:layout_constraintTop_toTopOf="@+id/profile_username" />
 
+    <androidx.cardview.widget.CardView
+        android:id="@+id/about_me_card"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        app:cardCornerRadius="8dp"
+        app:cardElevation="1dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/profile_username">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="12dp">
+
+            <TextView
+                android:id="@+id/profile_about_me"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Add a bio..."
+                android:textColor="#666666"
+                android:textSize="14sp"
+                android:maxLines="5"
+                android:minLines="2"
+                android:ellipsize="end" />
+
+            <ImageView
+                android:id="@+id/about_me_edit_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:layout_alignParentTop="true"
+                android:padding="4dp"
+                android:src="@drawable/ic_edit" />
+        </RelativeLayout>
+    </androidx.cardview.widget.CardView>
 </androidx.constraintlayout.widget.ConstraintLayout>

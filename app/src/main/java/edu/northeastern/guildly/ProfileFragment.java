@@ -1,32 +1,49 @@
 package edu.northeastern.guildly;
-
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.TextView;
-
+import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import java.util.Arrays;
+import java.util.List;
+
+import de.hdodenhof.circleimageview.CircleImageView;
 
 public class ProfileFragment extends Fragment {
 
-    private TextView profileUsername;
+    private EditText profileUsername;
     private TextView streakDescription;
-    private ImageView profileEditButton; // Buttons - static for now
+    private ImageView profileEditButton;
     private TextView habitsViewMore;
     private TextView friendsViewMore;
+    private DatabaseReference userRef;
+    private String myUserKey;
+    private TextView profileAboutMe;
+    private ImageView aboutMeEditButton;
+
+    private ImageView settingsButton;
 
     public ProfileFragment() {
-        // Required empty public constructor
     }
+
+
+
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
+
         return inflater.inflate(R.layout.fragment_profile, container, false);
     }
 
@@ -34,37 +51,284 @@ public class ProfileFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // Initialize views
+
+        String myEmail = MainActivity.currentUserEmail;
+        myUserKey = (myEmail != null) ? myEmail.replace(".", ",") : "NO_USER";
+
+
+        userRef = FirebaseDatabase.getInstance().getReference("users").child(myUserKey);
+
         initViews(view);
 
-        // Set user data (replace with Firebase retrieval logic if necessary)
+
         setUserData();
+
+
+        setupClickListeners();
     }
 
     private void initViews(View view) {
-        // Profile section
         profileUsername = view.findViewById(R.id.profile_username);
         profileEditButton = view.findViewById(R.id.profile_edit_button);
 
-        // Streak section
+
         streakDescription = view.findViewById(R.id.streak_description);
 
-        // Habits section
+
         habitsViewMore = view.findViewById(R.id.habits_view_more);
 
-        // Friends section
-        friendsViewMore = view.findViewById(R.id.friends_view_more);
 
-        // TODO: Set click listeners if needed
+        friendsViewMore = view.findViewById(R.id.friends_view_more);
+        profileAboutMe = view.findViewById(R.id.profile_about_me);
+        aboutMeEditButton = view.findViewById(R.id.about_me_edit_button);
+        settingsButton = view.findViewById(R.id.settings_button);
     }
 
     private void setUserData() {
-        // Set profile data
+
         profileUsername.setText("Yunmu57");
 
-        // Set streak data
-        streakDescription.setText("You have drank 64oz Water for 31 days straight!!!");
 
-        // TODO: Replace with Firebase retrieval logic
+        streakDescription.setText("You have drank 64oz Water for 31 days straight!!!");
+        profileAboutMe.setText("Habit enthusiast and aspiring developer!");
+
+
+        updateHabitImages();
+        updateFriendImages();
+    }
+
+    private void setupClickListeners() {
+
+        habitsViewMore.setOnClickListener(v -> {
+            showHabitsDialog();
+        });
+
+
+        friendsViewMore.setOnClickListener(v -> {
+            showFriendsDialog();
+        });
+
+
+        profileEditButton.setOnClickListener(v -> {
+            toggleUsernameEditing();
+        });
+
+
+        CircleImageView profileImage = getView().findViewById(R.id.profile_image);
+        profileImage.setOnClickListener(v -> {
+            showSelectAvatarDialog();
+        });
+
+        View aboutMeCard = getView().findViewById(R.id.about_me_card);
+        aboutMeCard.setOnClickListener(v -> {
+            showEditAboutMeDialog();
+        });
+
+        aboutMeEditButton.setOnClickListener(v -> {
+            showEditAboutMeDialog();
+        });
+
+        settingsButton.setOnClickListener(v -> {
+            Intent intent = new Intent(getActivity(), SettingsActivity.class);
+            startActivity(intent);
+        });
+    }
+
+    private void showEditAboutMeDialog() {
+
+        View dialogView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_edit_about_me, null);
+        EditText editAboutMe = dialogView.findViewById(R.id.edit_about_me);
+
+
+        String currentAboutMe = profileAboutMe.getText().toString();
+        if (!currentAboutMe.equals("Add a bio...")) {
+            editAboutMe.setText(currentAboutMe);
+        }
+
+
+        AlertDialog dialog = new AlertDialog.Builder(getContext())
+                .setView(dialogView)
+                .setPositiveButton("Save", (dialogInterface, i) -> {
+                    String newAboutMe = editAboutMe.getText().toString().trim();
+                    if (!newAboutMe.isEmpty()) {
+
+                        profileAboutMe.setText(newAboutMe);
+
+
+                        userRef.child("aboutMe").setValue(newAboutMe)
+                                .addOnSuccessListener(aVoid -> {
+                                    Toast.makeText(getContext(), "Bio updated", Toast.LENGTH_SHORT).show();
+                                })
+                                .addOnFailureListener(e -> {
+                                    Toast.makeText(getContext(), "Failed to update bio", Toast.LENGTH_SHORT).show();
+                                });
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .create();
+
+        dialog.show();
+    }
+
+
+    private void toggleUsernameEditing() {
+
+        if (!profileUsername.isEnabled()) {
+            profileUsername.setEnabled(true);
+            profileUsername.setFocusableInTouchMode(true);
+            profileUsername.requestFocus();
+            profileUsername.setSelection(profileUsername.getText().length());
+
+
+            profileEditButton.setImageResource(android.R.drawable.ic_menu_save);
+        } else {
+
+            String newUsername = profileUsername.getText().toString().trim();
+            if (!newUsername.isEmpty()) {
+
+                userRef.child("username").setValue(newUsername)
+                        .addOnSuccessListener(aVoid -> {
+                            Toast.makeText(getContext(), "Username updated", Toast.LENGTH_SHORT).show();
+                        })
+                        .addOnFailureListener(e -> {
+                            Toast.makeText(getContext(), "Failed to update username", Toast.LENGTH_SHORT).show();
+                        });
+            }
+
+
+            profileUsername.setEnabled(false);
+
+
+            profileEditButton.setImageResource(R.drawable.ic_edit);
+        }
+    }
+
+    private void showHabitsDialog() {
+
+        List<Habit> userHabits = Arrays.asList(
+                new Habit("Drink 64oz of water", R.drawable.ic_water),
+                new Habit("Workout for 30 mins", R.drawable.ic_workout),
+                new Habit("Do homework", R.drawable.ic_homework),
+                new Habit("Read a book", R.drawable.ic_book),
+                new Habit("Meditate for 10 minutes", R.drawable.ic_meditation),
+                new Habit("Save money today", R.drawable.ic_savemoney),
+                new Habit("Eat vegetables", R.drawable.ic_vegetable),
+                new Habit("No phone after 10PM", R.drawable.ic_phonebanned)
+        );
+
+        View dialogView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_add_habit, null);
+        ListView listView = dialogView.findViewById(R.id.habit_list_view);
+
+        HabitChoiceAdapter adapter = new HabitChoiceAdapter(getContext(), userHabits);
+        listView.setAdapter(adapter);
+
+        AlertDialog dialog = new AlertDialog.Builder(getContext())
+                .setTitle("My Habits")
+                .setView(dialogView)
+                .create();
+
+        dialog.show();
+    }
+
+    private void showFriendsDialog() {
+
+        List<Friend> friendsList = Arrays.asList(
+                new Friend("RohanS3", 90, R.drawable.gamer),
+                new Friend("ParwazS98", 70, R.drawable.man),
+                new Friend("PMadisen43", 50, R.drawable.girl)
+        );
+
+        View dialogView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_view_friends, null);
+        ListView listView = dialogView.findViewById(R.id.friends_list_view);
+
+        FriendChoiceAdapter adapter = new FriendChoiceAdapter(getContext(), friendsList);
+        listView.setAdapter(adapter);
+
+        AlertDialog dialog = new AlertDialog.Builder(getContext())
+                .setTitle("My Friends")
+                .setView(dialogView)
+                .create();
+
+        dialog.show();
+    }
+
+    private void showSelectAvatarDialog() {
+        View dialogView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_select_avatar, null);
+
+        CircleImageView avatarGamer = dialogView.findViewById(R.id.avatar_gamer);
+        CircleImageView avatarMan = dialogView.findViewById(R.id.avatar_man);
+        CircleImageView avatarGirl = dialogView.findViewById(R.id.avatar_girl);
+
+        AlertDialog dialog = new AlertDialog.Builder(getContext())
+                .setTitle("Select Avatar")
+                .setView(dialogView)
+                .create();
+
+        avatarGamer.setOnClickListener(v -> {
+            updateProfileAvatar("gamer");
+            dialog.dismiss();
+        });
+
+        avatarMan.setOnClickListener(v -> {
+            updateProfileAvatar("man");
+            dialog.dismiss();
+        });
+
+        avatarGirl.setOnClickListener(v -> {
+            updateProfileAvatar("girl");
+            dialog.dismiss();
+        });
+
+        dialog.show();
+    }
+
+    private void updateProfileAvatar(String avatarName) {
+        CircleImageView profileImage = getView().findViewById(R.id.profile_image);
+
+        int resourceId;
+        switch (avatarName) {
+            case "gamer":
+                resourceId = R.drawable.gamer;
+                break;
+            case "man":
+                resourceId = R.drawable.man;
+                break;
+            case "girl":
+                resourceId = R.drawable.girl;
+                break;
+            default:
+                resourceId = R.drawable.unknown_profile;
+                break;
+        }
+
+        profileImage.setImageResource(resourceId);
+
+        userRef.child("profilePicUrl").setValue(avatarName)
+                .addOnSuccessListener(aVoid -> {
+                    Toast.makeText(getContext(), "Avatar updated", Toast.LENGTH_SHORT).show();
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(getContext(), "Failed to update avatar", Toast.LENGTH_SHORT).show();
+                });
+    }
+
+    private void updateHabitImages() {
+        ImageView habitWorkout = getView().findViewById(R.id.habit_workout);
+        ImageView habitMeditation = getView().findViewById(R.id.habit_meditation);
+        ImageView habitSwimming = getView().findViewById(R.id.habit_swimming);
+
+        habitWorkout.setImageResource(R.drawable.ic_workout);
+        habitMeditation.setImageResource(R.drawable.ic_meditation);
+        habitSwimming.setImageResource(R.drawable.ic_water);
+    }
+
+    private void updateFriendImages() {
+        CircleImageView friendOne = getView().findViewById(R.id.friend_one);
+        CircleImageView friendTwo = getView().findViewById(R.id.friend_two);
+        CircleImageView friendThree = getView().findViewById(R.id.friend_three);
+
+        friendOne.setImageResource(R.drawable.gamer);
+        friendTwo.setImageResource(R.drawable.man);
+        friendThree.setImageResource(R.drawable.girl);
     }
 }
