@@ -24,11 +24,6 @@
             </intent-filter>
         </activity>
 
-        <!-- SignUpActivity -->
-        <activity
-            android:name=".SignUpActivity"
-            android:exported="true" />
-
         <!-- MainActivity (no launcher intent) -->
         <activity
             android:name=".MainActivity"
@@ -49,6 +44,16 @@
         <activity
             android:name=".ChatDetailActivity"
             android:exported="true" />
+
+
+        <activity
+            android:name=".signUpFragments.MultiStepSignUpActivity"
+            android:label="Create Account"
+            android:parentActivityName=".LoginActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".LoginActivity" />
+        </activity>
 
     </application>
 
