@@ -19,6 +19,8 @@ import java.util.Arrays;
 import java.util.List;
 
 import de.hdodenhof.circleimageview.CircleImageView;
+import edu.northeastern.guildly.data.Friend;
+import edu.northeastern.guildly.data.Habit;
 
 public class ProfileFragment extends Fragment {
 
@@ -219,8 +221,9 @@ public class ProfileFragment extends Fragment {
         View dialogView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_add_habit, null);
         ListView listView = dialogView.findViewById(R.id.habit_list_view);
 
-        HabitChoiceAdapter adapter = new HabitChoiceAdapter(getContext(), userHabits);
-        listView.setAdapter(adapter);
+       // need to merge
+       // HabitChoiceAdapter adapter = new HabitChoiceAdapter(getContext(), userHabits);
+      //  listView.setAdapter(adapter);
 
         AlertDialog dialog = new AlertDialog.Builder(getContext())
                 .setTitle("My Habits")

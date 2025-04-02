@@ -20,6 +20,8 @@ import java.util.Arrays;
 import java.util.List;
 
 import de.hdodenhof.circleimageview.CircleImageView;
+import edu.northeastern.guildly.data.Friend;
+import edu.northeastern.guildly.data.Habit;
 
 public class ProfileActivity extends AppCompatActivity {
 
@@ -192,8 +194,8 @@ public class ProfileActivity extends AppCompatActivity {
         View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_add_habit, null);
         ListView listView = dialogView.findViewById(R.id.habit_list_view);
 
-        HabitChoiceAdapter adapter = new HabitChoiceAdapter(this, userHabits);
-        listView.setAdapter(adapter);
+      //  HabitChoiceAdapter adapter = new HabitChoiceAdapter(this, userHabits);
+     //   listView.setAdapter(adapter);
 
         AlertDialog dialog = new AlertDialog.Builder(this)
                 .setTitle("My Habits")

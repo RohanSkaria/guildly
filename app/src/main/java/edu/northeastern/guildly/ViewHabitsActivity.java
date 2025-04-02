@@ -9,6 +9,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import edu.northeastern.guildly.adapters.HabitAdapter;
+import edu.northeastern.guildly.data.Habit;
+
 public class ViewHabitsActivity extends AppCompatActivity {
 
     private RecyclerView habitsRecyclerView;
@@ -34,7 +37,7 @@ public class ViewHabitsActivity extends AppCompatActivity {
                 new Habit("No phone after 10PM", R.drawable.ic_phonebanned)
         ));
 
-        habitAdapter = new HabitAdapter(userHabits);
+       // habitAdapter = new HabitAdapter(userHabits);
         habitsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         habitsRecyclerView.setAdapter(habitAdapter);
     }

@@ -9,6 +9,7 @@ import androidx.annotation.Nullable;
 import java.util.List;
 
 import de.hdodenhof.circleimageview.CircleImageView;
+import edu.northeastern.guildly.data.Friend;
 
 public class FriendChoiceAdapter extends ArrayAdapter<Friend> {
     public FriendChoiceAdapter(@NonNull Context context, @NonNull List<Friend> friends) {
