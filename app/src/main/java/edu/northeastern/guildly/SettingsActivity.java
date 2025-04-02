@@ -1,5 +1,7 @@
 package edu.northeastern.guildly;
 
+import static android.content.ContentValues.TAG;
+
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -169,16 +171,24 @@ public class SettingsActivity extends AppCompatActivity {
             return;
         }
 
+        // Add a logging statement for debugging
+        Log.d(TAG, "Attempting to update password for user: " + userKey);
+
 
         usersRef.child(userKey).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot snapshot) {
                 User user = snapshot.getValue(User.class);
                 if (user != null) {
+
+
                     if (currentPassword.equals(user.password)) {
+                        // Update password with log messages and detailed error handling
+                        Log.d(TAG, "Password verified, updating to new password");
 
                         usersRef.child(userKey).child("password").setValue(newPassword)
                                 .addOnSuccessListener(aVoid -> {
+                                    Log.d(TAG, "Password updated successfully in Firebase");
                                     editTextCurrentPassword.setText("");
                                     editTextNewPassword.setText("");
                                     Toast.makeText(SettingsActivity.this,
@@ -186,26 +196,32 @@ public class SettingsActivity extends AppCompatActivity {
                                             Toast.LENGTH_SHORT).show();
                                 })
                                 .addOnFailureListener(e -> {
+                                    Log.e(TAG, "Error updating password: " + e.getMessage(), e);
                                     Toast.makeText(SettingsActivity.this,
-                                            "Failed to update password: " + e.getMessage(),
+                                               "Failed to update password: " + e.getMessage(),
                                             Toast.LENGTH_LONG).show();
                                 });
                     } else {
+                        Log.d(TAG, "Current password does not match stored password");
                         editTextCurrentPassword.setError("Current password is incorrect");
                     }
+                } else {
+                    Log.e(TAG, "User data is null for key: " + userKey);
+                    Toast.makeText(SettingsActivity.this,
+                            "Error: User data not found",
+                            Toast.LENGTH_SHORT).show();
                 }
             }
 
             @Override
             public void onCancelled(DatabaseError error) {
-                Log.e("SettingsActivity", "Failed to read user data", error.toException());
+                Log.e(TAG, "Failed to read user data: " + error.getMessage(), error.toException());
                 Toast.makeText(SettingsActivity.this,
-                        "Error: " + error.getMessage(),
+                        "Database error: " + error.getMessage(),
                         Toast.LENGTH_SHORT).show();
             }
         });
     }
-
     private void logout() {
 
         MainActivity.currentUserEmail = null;
