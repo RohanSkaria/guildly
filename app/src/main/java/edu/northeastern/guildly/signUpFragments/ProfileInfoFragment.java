@@ -71,6 +71,10 @@ public class ProfileInfoFragment extends Fragment {
         data.putString("password", password);
         data.putString("aboutMe", aboutMe);
 
+        // IMPORTANT: Also store the sanitized email key so HabitSelection can write to DB
+        String sanitizedEmailKey = email.replace(".", ",");
+        data.putString("userId", sanitizedEmailKey);
+
         return true;
     }
 }

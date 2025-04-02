@@ -12,6 +12,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.List;
 
+import edu.northeastern.guildly.data.Friend;
+
 public class LeaderboardAdapter extends RecyclerView.Adapter<LeaderboardAdapter.LeaderboardViewHolder> {
 
     private List<Friend> friendsList;

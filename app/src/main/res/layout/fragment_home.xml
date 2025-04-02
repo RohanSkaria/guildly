@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -13,19 +14,23 @@
         android:orientation="horizontal"
         tools:ignore="MissingConstraints">
 
+        <!-- 1) A dynamic welcome message -->
         <TextView
             android:id="@+id/user_name"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/welcome_user1"
+            android:text="Welcome!"
             android:textSize="18sp"
             android:textStyle="bold"
             android:padding="16dp" />
 
+        <!-- 2) A dynamic streak message -->
         <TextView
+            android:id="@+id/textViewStreak"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Streak: 10 days" />
+            android:text=""
+            android:padding="16dp" />
     </LinearLayout>
 
     <View

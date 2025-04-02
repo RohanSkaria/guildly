@@ -1,4 +1,4 @@
-package edu.northeastern.guildly;
+package edu.northeastern.guildly.data;
 
 public class Friend {
     private String username;
