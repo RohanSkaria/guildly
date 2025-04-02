@@ -1,19 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/profile_habits_section"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginStart="16dp"
     android:layout_marginEnd="16dp"
     android:layout_marginBottom="16dp"
     app:cardCornerRadius="12dp"
-    app:cardElevation="2dp">
+    app:cardElevation="2dp" >
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="16dp">
+        android:padding="16dp" >
 
+        <!-- Title "Habits:" on left -->
         <TextView
             android:id="@+id/habits_title"
             android:layout_width="wrap_content"
@@ -25,6 +28,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
+        <!-- "View More" link on right -->
         <TextView
             android:id="@+id/habits_view_more"
             android:layout_width="wrap_content"
@@ -35,78 +39,116 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
+        <!-- The "No current habits!" message if none exist -->
+        <TextView
+            android:id="@+id/tvNoHabitsMessage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="No current habits!"
+            android:textColor="@android:color/black"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:visibility="gone"
+            app:layout_constraintTop_toBottomOf="@+id/habits_title"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginTop="16dp" />
+
+        <!-- A row for top-3 habit icons + text below them -->
         <LinearLayout
-            android:layout_width="match_parent"
+            android:id="@+id/topHabitsRow"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:orientation="horizontal"
-            app:layout_constraintTop_toBottomOf="@id/habits_title">
+            android:gravity="center"
+            app:layout_constraintTop_toBottomOf="@+id/habits_title"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" >
 
-            <FrameLayout
+            <!-- Slot #1 -->
+            <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="1">
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:padding="8dp">
 
-                <androidx.cardview.widget.CardView
-                    android:layout_width="60dp"
-                    android:layout_height="60dp"
-                    android:layout_gravity="center"
-                    app:cardCornerRadius="12dp"
-                    app:cardElevation="2dp">
-                    <!--        wire images to picked activities           -->
-                    <ImageView
-                        android:id="@+id/habit_workout"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:padding="12dp"
-                        android:src="@drawable/unknown_profile"
-                        android:background="#333333" />
-                </androidx.cardview.widget.CardView>
-            </FrameLayout>
+                <ImageView
+                    android:id="@+id/ivTopHabit1"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:src="@drawable/ic_workout"
+                    android:visibility="gone"/>
 
-            <FrameLayout
+                <TextView
+                    android:id="@+id/tvTopHabit1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🔥 0 days"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:visibility="gone"
+                    android:layout_marginTop="4dp"/>
+            </LinearLayout>
+
+            <!-- Slot #2 -->
+            <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="1">
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:padding="8dp">
 
-                <androidx.cardview.widget.CardView
-                    android:layout_width="60dp"
-                    android:layout_height="60dp"
-                    android:layout_gravity="center"
-                    app:cardCornerRadius="12dp"
-                    app:cardElevation="2dp">
-                    <!--        wire images to picked activities           -->
-                    <ImageView
-                        android:id="@+id/habit_meditation"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:padding="12dp"
-                        android:src="@drawable/unknown_profile"
-                        android:background="#FF6B6B" />
-                </androidx.cardview.widget.CardView>
-            </FrameLayout>
+                <ImageView
+                    android:id="@+id/ivTopHabit2"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:src="@drawable/ic_workout"
+                    android:visibility="gone"/>
 
-            <FrameLayout
+                <TextView
+                    android:id="@+id/tvTopHabit2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🔥 0 days"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:visibility="gone"
+                    android:layout_marginTop="4dp"/>
+            </LinearLayout>
+
+            <!-- Slot #3 -->
+            <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="1">
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:padding="8dp">
 
-                <androidx.cardview.widget.CardView
-                    android:layout_width="60dp"
-                    android:layout_height="60dp"
-                    android:layout_gravity="center"
-                    app:cardCornerRadius="12dp"
-                    app:cardElevation="2dp">
+                <ImageView
+                    android:id="@+id/ivTopHabit3"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:src="@drawable/ic_workout"
+                    android:visibility="gone"/>
 
-                    <ImageView
-                        android:id="@+id/habit_swimming"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:padding="12dp"
-                        android:src="@drawable/unknown_profile"
-                        android:background="#4682B4" />
-                </androidx.cardview.widget.CardView>
-            </FrameLayout>
+                <TextView
+                    android:id="@+id/tvTopHabit3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🔥 0 days"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:visibility="gone"
+                    android:layout_marginTop="4dp"/>
+            </LinearLayout>
         </LinearLayout>
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.cardview.widget.CardView>

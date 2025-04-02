@@ -26,6 +26,8 @@ import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import de.hdodenhof.circleimageview.CircleImageView;
@@ -50,6 +52,11 @@ public class ProfileFragment extends Fragment {
     private ImageView settingsButton;
     private CircleImageView profileImage;
 
+    // Top-3 habit icon slots
+    private ImageView ivTopHabit1, ivTopHabit2, ivTopHabit3;
+    private TextView tvTopHabit1, tvTopHabit2, tvTopHabit3;
+    private TextView tvNoHabitsMessage; // if we have 0 total tracked habits
+
     public ProfileFragment() {
         // Required empty constructor
     }
@@ -69,7 +76,7 @@ public class ProfileFragment extends Fragment {
 
         super.onViewCreated(view, savedInstanceState);
 
-        // Figure out which user we're displaying
+        // Determine user
         String myEmail = MainActivity.currentUserEmail;
         myUserKey = (myEmail != null) ? myEmail.replace(".", ",") : "NO_USER";
         userRef = FirebaseDatabase.getInstance()
@@ -82,22 +89,34 @@ public class ProfileFragment extends Fragment {
     }
 
     private void initViews(View view) {
-        profileUsername    = view.findViewById(R.id.profile_username);
-        profileEditButton  = view.findViewById(R.id.profile_edit_button);
-        streakDescription  = view.findViewById(R.id.streak_description);
-        habitsViewMore     = view.findViewById(R.id.habits_view_more);
-        friendsViewMore    = view.findViewById(R.id.friends_view_more);
-        profileAboutMe     = view.findViewById(R.id.profile_about_me);
-        aboutMeEditButton  = view.findViewById(R.id.about_me_edit_button);
-        settingsButton     = view.findViewById(R.id.settings_button);
-        profileImage       = view.findViewById(R.id.profile_image);
+        profileUsername   = view.findViewById(R.id.profile_username);
+        profileEditButton = view.findViewById(R.id.profile_edit_button);
+        streakDescription = view.findViewById(R.id.streak_description);
+        habitsViewMore    = view.findViewById(R.id.habits_view_more);
+        friendsViewMore   = view.findViewById(R.id.friends_view_more);
+        profileAboutMe    = view.findViewById(R.id.profile_about_me);
+        aboutMeEditButton = view.findViewById(R.id.about_me_edit_button);
+        settingsButton    = view.findViewById(R.id.settings_button);
+        profileImage      = view.findViewById(R.id.profile_image);
+
+        // Top 3 habit slots
+        ivTopHabit1 = view.findViewById(R.id.ivTopHabit1);
+        ivTopHabit2 = view.findViewById(R.id.ivTopHabit2);
+        ivTopHabit3 = view.findViewById(R.id.ivTopHabit3);
+
+        tvTopHabit1 = view.findViewById(R.id.tvTopHabit1);
+        tvTopHabit2 = view.findViewById(R.id.tvTopHabit2);
+        tvTopHabit3 = view.findViewById(R.id.tvTopHabit3);
+
+        tvNoHabitsMessage = view.findViewById(R.id.tvNoHabitsMessage);
     }
 
     /**
-     * Pulls user data from DB, sets the username, aboutMe,
-     * any "streak" info, plus sets the avatar if stored in "profilePicUrl".
+     * Pulls user data from DB, sets the username, aboutMe, avatar, etc.
+     * Then loads tracked habits to find top 3 by streak.
      */
     private void loadUserDataFromFirebase() {
+        // 1) Load user top-level fields
         userRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -117,16 +136,14 @@ public class ProfileFragment extends Fragment {
                         profileAboutMe.setText("Add a bio...");
                     }
 
-                    // If you store the avatar name (like "man", "gamer", etc.)
+                    // Avatar
                     if (!TextUtils.isEmpty(user.profilePicUrl)) {
                         updateProfileAvatar(user.profilePicUrl);
                     }
-
-                    // If you want to display a "streak" or something,
-                    // you can set it from user data. This is placeholder:
-                    // streakDescription might say "Longest streak: 10 days" or so
-                    streakDescription.setText("No global streak data yet...");
                 }
+
+                // 2) Then load tracked habits => do longest streak + show top 3
+                loadTrackedHabitsAndSort();
             }
 
             @Override
@@ -136,6 +153,102 @@ public class ProfileFragment extends Fragment {
                         Toast.LENGTH_LONG).show();
             }
         });
+    }
+
+    /**
+     * Load only habits where isTracked=true => find best streak => fill top 3 icons
+     */
+    private void loadTrackedHabitsAndSort() {
+        userRef.child("habits").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                List<Habit> tracked = new ArrayList<>();
+                for (DataSnapshot ds : snapshot.getChildren()) {
+                    Habit h = ds.getValue(Habit.class);
+                    if (h != null && h.isTracked()) {
+                        tracked.add(h);
+                    }
+                }
+
+                // If none => tvNoHabitsMessage => "No current habits!"
+                if (tracked.isEmpty()) {
+                    tvNoHabitsMessage.setVisibility(View.VISIBLE);
+                    // Hide the icon slots
+                    ivTopHabit1.setVisibility(View.GONE);
+                    ivTopHabit2.setVisibility(View.GONE);
+                    ivTopHabit3.setVisibility(View.GONE);
+                    tvTopHabit1.setVisibility(View.GONE);
+                    tvTopHabit2.setVisibility(View.GONE);
+                    tvTopHabit3.setVisibility(View.GONE);
+
+                    // Also set "No streak yet!" or something
+                    streakDescription.setText("No streak yet!");
+                    return;
+                } else {
+                    tvNoHabitsMessage.setVisibility(View.GONE);
+                }
+
+                // Sort by streak desc
+                Collections.sort(tracked, new Comparator<Habit>() {
+                    @Override
+                    public int compare(Habit o1, Habit o2) {
+                        return o2.getStreakCount() - o1.getStreakCount();
+                    }
+                });
+
+                // The first element => best streak
+                Habit top = tracked.get(0);
+                if (top.getStreakCount() > 0) {
+                    streakDescription.setText("Longest streak: " +
+                            top.getStreakCount() + " days of " +
+                            top.getHabitName() + "!");
+                } else {
+                    streakDescription.setText("No streak yet!");
+                }
+
+                // Now fill up to 3
+                setTopHabitSlot(0, tracked);
+                setTopHabitSlot(1, tracked);
+                setTopHabitSlot(2, tracked);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Toast.makeText(getContext(),
+                        "Failed to load habits: " + error.getMessage(),
+                        Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    /**
+     * Set the i-th slot with the i-th Habit in sorted list if i < size,
+     * else hide it.
+     */
+    private void setTopHabitSlot(int i, List<Habit> sorted) {
+        ImageView iv;
+        TextView tv;
+        if (i == 0) {
+            iv = ivTopHabit1; tv = tvTopHabit1;
+        } else if (i == 1) {
+            iv = ivTopHabit2; tv = tvTopHabit2;
+        } else {
+            iv = ivTopHabit3; tv = tvTopHabit3;
+        }
+
+        if (i >= sorted.size()) {
+            // Hide
+            iv.setVisibility(View.GONE);
+            tv.setVisibility(View.GONE);
+        } else {
+            // Show
+            iv.setVisibility(View.VISIBLE);
+            tv.setVisibility(View.VISIBLE);
+
+            Habit h = sorted.get(i);
+            iv.setImageResource(h.getIconResId());
+            tv.setText("🔥 " + h.getStreakCount() + " days");
+        }
     }
 
     private void setupClickListeners() {
@@ -154,9 +267,7 @@ public class ProfileFragment extends Fragment {
         });
     }
 
-    /**
-     * Let user edit 'aboutMe' in a dialog, update in DB.
-     */
+    // Let user edit 'aboutMe'
     private void showEditAboutMeDialog() {
         View dialogView = LayoutInflater.from(getContext())
                 .inflate(R.layout.dialog_edit_about_me, null);
@@ -167,7 +278,7 @@ public class ProfileFragment extends Fragment {
             editAboutMe.setText(currentAboutMe);
         }
 
-        AlertDialog dialog = new AlertDialog.Builder(requireContext())
+        new AlertDialog.Builder(requireContext())
                 .setView(dialogView)
                 .setPositiveButton("Save", (dialogInterface, i) -> {
                     String newAboutMe = editAboutMe.getText().toString().trim();
@@ -186,28 +297,19 @@ public class ProfileFragment extends Fragment {
                     }
                 })
                 .setNegativeButton("Cancel", null)
-                .create();
-
-        dialog.show();
+                .create()
+                .show();
     }
 
-    /**
-     * Toggle editing of the username field.
-     * If saving => update the DB.
-     */
+    // Let user toggle username editing
     private void toggleUsernameEditing() {
         if (!profileUsername.isEnabled()) {
-            // Enter "edit mode"
             profileUsername.setEnabled(true);
             profileUsername.setFocusableInTouchMode(true);
             profileUsername.requestFocus();
-            profileUsername.setSelection(
-                    profileUsername.getText().length()
-            );
+            profileUsername.setSelection(profileUsername.getText().length());
             profileEditButton.setImageResource(android.R.drawable.ic_menu_save);
-
         } else {
-            // Exit "edit mode" => save to DB
             String newUsername = profileUsername.getText().toString().trim();
             if (!newUsername.isEmpty()) {
                 userRef.child("username").setValue(newUsername)
@@ -220,18 +322,13 @@ public class ProfileFragment extends Fragment {
                                     "Failed to update username", Toast.LENGTH_SHORT).show();
                         });
             }
-
             profileUsername.setEnabled(false);
             profileEditButton.setImageResource(R.drawable.ic_edit);
         }
     }
 
-    /**
-     * Show a dialog with a RecyclerView of just the user’s tracked habits (isTracked=true),
-     * using your HabitAdapter in 'home mode' (isSelectionMode=false).
-     */
+    // Show only tracked habits in a dialog
     private void showHabitsDialog() {
-        // 1) Load all habits from /users/<myUserKey>/habits, filter for isTracked = true
         userRef.child("habits").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -243,15 +340,12 @@ public class ProfileFragment extends Fragment {
                     }
                 }
 
-                // 2) Now inflate a dialog with a RecyclerView
                 View dialogView = LayoutInflater.from(getContext())
                         .inflate(R.layout.dialog_add_habit, null);
-                // In your XML, we might rename "habit_list_view" to a RecyclerView
-                // So let's assume we have a RecyclerView with id=habit_list_recycler:
+
                 RecyclerView rv = dialogView.findViewById(R.id.habit_list_view);
                 rv.setLayoutManager(new LinearLayoutManager(getContext()));
 
-                // 3) Create the adapter (isSelectionMode=false => daily completion logic)
                 HabitAdapter adapter = new HabitAdapter(
                         trackedHabits,
                         userRef.child("habits"),
@@ -259,7 +353,6 @@ public class ProfileFragment extends Fragment {
                 );
                 rv.setAdapter(adapter);
 
-                // 4) Show dialog
                 new AlertDialog.Builder(requireContext())
                         .setTitle("My Habits")
                         .setView(dialogView)
@@ -277,20 +370,13 @@ public class ProfileFragment extends Fragment {
         });
     }
 
-    /**
-     * Show a placeholder "My Friends" dialog or
-     * pull from DB if you store friends in /users/<uid>/friends
-     */
+    // For friends
     private void showFriendsDialog() {
-        // For now, just show a placeholder
         View dialogView = LayoutInflater.from(getContext())
                 .inflate(R.layout.dialog_view_friends, null);
 
-        // You might have a RecyclerView or a ListView in dialog_view_friends
         ListView listView = dialogView.findViewById(R.id.friends_list_view);
-
-        // TODO: Actually load from DB if you want
-        // For now, no code that references FriendChoiceAdapter
+        // TODO: load from DB if desired
 
         new AlertDialog.Builder(requireContext())
                 .setTitle("My Friends")
@@ -300,9 +386,7 @@ public class ProfileFragment extends Fragment {
                 .show();
     }
 
-    /**
-     * Let user select one of the 3 avatars. Save that choice in "profilePicUrl."
-     */
+    // Choose avatar
     private void showSelectAvatarDialog() {
         View dialogView = LayoutInflater.from(getContext())
                 .inflate(R.layout.dialog_select_avatar, null);
@@ -332,9 +416,6 @@ public class ProfileFragment extends Fragment {
         dialog.show();
     }
 
-    /**
-     * Sets local image resource & writes "profilePicUrl" to DB.
-     */
     private void updateProfileAvatar(String avatarName) {
         int resourceId;
         switch (avatarName) {
