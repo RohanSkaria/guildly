@@ -11,4 +11,6 @@
     <string name="home">Home</string>
     <string name="connections">Connections</string>
     <string name="global_leaderboard">Global Leaderboard</string>
+    <string name="habit_icon">Habit icon</string>
+    <string name="friend_avatar">Friend avatar</string>
 </resources>

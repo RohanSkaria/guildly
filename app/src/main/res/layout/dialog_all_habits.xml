@@ -3,13 +3,17 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/dialogAllHabitsRoot"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:padding="16dp"
+    android:clipToPadding="false">
 
-    <!-- You can put a title or something if desired, or rely on the AlertDialog title -->
+    <!-- Title can be set from code with .setTitle("My Habits") if you prefer -->
+
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rvAllHabits"
+        android:id="@+id/habit_list_view"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
+        android:layout_height="match_parent"
+        android:scrollbars="vertical" />
+
 </LinearLayout>

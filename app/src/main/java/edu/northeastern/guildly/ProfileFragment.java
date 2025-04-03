@@ -38,6 +38,13 @@ import edu.northeastern.guildly.adapters.HabitAdapter;
 import edu.northeastern.guildly.data.Habit;
 import edu.northeastern.guildly.data.User;
 
+/**
+ * ProfileFragment that shows:
+ *  - username, about me
+ *  - top 3 habits by streak
+ *  - up to 3 friends (profile pic + username)
+ *  - "View More" to see the full friend list
+ */
 public class ProfileFragment extends Fragment {
 
     private EditText profileUsername;
@@ -52,10 +59,15 @@ public class ProfileFragment extends Fragment {
     private ImageView settingsButton;
     private CircleImageView profileImage;
 
-    // Top-3 habit icon slots
+    // Top-3 habit slots
     private ImageView ivTopHabit1, ivTopHabit2, ivTopHabit3;
     private TextView tvTopHabit1, tvTopHabit2, tvTopHabit3;
-    private TextView tvNoHabitsMessage; // if we have 0 total tracked habits
+    private TextView tvNoHabitsMessage;
+
+    // Friend slots
+    private CircleImageView friendOne, friendTwo, friendThree;
+    private TextView friendOneName, friendTwoName, friendThreeName;
+    private TextView tvNoFriendsMessage;
 
     public ProfileFragment() {
         // Required empty constructor
@@ -73,15 +85,12 @@ public class ProfileFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view,
                               @Nullable Bundle savedInstanceState) {
-
         super.onViewCreated(view, savedInstanceState);
 
-        // Determine user
+        // Which user?
         String myEmail = MainActivity.currentUserEmail;
         myUserKey = (myEmail != null) ? myEmail.replace(".", ",") : "NO_USER";
-        userRef = FirebaseDatabase.getInstance()
-                .getReference("users")
-                .child(myUserKey);
+        userRef = FirebaseDatabase.getInstance().getReference("users").child(myUserKey);
 
         initViews(view);
         loadUserDataFromFirebase();
@@ -89,6 +98,7 @@ public class ProfileFragment extends Fragment {
     }
 
     private void initViews(View view) {
+        // Basic profile fields
         profileUsername   = view.findViewById(R.id.profile_username);
         profileEditButton = view.findViewById(R.id.profile_edit_button);
         streakDescription = view.findViewById(R.id.streak_description);
@@ -99,37 +109,43 @@ public class ProfileFragment extends Fragment {
         settingsButton    = view.findViewById(R.id.settings_button);
         profileImage      = view.findViewById(R.id.profile_image);
 
-        // Top 3 habit slots
+        // Top habits
         ivTopHabit1 = view.findViewById(R.id.ivTopHabit1);
         ivTopHabit2 = view.findViewById(R.id.ivTopHabit2);
         ivTopHabit3 = view.findViewById(R.id.ivTopHabit3);
-
         tvTopHabit1 = view.findViewById(R.id.tvTopHabit1);
         tvTopHabit2 = view.findViewById(R.id.tvTopHabit2);
         tvTopHabit3 = view.findViewById(R.id.tvTopHabit3);
-
         tvNoHabitsMessage = view.findViewById(R.id.tvNoHabitsMessage);
+
+        // Friends top-3
+        friendOne   = view.findViewById(R.id.friend_one);
+        friendTwo   = view.findViewById(R.id.friend_two);
+        friendThree = view.findViewById(R.id.friend_three);
+
+        friendOneName   = view.findViewById(R.id.friend_one_name);
+        friendTwoName   = view.findViewById(R.id.friend_two_name);
+        friendThreeName = view.findViewById(R.id.friend_three_name);
+
+        // "Add a friend!" if none
+        tvNoFriendsMessage = view.findViewById(R.id.tvNoFriendsMessage);
     }
 
     /**
-     * Pulls user data from DB, sets the username, aboutMe, avatar, etc.
-     * Then loads tracked habits to find top 3 by streak.
+     * Loads user-level data (username, aboutMe, avatar).
+     * Then loads top 3 tracked habits & top 3 friends.
      */
     private void loadUserDataFromFirebase() {
-        // 1) Load user top-level fields
         userRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 User user = snapshot.getValue(User.class);
                 if (user != null) {
                     // Username
-                    profileUsername.setText(
-                            TextUtils.isEmpty(user.username)
-                                    ? "UnnamedUser"
-                                    : user.username
-                    );
+                    profileUsername.setText(TextUtils.isEmpty(user.username)
+                            ? "UnnamedUser" : user.username);
 
-                    // AboutMe
+                    // About me
                     if (!TextUtils.isEmpty(user.aboutMe)) {
                         profileAboutMe.setText(user.aboutMe);
                     } else {
@@ -140,10 +156,13 @@ public class ProfileFragment extends Fragment {
                     if (!TextUtils.isEmpty(user.profilePicUrl)) {
                         updateProfileAvatar(user.profilePicUrl);
                     }
-                }
 
-                // 2) Then load tracked habits => do longest streak + show top 3
-                loadTrackedHabitsAndSort();
+                    // Now load top 3 habits
+                    loadTrackedHabitsAndSort();
+
+                    // Now load top 3 friends
+                    loadFriendsAndShowTop3(user.friends);
+                }
             }
 
             @Override
@@ -156,7 +175,7 @@ public class ProfileFragment extends Fragment {
     }
 
     /**
-     * Load only habits where isTracked=true => find best streak => fill top 3 icons
+     * Load only tracked habits => find best streak => fill top 3 icons
      */
     private void loadTrackedHabitsAndSort() {
         userRef.child("habits").addListenerForSingleValueEvent(new ValueEventListener() {
@@ -170,10 +189,9 @@ public class ProfileFragment extends Fragment {
                     }
                 }
 
-                // If none => tvNoHabitsMessage => "No current habits!"
                 if (tracked.isEmpty()) {
                     tvNoHabitsMessage.setVisibility(View.VISIBLE);
-                    // Hide the icon slots
+                    // Hide the 3 icon slots
                     ivTopHabit1.setVisibility(View.GONE);
                     ivTopHabit2.setVisibility(View.GONE);
                     ivTopHabit3.setVisibility(View.GONE);
@@ -181,7 +199,6 @@ public class ProfileFragment extends Fragment {
                     tvTopHabit2.setVisibility(View.GONE);
                     tvTopHabit3.setVisibility(View.GONE);
 
-                    // Also set "No streak yet!" or something
                     streakDescription.setText("No streak yet!");
                     return;
                 } else {
@@ -196,7 +213,7 @@ public class ProfileFragment extends Fragment {
                     }
                 });
 
-                // The first element => best streak
+                // The first => best streak
                 Habit top = tracked.get(0);
                 if (top.getStreakCount() > 0) {
                     streakDescription.setText("Longest streak: " +
@@ -206,7 +223,7 @@ public class ProfileFragment extends Fragment {
                     streakDescription.setText("No streak yet!");
                 }
 
-                // Now fill up to 3
+                // Fill top 3
                 setTopHabitSlot(0, tracked);
                 setTopHabitSlot(1, tracked);
                 setTopHabitSlot(2, tracked);
@@ -221,27 +238,17 @@ public class ProfileFragment extends Fragment {
         });
     }
 
-    /**
-     * Set the i-th slot with the i-th Habit in sorted list if i < size,
-     * else hide it.
-     */
     private void setTopHabitSlot(int i, List<Habit> sorted) {
         ImageView iv;
         TextView tv;
-        if (i == 0) {
-            iv = ivTopHabit1; tv = tvTopHabit1;
-        } else if (i == 1) {
-            iv = ivTopHabit2; tv = tvTopHabit2;
-        } else {
-            iv = ivTopHabit3; tv = tvTopHabit3;
-        }
+        if (i == 0)      { iv = ivTopHabit1; tv = tvTopHabit1; }
+        else if (i == 1) { iv = ivTopHabit2; tv = tvTopHabit2; }
+        else             { iv = ivTopHabit3; tv = tvTopHabit3; }
 
         if (i >= sorted.size()) {
-            // Hide
             iv.setVisibility(View.GONE);
             tv.setVisibility(View.GONE);
         } else {
-            // Show
             iv.setVisibility(View.VISIBLE);
             tv.setVisibility(View.VISIBLE);
 
@@ -251,20 +258,119 @@ public class ProfileFragment extends Fragment {
         }
     }
 
+    /**
+     * Load up to 3 friend keys from user.friends.
+     * For each friend key => fetch friend user => show pic + username.
+     * If user has no friends => "Add a friend!"
+     */
+    private void loadFriendsAndShowTop3(List<String> friendKeys) {
+        if (friendKeys == null || friendKeys.isEmpty()) {
+            // no friends
+            tvNoFriendsMessage.setVisibility(View.VISIBLE);
+
+            friendOne.setVisibility(View.GONE);
+            friendOneName.setVisibility(View.GONE);
+
+            friendTwo.setVisibility(View.GONE);
+            friendTwoName.setVisibility(View.GONE);
+
+            friendThree.setVisibility(View.GONE);
+            friendThreeName.setVisibility(View.GONE);
+
+            return;
+        }
+        // else show up to 3
+        tvNoFriendsMessage.setVisibility(View.GONE);
+
+        for (int i = 0; i < 3; i++) {
+            if (i >= friendKeys.size()) {
+                hideFriendSlot(i);
+            } else {
+                String friendKey = friendKeys.get(i);
+                showFriendSlot(i, friendKey);
+            }
+        }
+    }
+
+    private void hideFriendSlot(int i) {
+        if (i == 0) {
+            friendOne.setVisibility(View.GONE);
+            friendOneName.setVisibility(View.GONE);
+        } else if (i == 1) {
+            friendTwo.setVisibility(View.GONE);
+            friendTwoName.setVisibility(View.GONE);
+        } else {
+            friendThree.setVisibility(View.GONE);
+            friendThreeName.setVisibility(View.GONE);
+        }
+    }
+
+    private void showFriendSlot(int i, String friendKey) {
+        DatabaseReference friendRef = FirebaseDatabase.getInstance()
+                .getReference("users")
+                .child(friendKey);
+
+        friendRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                User friendUser = snapshot.getValue(User.class);
+                if (friendUser == null) {
+                    hideFriendSlot(i);
+                    return;
+                }
+
+                CircleImageView friendImg;
+                TextView friendNameTxt;
+                if (i == 0) {
+                    friendImg = friendOne;
+                    friendNameTxt = friendOneName;
+                } else if (i == 1) {
+                    friendImg = friendTwo;
+                    friendNameTxt = friendTwoName;
+                } else {
+                    friendImg = friendThree;
+                    friendNameTxt = friendThreeName;
+                }
+
+                friendImg.setVisibility(View.VISIBLE);
+                friendNameTxt.setVisibility(View.VISIBLE);
+
+                String uname = !TextUtils.isEmpty(friendUser.username)
+                        ? friendUser.username : "Friend";
+                friendNameTxt.setText(uname);
+
+                // Avatar
+                int resourceId;
+                if ("gamer".equals(friendUser.profilePicUrl)) {
+                    resourceId = R.drawable.gamer;
+                } else if ("man".equals(friendUser.profilePicUrl)) {
+                    resourceId = R.drawable.man;
+                } else if ("girl".equals(friendUser.profilePicUrl)) {
+                    resourceId = R.drawable.girl;
+                } else {
+                    resourceId = R.drawable.unknown_profile;
+                }
+                friendImg.setImageResource(resourceId);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                hideFriendSlot(i);
+            }
+        });
+    }
+
     private void setupClickListeners() {
         habitsViewMore.setOnClickListener(v -> showHabitsDialog());
         friendsViewMore.setOnClickListener(v -> showFriendsDialog());
-
         profileEditButton.setOnClickListener(v -> toggleUsernameEditing());
         profileImage.setOnClickListener(v -> showSelectAvatarDialog());
 
         View aboutMeCard = getView().findViewById(R.id.about_me_card);
         aboutMeCard.setOnClickListener(v -> showEditAboutMeDialog());
         aboutMeEditButton.setOnClickListener(v -> showEditAboutMeDialog());
-
-        settingsButton.setOnClickListener(v -> {
-            startActivity(new Intent(getActivity(), SettingsActivity.class));
-        });
+        settingsButton.setOnClickListener(v ->
+                startActivity(new Intent(getActivity(), SettingsActivity.class)));
     }
 
     // Let user edit 'aboutMe'
@@ -287,13 +393,11 @@ public class ProfileFragment extends Fragment {
                         userRef.child("aboutMe").setValue(newAboutMe)
                                 .addOnSuccessListener(aVoid ->
                                         Toast.makeText(getContext(),
-                                                "Bio updated", Toast.LENGTH_SHORT).show()
-                                )
+                                                "Bio updated", Toast.LENGTH_SHORT).show())
                                 .addOnFailureListener(e ->
                                         Toast.makeText(getContext(),
                                                 "Failed to update bio",
-                                                Toast.LENGTH_SHORT).show()
-                                );
+                                                Toast.LENGTH_SHORT).show());
                     }
                 })
                 .setNegativeButton("Cancel", null)
@@ -301,7 +405,7 @@ public class ProfileFragment extends Fragment {
                 .show();
     }
 
-    // Let user toggle username editing
+    // Let user toggle username
     private void toggleUsernameEditing() {
         if (!profileUsername.isEnabled()) {
             profileUsername.setEnabled(true);
@@ -340,8 +444,9 @@ public class ProfileFragment extends Fragment {
                     }
                 }
 
+                // Inflate the correct layout that has a RecyclerView, not a ListView:
                 View dialogView = LayoutInflater.from(getContext())
-                        .inflate(R.layout.dialog_add_habit, null);
+                        .inflate(R.layout.dialog_all_habits, null);
 
                 RecyclerView rv = dialogView.findViewById(R.id.habit_list_view);
                 rv.setLayoutManager(new LinearLayoutManager(getContext()));
@@ -370,23 +475,84 @@ public class ProfileFragment extends Fragment {
         });
     }
 
-    // For friends
+    // Show all friends in a dialog
     private void showFriendsDialog() {
-        View dialogView = LayoutInflater.from(getContext())
-                .inflate(R.layout.dialog_view_friends, null);
+        // We'll load user.friends again
+        userRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                User me = snapshot.getValue(User.class);
+                if (me == null || me.friends == null || me.friends.isEmpty()) {
+                    // no friends
+                    Toast.makeText(getContext(),
+                            "You have no friends!", Toast.LENGTH_SHORT).show();
+                    return;
+                }
 
-        ListView listView = dialogView.findViewById(R.id.friends_list_view);
-        // TODO: load from DB if desired
+                // We'll fetch each friend's name, then display in a simple list
+                List<String> friendUsernames = new ArrayList<>();
+                loadAllFriendNames(me.friends, friendUsernames);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                // nothing
+            }
+        });
+    }
+
+    // Recursively fetch friend user doc => get username
+    private void loadAllFriendNames(List<String> friendKeys, List<String> friendUsernames) {
+        if (friendKeys.isEmpty()) {
+            showAllFriendsDialog(friendUsernames);
+            return;
+        }
+
+        String firstKey = friendKeys.get(0);
+        DatabaseReference friendRef = FirebaseDatabase.getInstance()
+                .getReference("users")
+                .child(firstKey);
+
+        friendRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                User friendUser = snapshot.getValue(User.class);
+                if (friendUser != null && !TextUtils.isEmpty(friendUser.username)) {
+                    friendUsernames.add(friendUser.username);
+                } else {
+                    friendUsernames.add("Unknown friend");
+                }
+                friendKeys.remove(0);
+                loadAllFriendNames(friendKeys, friendUsernames);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                friendKeys.remove(0);
+                loadAllFriendNames(friendKeys, friendUsernames);
+            }
+        });
+    }
+
+    private void showAllFriendsDialog(List<String> allFriendNames) {
+        if (getContext() == null) return;
+        if (allFriendNames.isEmpty()) {
+            Toast.makeText(getContext(),
+                    "No friends found", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        String[] items = allFriendNames.toArray(new String[0]);
 
         new AlertDialog.Builder(requireContext())
                 .setTitle("My Friends")
-                .setView(dialogView)
+                .setItems(items, (dialog, which) -> {
+                    // If you want a click action
+                })
                 .setPositiveButton("Close", null)
-                .create()
                 .show();
     }
 
-    // Choose avatar
+    // For choosing avatar
     private void showSelectAvatarDialog() {
         View dialogView = LayoutInflater.from(getContext())
                 .inflate(R.layout.dialog_select_avatar, null);

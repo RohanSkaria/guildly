@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/profile_friends_section"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginStart="16dp"
@@ -14,6 +16,7 @@
         android:layout_height="wrap_content"
         android:padding="16dp">
 
+        <!-- Title on left -->
         <TextView
             android:id="@+id/friends_title"
             android:layout_width="wrap_content"
@@ -25,6 +28,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
+        <!-- "View More" on right -->
         <TextView
             android:id="@+id/friends_view_more"
             android:layout_width="wrap_content"
@@ -35,42 +39,113 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
+        <!-- "No friends" message if empty -->
+        <TextView
+            android:id="@+id/tvNoFriendsMessage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Add a friend!"
+            android:textStyle="bold"
+            android:textSize="16sp"
+            android:visibility="gone"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/friends_title"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:layout_marginTop="16dp"/>
+
+        <!-- A horizontal row for up to 3 friends, each with an avatar + name below -->
         <LinearLayout
-            android:layout_width="match_parent"
+            android:id="@+id/friendsRow"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
+            android:gravity="center"
             android:orientation="horizontal"
-            app:layout_constraintTop_toBottomOf="@id/friends_title">
-            <!--        wire images to picked activities           -->
-            <de.hdodenhof.circleimageview.CircleImageView
-                android:id="@+id/friend_one"
-                android:layout_width="0dp"
-                android:layout_height="60dp"
-                android:layout_weight="1"
-                android:src="@drawable/unknown_profile"
-                app:civ_border_color="#FFFFFF"
-                app:civ_border_width="2dp"
-                app:civ_circle_background_color="#4CAF50" />
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/friends_title"
+            app:layout_constraintBottom_toBottomOf="parent">
 
-            <de.hdodenhof.circleimageview.CircleImageView
-                android:id="@+id/friend_two"
+            <!-- Friend #1 -->
+            <LinearLayout
+                android:id="@+id/friendSlot1"
                 android:layout_width="0dp"
-                android:layout_height="60dp"
+                android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:src="@drawable/unknown_profile"
-                app:civ_border_color="#FFFFFF"
-                app:civ_border_width="2dp"
-                app:civ_circle_background_color="#2196F3" />
+                android:gravity="center"
+                android:orientation="vertical"
+                android:padding="4dp">
 
-            <de.hdodenhof.circleimageview.CircleImageView
-                android:id="@+id/friend_three"
+                <de.hdodenhof.circleimageview.CircleImageView
+                    android:id="@+id/friend_one"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:src="@drawable/unknown_profile" />
+
+                <!-- Friend #1's username -->
+                <TextView
+                    android:id="@+id/friend_one_name"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@android:color/black"
+                    android:textSize="14sp"
+                    android:visibility="gone"
+                    android:layout_marginTop="4dp" />
+            </LinearLayout>
+
+            <!-- Friend #2 -->
+            <LinearLayout
+                android:id="@+id/friendSlot2"
                 android:layout_width="0dp"
-                android:layout_height="60dp"
+                android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:src="@drawable/unknown_profile"
-                app:civ_border_color="#FFFFFF"
-                app:civ_border_width="2dp"
-                app:civ_circle_background_color="#FFC107" />
+                android:gravity="center"
+                android:orientation="vertical"
+                android:padding="4dp">
+
+                <de.hdodenhof.circleimageview.CircleImageView
+                    android:id="@+id/friend_two"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:src="@drawable/unknown_profile" />
+
+                <TextView
+                    android:id="@+id/friend_two_name"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@android:color/black"
+                    android:textSize="14sp"
+                    android:visibility="gone"
+                    android:layout_marginTop="4dp" />
+            </LinearLayout>
+
+            <!-- Friend #3 -->
+            <LinearLayout
+                android:id="@+id/friendSlot3"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:padding="4dp">
+
+                <de.hdodenhof.circleimageview.CircleImageView
+                    android:id="@+id/friend_three"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:src="@drawable/unknown_profile" />
+
+                <TextView
+                    android:id="@+id/friend_three_name"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@android:color/black"
+                    android:textSize="14sp"
+                    android:visibility="gone"
+                    android:layout_marginTop="4dp" />
+            </LinearLayout>
         </LinearLayout>
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.cardview.widget.CardView>
