@@ -71,7 +71,7 @@ public class ChatDetailActivity extends AppCompatActivity {
 
     private void loadMessages() {
         DatabaseReference messagesRef = chatRef.child("messages");
-        // Listen in real-time for new/changed messages
+
         messagesRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -79,13 +79,17 @@ public class ChatDetailActivity extends AppCompatActivity {
                 for (DataSnapshot msgSnap : snapshot.getChildren()) {
                     Message msg = msgSnap.getValue(Message.class);
                     if (msg != null) {
+
+                        if (!msg.senderId.equals(myUserKey) && "SENT".equals(msg.status)) {
+                            msgSnap.getRef().child("status").setValue("READ");
+                            msg.status = "READ";
+                        }
                         messageList.add(msg);
                     }
                 }
-                // Sort by timestamp ascending
+
                 Collections.sort(messageList, Comparator.comparingLong(m -> m.timestamp));
                 chatDetailAdapter.notifyDataSetChanged();
-                // Scroll to bottom
                 recyclerViewChatDetail.scrollToPosition(messageList.size() - 1);
             }
 

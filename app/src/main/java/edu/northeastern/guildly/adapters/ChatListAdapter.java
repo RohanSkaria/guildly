@@ -44,7 +44,11 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ViewHo
         holder.textFriendUsername.setText(item.friendUsername);
         holder.textLastMessage.setText(item.lastMessage);
         holder.textTimestamp.setText(item.timestamp);
-        holder.imageFriendAvatar.setImageResource(R.drawable.unknown_profile);
+
+
+        int avatarResourceId = R.drawable.unknown_profile;
+
+        holder.imageFriendAvatar.setImageResource(avatarResourceId);
 
         if (item.lastMessageIconRes > 0) {
             holder.imageLastMessageStatus.setVisibility(View.VISIBLE);
