@@ -8,7 +8,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -34,6 +33,7 @@ import de.hdodenhof.circleimageview.CircleImageView;
 import edu.northeastern.guildly.R;
 import edu.northeastern.guildly.SettingsActivity;
 import edu.northeastern.guildly.MainActivity;
+import edu.northeastern.guildly.adapters.FriendsAdapter;
 import edu.northeastern.guildly.adapters.HabitAdapter;
 import edu.northeastern.guildly.data.Habit;
 import edu.northeastern.guildly.data.User;
@@ -475,33 +475,89 @@ public class ProfileFragment extends Fragment {
         });
     }
 
-    // Show all friends in a dialog
+
     private void showFriendsDialog() {
-        // We'll load user.friends again
+
         userRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 User me = snapshot.getValue(User.class);
                 if (me == null || me.friends == null || me.friends.isEmpty()) {
-                    // no friends
+
                     Toast.makeText(getContext(),
                             "You have no friends!", Toast.LENGTH_SHORT).show();
                     return;
                 }
 
-                // We'll fetch each friend's name, then display in a simple list
-                List<String> friendUsernames = new ArrayList<>();
-                loadAllFriendNames(me.friends, friendUsernames);
+
+                List<String> friendKeys = new ArrayList<>(me.friends);
+                loadAllFriendUsers(friendKeys, new ArrayList<>());
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                // nothing
+
             }
         });
     }
 
-    // Recursively fetch friend user doc => get username
+    private void showAllFriendsWithAvatarsDialog(List<User> friendUsers) {
+        if (getContext() == null) return;
+        if (friendUsers.isEmpty()) {
+            Toast.makeText(getContext(),
+                    "No friends found", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+
+        View dialogView = LayoutInflater.from(getContext())
+                .inflate(R.layout.dialog_all_friends, null);
+
+        RecyclerView rvFriends = dialogView.findViewById(R.id.rvAllFriends);
+        rvFriends.setLayoutManager(new LinearLayoutManager(getContext()));
+
+
+        FriendsAdapter adapter = new FriendsAdapter(friendUsers);
+        rvFriends.setAdapter(adapter);
+
+        new AlertDialog.Builder(requireContext())
+                .setTitle("My Friends")
+                .setView(dialogView)
+                .setPositiveButton("Close", null)
+                .show();
+    }
+
+    private void loadAllFriendUsers(List<String> friendKeys, List<User> friendUsers) {
+        if (friendKeys.isEmpty()) {
+            showAllFriendsWithAvatarsDialog(friendUsers);
+            return;
+        }
+
+        String firstKey = friendKeys.get(0);
+        DatabaseReference friendRef = FirebaseDatabase.getInstance()
+                .getReference("users")
+                .child(firstKey);
+
+        friendRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                User friendUser = snapshot.getValue(User.class);
+                if (friendUser != null) {
+                    friendUsers.add(friendUser);
+                }
+                friendKeys.remove(0);
+                loadAllFriendUsers(friendKeys, friendUsers);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                friendKeys.remove(0);
+                loadAllFriendUsers(friendKeys, friendUsers);
+            }
+        });
+    }
+
+
     private void loadAllFriendNames(List<String> friendKeys, List<String> friendUsernames) {
         if (friendKeys.isEmpty()) {
             showAllFriendsDialog(friendUsernames);
