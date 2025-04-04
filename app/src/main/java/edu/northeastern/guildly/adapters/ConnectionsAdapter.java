@@ -48,19 +48,39 @@ public class ConnectionsAdapter extends RecyclerView.Adapter<ConnectionsAdapter.
         if (usernameCache.containsKey(friendKey)) {
             String cachedUsername = usernameCache.get(friendKey);
             holder.usernameText.setText(cachedUsername);
-            return;
+        } else {
+            holder.usernameText.setText("Loading...");
         }
 
-        holder.usernameText.setText("Loading...");
+
+        holder.profileImage.setImageResource(R.drawable.unknown_profile);
 
         usersRef.child(friendKey)
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
                         User friendUser = snapshot.getValue(User.class);
-                        if (friendUser != null && friendUser.username != null) {
-                            usernameCache.put(friendKey, friendUser.username);
-                            holder.usernameText.setText(friendUser.username);
+                        if (friendUser != null) {
+
+                            if (friendUser.username != null) {
+                                usernameCache.put(friendKey, friendUser.username);
+                                holder.usernameText.setText(friendUser.username);
+                            } else {
+                                holder.usernameText.setText(friendKey + " (not found)");
+                            }
+
+
+                            int resourceId;
+                            if ("gamer".equals(friendUser.profilePicUrl)) {
+                                resourceId = R.drawable.gamer;
+                            } else if ("man".equals(friendUser.profilePicUrl)) {
+                                resourceId = R.drawable.man;
+                            } else if ("girl".equals(friendUser.profilePicUrl)) {
+                                resourceId = R.drawable.girl;
+                            } else {
+                                resourceId = R.drawable.unknown_profile;
+                            }
+                            holder.profileImage.setImageResource(resourceId);
                         } else {
                             holder.usernameText.setText(friendKey + " (not found)");
                         }
