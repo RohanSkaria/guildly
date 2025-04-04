@@ -3,6 +3,7 @@ package edu.northeastern.guildly;
 import static android.content.ContentValues.TAG;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -223,6 +224,11 @@ public class SettingsActivity extends AppCompatActivity {
         });
     }
     private void logout() {
+
+        SharedPreferences prefs = getSharedPreferences("GuildlyPrefs", MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.remove("loggedInUserEmail");
+        editor.apply();
 
         MainActivity.currentUserEmail = null;
 
