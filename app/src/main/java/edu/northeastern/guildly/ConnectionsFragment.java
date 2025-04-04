@@ -29,11 +29,14 @@ import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.database.Query;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import edu.northeastern.guildly.adapters.ConnectionsAdapter;
+import edu.northeastern.guildly.data.Friend;
+import edu.northeastern.guildly.data.Habit;
 import edu.northeastern.guildly.data.User;
 
 public class ConnectionsFragment extends Fragment {
@@ -52,6 +55,7 @@ public class ConnectionsFragment extends Fragment {
     private String myUserKey;  // sanitized email key
 
     private DatabaseReference usersRef;
+    private DatabaseReference userRef;
 
     private List<String> myFriendsList; // store friend keys
     private ConnectionsAdapter connectionsAdapter;
@@ -94,6 +98,7 @@ public class ConnectionsFragment extends Fragment {
         connectionsRecyclerView.setAdapter(connectionsAdapter);
 
         usersRef = FirebaseDatabase.getInstance().getReference("users");
+        userRef = usersRef.child(myUserKey);
 
         if (myEmail != null) {
             loadMyFriends();
@@ -103,9 +108,131 @@ public class ConnectionsFragment extends Fragment {
         setupFriendRequestsButton();
         updateFriendRequestsBadge();
 
+
+        RecyclerView leaderboardRecyclerView = root.findViewById(R.id.leaderboard);
+        leaderboardRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+
+
+        TextView globalHeader = root.findViewById(R.id.global_header);
+        globalHeader.setText("Global Leaderboard");
+
+
+        loadLeaderboardData(leaderboardRecyclerView);
+
         return root;
     }
 
+
+    private void loadLeaderboardData(RecyclerView leaderboardRecyclerView) {
+        // Example implementation - you'll need to populate with real data based on friend streaks
+        List<Friend> friendsList = new ArrayList<>();
+
+        // If you have friends, look up their habit data and add to leaderboard
+        if (myFriendsList != null && !myFriendsList.isEmpty()) {
+            for (String friendKey : myFriendsList) {
+                usersRef.child(friendKey).addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        User friendUser = snapshot.getValue(User.class);
+                        if (friendUser != null) {
+                            // Get the friend's top habit streak
+                            int topStreak = 0;
+
+                            // Look in their habits for the top streak
+                            if (snapshot.child("habits").exists()) {
+                                for (DataSnapshot habitSnap : snapshot.child("habits").getChildren()) {
+                                    Habit habit = habitSnap.getValue(Habit.class);
+                                    if (habit != null && habit.isTracked() && habit.getStreakCount() > topStreak) {
+                                        topStreak = habit.getStreakCount();
+                                    }
+                                }
+                            }
+
+                            // Get profile image resource
+                            int profileImageResource;
+                            switch (friendUser.profilePicUrl == null ? "" : friendUser.profilePicUrl) {
+                                case "gamer": profileImageResource = R.drawable.gamer; break;
+                                case "man": profileImageResource = R.drawable.man; break;
+                                case "girl": profileImageResource = R.drawable.girl; break;
+                                default: profileImageResource = R.drawable.unknown_profile; break;
+                            }
+
+                            // Add to the leaderboard list
+                            friendsList.add(new Friend(
+                                    friendUser.username != null ? friendUser.username : "Friend",
+                                    topStreak,
+                                    profileImageResource
+                            ));
+
+                            // Also add the current user to the leaderboard
+                            if (friendsList.size() == myFriendsList.size()) {
+                                addCurrentUserToLeaderboard(friendsList, leaderboardRecyclerView);
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        // Handle error
+                    }
+                });
+            }
+        } else {
+            // No friends, just show the current user
+            addCurrentUserToLeaderboard(friendsList, leaderboardRecyclerView);
+        }
+    }
+
+    private void addCurrentUserToLeaderboard(List<Friend> friendsList, RecyclerView leaderboardRecyclerView) {
+        // Add the current user to the leaderboard
+        usersRef.child(myUserKey).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                User currentUser = snapshot.getValue(User.class);
+                if (currentUser != null) {
+                    // Get current user's top streak
+                    int topStreak = 0;
+
+                    if (snapshot.child("habits").exists()) {
+                        for (DataSnapshot habitSnap : snapshot.child("habits").getChildren()) {
+                            Habit habit = habitSnap.getValue(Habit.class);
+                            if (habit != null && habit.isTracked() && habit.getStreakCount() > topStreak) {
+                                topStreak = habit.getStreakCount();
+                            }
+                        }
+                    }
+
+                    // Get profile image resource
+                    int profileImageResource;
+                    switch (currentUser.profilePicUrl == null ? "" : currentUser.profilePicUrl) {
+                        case "gamer": profileImageResource = R.drawable.gamer; break;
+                        case "man": profileImageResource = R.drawable.man; break;
+                        case "girl": profileImageResource = R.drawable.girl; break;
+                        default: profileImageResource = R.drawable.unknown_profile; break;
+                    }
+
+                    // Add current user to list
+                    friendsList.add(new Friend(
+                            currentUser.username != null ? currentUser.username : "Me",
+                            topStreak,
+                            profileImageResource
+                    ));
+
+                    // Sort the list by streak count in descending order
+                    Collections.sort(friendsList, (f1, f2) -> Integer.compare(f2.getStreakCount(), f1.getStreakCount()));
+
+                    // Create and set the adapter
+                    LeaderboardAdapter adapter = new LeaderboardAdapter(friendsList);
+                    leaderboardRecyclerView.setAdapter(adapter);
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                // Handle error
+            }
+        });
+    }
 
     /**
      * Loads the current user's 'friends' list from DB and updates the RecyclerView.
