@@ -55,6 +55,8 @@
                 android:value=".LoginActivity" />
         </activity>
 
+        <activity android:name=".ForgotPasswordActivity" />
+
     </application>
 
 </manifest>
