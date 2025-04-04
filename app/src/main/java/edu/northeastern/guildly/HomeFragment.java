@@ -129,29 +129,43 @@ public class HomeFragment extends Fragment {
      * The user can re-check which habits they're tracking by a popup with the single adapter in selection mode.
      */
     private void showPredefinedHabitsDialog() {
-        // We'll create a shallow copy of the 8 possible habits,
-        // marking isTracked = true if the user is currently tracking them.
+
         List<Habit> cloneList = new ArrayList<>();
         for (Habit ph : predefinedHabits) {
             boolean alreadyTracked = false;
+            Habit existingHabit = null;
+
+
             for (Habit current : habitList) {
                 if (current.getHabitName().equals(ph.getHabitName())) {
                     alreadyTracked = true;
+                    existingHabit = current;
                     break;
                 }
             }
+
+
             Habit newHabit = new Habit(ph.getHabitName(), ph.getIconResId());
             newHabit.setTracked(alreadyTracked);
+
+
+            if (alreadyTracked && existingHabit != null) {
+                newHabit.setStreakCount(existingHabit.getStreakCount());
+                newHabit.setLastCompletedTime(existingHabit.getLastCompletedTime());
+                newHabit.setCompletedToday(existingHabit.isCompletedToday());
+                newHabit.setNextAvailableTime(existingHabit.getNextAvailableTime());
+            }
+
             cloneList.add(newHabit);
         }
 
-        // We'll show them in a small RecyclerView using the same HabitAdapter in "selection mode."
+
         View dialogView = LayoutInflater.from(getContext())
                 .inflate(R.layout.dialog_predefined_habits, null);
         RecyclerView rv = dialogView.findViewById(R.id.predefinedHabitsRecycler);
         rv.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        // Create a second adapter in selection mode
+
         HabitAdapter tempAdapter = new HabitAdapter(cloneList, userHabitsRef, /* isSelectionMode= */ true);
         rv.setAdapter(tempAdapter);
 
@@ -159,23 +173,39 @@ public class HomeFragment extends Fragment {
                 .setTitle("Select Habits to Track")
                 .setView(dialogView)
                 .setPositiveButton("Done", (dialog, which) -> {
-                    // Once the user hits "Done,"
-                    // we do partial logic:
-                    //  1) Add the newly tracked habits
-                    //  2) Remove untracked from DB
-                    //  3) Reload local list
 
-                    // 1) For each in cloneList, if isTracked=true => setValue, else removeValue
+
                     for (Habit h : cloneList) {
+                        DatabaseReference habitRef = userHabitsRef.child(h.getHabitName());
+
                         if (h.isTracked()) {
-                            userHabitsRef.child(h.getHabitName()).setValue(h);
+
+                            boolean existsInCurrent = false;
+                            Habit existingHabit = null;
+
+                            for (Habit current : habitList) {
+                                if (current.getHabitName().equals(h.getHabitName())) {
+                                    existsInCurrent = true;
+                                    existingHabit = current;
+                                    break;
+                                }
+                            }
+
+                            if (existsInCurrent && existingHabit != null) {
+
+                                habitRef.child("tracked").setValue(true);
+                            } else {
+
+                                habitRef.setValue(h);
+                            }
                         } else {
-                            userHabitsRef.child(h.getHabitName()).removeValue();
+
+                            habitRef.removeValue();
                         }
                     }
-                    // 2) Reload from DB to reflect changes
-                    loadHabitsFromFirebase();
 
+
+                    loadHabitsFromFirebase();
                 })
                 .setNegativeButton("Cancel", (dialog, which) -> {
                 })
