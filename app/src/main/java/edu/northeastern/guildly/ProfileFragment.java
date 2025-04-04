@@ -33,6 +33,7 @@ import de.hdodenhof.circleimageview.CircleImageView;
 import edu.northeastern.guildly.R;
 import edu.northeastern.guildly.SettingsActivity;
 import edu.northeastern.guildly.MainActivity;
+import edu.northeastern.guildly.adapters.AllHabitsAdapter;
 import edu.northeastern.guildly.adapters.FriendsAdapter;
 import edu.northeastern.guildly.adapters.HabitAdapter;
 import edu.northeastern.guildly.data.Habit;
@@ -431,7 +432,7 @@ public class ProfileFragment extends Fragment {
         }
     }
 
-    // Show only tracked habits in a dialog
+
     private void showHabitsDialog() {
         userRef.child("habits").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
@@ -444,18 +445,15 @@ public class ProfileFragment extends Fragment {
                     }
                 }
 
-                // Inflate the correct layout that has a RecyclerView, not a ListView:
+
                 View dialogView = LayoutInflater.from(getContext())
                         .inflate(R.layout.dialog_all_habits, null);
 
                 RecyclerView rv = dialogView.findViewById(R.id.habit_list_view);
                 rv.setLayoutManager(new LinearLayoutManager(getContext()));
 
-                HabitAdapter adapter = new HabitAdapter(
-                        trackedHabits,
-                        userRef.child("habits"),
-                        false
-                );
+
+                AllHabitsAdapter adapter = new AllHabitsAdapter(trackedHabits);
                 rv.setAdapter(adapter);
 
                 new AlertDialog.Builder(requireContext())
@@ -474,7 +472,6 @@ public class ProfileFragment extends Fragment {
             }
         });
     }
-
 
     private void showFriendsDialog() {
 
