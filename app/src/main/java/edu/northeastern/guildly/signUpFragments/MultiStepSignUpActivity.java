@@ -1,4 +1,4 @@
-package edu.northeastern.guildly;
+package edu.northeastern.guildly.signUpFragments;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -25,10 +25,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import edu.northeastern.guildly.signUpFragments.AvatarSelectionFragment;
-import edu.northeastern.guildly.signUpFragments.HabitSelectionFragment;
-import edu.northeastern.guildly.signUpFragments.ProfileInfoFragment;
-import edu.northeastern.guildly.signUpFragments.SignUpReviewFragment;
+import edu.northeastern.guildly.MainActivity;
+import edu.northeastern.guildly.R;
+import edu.northeastern.guildly.data.User;
+import edu.northeastern.guildly.MainActivity;
 
 public class MultiStepSignUpActivity extends AppCompatActivity {
 
@@ -173,7 +173,6 @@ public class MultiStepSignUpActivity extends AppCompatActivity {
                     Map<String, Object> userMap = new HashMap<>();
                     userMap.put("username", username);
                     userMap.put("email", email);
-                    userMap.put("password", password);
                     userMap.put("profilePicUrl", profileImageUri);
                     userMap.put("aboutMe", aboutMe);
                     userMap.put("friends", newFriends);

@@ -19,6 +19,8 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import edu.northeastern.guildly.signUpFragments.MultiStepSignUpActivity;
+
 public class LoginActivity extends AppCompatActivity {
 
     private EditText editTextEmail, editTextPassword;
@@ -99,7 +101,7 @@ public class LoginActivity extends AppCompatActivity {
         });
 
         buttonGoToSignUp.setOnClickListener(view -> {
-            Intent intent = new Intent(LoginActivity.this, edu.northeastern.guildly.MultiStepSignUpActivity.class);
+            Intent intent = new Intent(LoginActivity.this, MultiStepSignUpActivity.class);
             startActivity(intent);
         });
 
