@@ -15,6 +15,7 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -199,7 +200,7 @@ public class SettingsActivity extends AppCompatActivity {
                                 .addOnFailureListener(e -> {
                                     Log.e(TAG, "Error updating password: " + e.getMessage(), e);
                                     Toast.makeText(SettingsActivity.this,
-                                               "Failed to update password: " + e.getMessage(),
+                                            "Failed to update password: " + e.getMessage(),
                                             Toast.LENGTH_LONG).show();
                                 });
                     } else {
@@ -225,6 +226,8 @@ public class SettingsActivity extends AppCompatActivity {
     }
     private void logout() {
 
+        FirebaseAuth.getInstance().signOut();
+
         SharedPreferences prefs = getSharedPreferences("GuildlyPrefs", MODE_PRIVATE);
         SharedPreferences.Editor editor = prefs.edit();
         editor.remove("loggedInUserEmail");
@@ -233,6 +236,7 @@ public class SettingsActivity extends AppCompatActivity {
         MainActivity.currentUserEmail = null;
 
         Intent intent = new Intent(SettingsActivity.this, LoginActivity.class);
+        intent.putExtra("logout", true);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
         finish();
