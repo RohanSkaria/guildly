@@ -1,47 +1,60 @@
 package edu.northeastern.guildly;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AppCompatActivity;
+
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
-import edu.northeastern.guildly.data.User; // Import your User model
 import edu.northeastern.guildly.signUpFragments.MultiStepSignUpActivity;
 
 public class LoginActivity extends AppCompatActivity {
 
     private EditText editTextEmail, editTextPassword;
     private Button buttonLogin;
-    private TextView buttonGoToSignUp;
+    private TextView buttonGoToSignUp, textViewForgotPassword;
+    private FirebaseAuth firebaseAuth;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        boolean fromLogout = getIntent().getBooleanExtra("logout", false);
+        SharedPreferences prefs = getSharedPreferences("GuildlyPrefs", MODE_PRIVATE);
+        String savedEmail = prefs.getString("loggedInUserEmail", null);
+        if (savedEmail != null && !fromLogout) {
+            MainActivity.currentUserEmail = savedEmail;
+            startActivity(new Intent(this, MainActivity.class));
+            finish();
+            return;
+        }
+
         setContentView(R.layout.activity_login);
 
+        firebaseAuth = FirebaseAuth.getInstance();
         editTextEmail = findViewById(R.id.editTextEmailLogin);
         editTextPassword = findViewById(R.id.editTextPasswordLogin);
         buttonLogin = findViewById(R.id.buttonLogin);
         buttonGoToSignUp = findViewById(R.id.buttonGoToSignUp);
+        textViewForgotPassword = findViewById(R.id.textViewForgotPassword);
 
-        // On "Login" button click
         buttonLogin.setOnClickListener(view -> {
             String email = editTextEmail.getText().toString().trim();
             String password = editTextPassword.getText().toString().trim();
 
-            // Basic validation
             if (TextUtils.isEmpty(email)) {
                 editTextEmail.setError("Email is required");
                 return;
@@ -51,60 +64,49 @@ public class LoginActivity extends AppCompatActivity {
                 return;
             }
 
-            // Convert email to a valid Firebase Realtime DB key
-            String sanitizedEmailKey = email.replace(".", ",");
+            firebaseAuth.signInWithEmailAndPassword(email, password)
+                    .addOnCompleteListener(task -> {
+                        if (task.isSuccessful()) {
+                            FirebaseUser firebaseUser = firebaseAuth.getCurrentUser();
+                            if (firebaseUser != null) {
+                                String sanitizedEmailKey = email.replace(".", ",");
+                                DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(sanitizedEmailKey);
 
-            // Reference to "users" in your Realtime Database
-            FirebaseDatabase database = FirebaseDatabase.getInstance();
-            DatabaseReference usersRef = database.getReference("users");
+                                userRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                                    @Override
+                                    public void onDataChange(DataSnapshot snapshot) {
+                                        if (snapshot.exists()) {
+                                            SharedPreferences.Editor editor = getSharedPreferences("GuildlyPrefs", MODE_PRIVATE).edit();
+                                            editor.putString("loggedInUserEmail", email);
+                                            editor.apply();
 
-            // Check if user with that email key exists
-            usersRef.child(sanitizedEmailKey).addListenerForSingleValueEvent(new ValueEventListener() {
-                @Override
-                public void onDataChange(DataSnapshot snapshot) {
-                    if (snapshot.exists()) {
-                        // Convert the snapshot to your User class
-                        User user = snapshot.getValue(User.class);
-                        if (user != null) {
-                            // Compare passwords
-                            if (user.password.equals(password)) {
-                                Toast.makeText(LoginActivity.this,
-                                        "Login successful!",
-                                        Toast.LENGTH_SHORT).show();
+                                            MainActivity.currentUserEmail = email;
+                                            startActivity(new Intent(LoginActivity.this, MainActivity.class));
+                                            finish();
+                                        } else {
+                                            Toast.makeText(LoginActivity.this, "User data not found.", Toast.LENGTH_SHORT).show();
+                                        }
+                                    }
 
-                                // 1) Store the logged-in user's email globally
-                                MainActivity.currentUserEmail = email;
-
-                                // 2) Go to MainActivity
-                                Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-                                startActivity(intent);
-                                finish();
-                            } else {
-                                Toast.makeText(LoginActivity.this,
-                                        "Invalid password. Please try again.",
-                                        Toast.LENGTH_SHORT).show();
+                                    @Override
+                                    public void onCancelled(DatabaseError error) {
+                                        Toast.makeText(LoginActivity.this, "Error loading user data", Toast.LENGTH_SHORT).show();
+                                    }
+                                });
                             }
+                        } else {
+                            Toast.makeText(LoginActivity.this, "Login failed: " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
                         }
-                    } else {
-                        Toast.makeText(LoginActivity.this,
-                                "User not found. Please sign up first.",
-                                Toast.LENGTH_SHORT).show();
-                    }
-                }
-
-                @Override
-                public void onCancelled(DatabaseError error) {
-                    Log.e("Login", "Failed to read user data", error.toException());
-                    Toast.makeText(LoginActivity.this,
-                            "Login failed: " + error.getMessage(),
-                            Toast.LENGTH_LONG).show();
-                }
-            });
+                    });
         });
 
-        // On "Go to Sign Up" button click
         buttonGoToSignUp.setOnClickListener(view -> {
             Intent intent = new Intent(LoginActivity.this, MultiStepSignUpActivity.class);
+            startActivity(intent);
+        });
+
+        textViewForgotPassword.setOnClickListener(v -> {
+            Intent intent = new Intent(LoginActivity.this, ForgotPasswordActivity.class);
             startActivity(intent);
         });
     }
