@@ -7,7 +7,19 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!-- List of messages -->
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/topAppBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="?attr/actionBarSize"
+        android:background="@android:color/white"
+        android:elevation="4dp"
+        android:theme="@style/ThemeOverlay.MaterialComponents.Light"
+        app:navigationIcon="@drawable/ic_arrow_back"
+        app:navigationIconTint="@color/black"
+        app:title=""
+        app:titleCentered="true" />
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerViewChatDetail"
         android:layout_width="match_parent"
@@ -15,7 +27,6 @@
         android:layout_weight="1"
         android:padding="8dp" />
 
-    <!-- Input + Send Button row -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
