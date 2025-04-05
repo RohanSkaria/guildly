@@ -3,17 +3,15 @@ package edu.northeastern.guildly.signUpFragments;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.FragmentTransaction;
 
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -27,8 +25,6 @@ import java.util.Map;
 
 import edu.northeastern.guildly.MainActivity;
 import edu.northeastern.guildly.R;
-import edu.northeastern.guildly.data.User;
-import edu.northeastern.guildly.MainActivity;
 
 public class MultiStepSignUpActivity extends AppCompatActivity {
 
@@ -63,12 +59,38 @@ public class MultiStepSignUpActivity extends AppCompatActivity {
         updateStepIndicator();
 
         btnNext.setOnClickListener(v -> {
-            if (validateCurrentStep()) {
+            if (currentStep == 1) {
+                if (profileInfoFragment.validateAndSaveData(signUpData)) {
+                    String username = signUpData.getString("username");
+                    if (TextUtils.isEmpty(username)) {
+                        Toast.makeText(this, "Username cannot be empty", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    DatabaseReference usernamesRef = FirebaseDatabase.getInstance().getReference("usernames");
+                    usernamesRef.child(username).addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(DataSnapshot snapshot) {
+                            if (snapshot.exists()) {
+                                Toast.makeText(MultiStepSignUpActivity.this, "Username already exists. Please choose another.", Toast.LENGTH_SHORT).show();
+                            } else {
+                                currentStep++;
+                                navigateToStep(currentStep);
+                                updateStepIndicator();
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(DatabaseError error) {
+                            Toast.makeText(MultiStepSignUpActivity.this, "Username check failed: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                }
+            } else if (validateCurrentStep()) {
                 if (currentStep < TOTAL_STEPS) {
                     currentStep++;
                     navigateToStep(currentStep);
                 } else {
-                    checkUsernameUniquenessAndSignUp();
+                    completeSignUp();
                 }
                 updateStepIndicator();
             }
@@ -106,7 +128,7 @@ public class MultiStepSignUpActivity extends AppCompatActivity {
     }
 
     private void loadFragment(androidx.fragment.app.Fragment fragment) {
-        androidx.fragment.app.FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
         transaction.replace(R.id.fragmentContainer, fragment);
         transaction.commit();
     }
@@ -132,27 +154,6 @@ public class MultiStepSignUpActivity extends AppCompatActivity {
                 return true;
         }
         return false;
-    }
-
-    private void checkUsernameUniquenessAndSignUp() {
-        String username = signUpData.getString("username");
-        DatabaseReference usernameRef = FirebaseDatabase.getInstance().getReference("usernames").child(username);
-
-        usernameRef.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot snapshot) {
-                if (snapshot.exists()) {
-                    Toast.makeText(MultiStepSignUpActivity.this, "Username already taken.", Toast.LENGTH_SHORT).show();
-                } else {
-                    completeSignUp();
-                }
-            }
-
-            @Override
-            public void onCancelled(DatabaseError error) {
-                Toast.makeText(MultiStepSignUpActivity.this, "Error checking username.", Toast.LENGTH_SHORT).show();
-            }
-        });
     }
 
     private void completeSignUp() {
