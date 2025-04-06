@@ -13,8 +13,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -49,7 +49,7 @@ public class ChatListActivity extends AppCompatActivity {
 
         chatListAdapter = new ChatListAdapter(friendChatList, item -> {
             if (item.chatId != null) {
-                openChatDetail(item.chatId);
+                ChatDetailActivity.openChatDetail(ChatListActivity.this, item.chatId, item.friendUsername);
             } else {
                 createNewChat(item.friendKey, item.friendUsername);
             }
@@ -201,12 +201,6 @@ public class ChatListActivity extends AppCompatActivity {
         return sdf.format(new Date(millis));
     }
 
-    private void openChatDetail(String chatId) {
-        Intent intent = new Intent(ChatListActivity.this, ChatDetailActivity.class);
-        intent.putExtra("CHAT_ID", chatId);
-        startActivity(intent);
-    }
-
     private void createNewChat(String friendKey, String friendUsername) {
         String newChatId = chatsRef.push().getKey();
         if (newChatId == null) {
@@ -222,7 +216,7 @@ public class ChatListActivity extends AppCompatActivity {
         newChat.participants = parts;
 
         chatsRef.child(newChatId).setValue(newChat)
-                .addOnSuccessListener(aVoid -> openChatDetail(newChatId))
+                .addOnSuccessListener(aVoid -> ChatDetailActivity.openChatDetail(ChatListActivity.this, newChatId, friendUsername))
                 .addOnFailureListener(e -> {
                     Log.e("ChatListActivity", "createNewChat failed", e);
                     Toast.makeText(ChatListActivity.this,

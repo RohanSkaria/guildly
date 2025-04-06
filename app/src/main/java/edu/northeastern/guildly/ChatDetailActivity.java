@@ -1,21 +1,24 @@
 package edu.northeastern.guildly;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -23,7 +26,6 @@ import java.util.Comparator;
 import java.util.List;
 
 import edu.northeastern.guildly.adapters.ChatDetailAdapter;
-import edu.northeastern.guildly.data.Chats;
 import edu.northeastern.guildly.data.Message;
 
 public class ChatDetailActivity extends AppCompatActivity {
@@ -44,34 +46,48 @@ public class ChatDetailActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat_detail);
 
+        Toolbar toolbar = findViewById(R.id.topAppBar);
+        setSupportActionBar(toolbar);
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        }
+
+        String friendUsername = getIntent().getStringExtra("FRIEND_USERNAME");
+        if (getSupportActionBar() != null && friendUsername != null) {
+            getSupportActionBar().setTitle(friendUsername);
+        }
+
         recyclerViewChatDetail = findViewById(R.id.recyclerViewChatDetail);
         editTextMessageInput = findViewById(R.id.editTextMessageInput);
         buttonSend = findViewById(R.id.buttonSend);
 
-        // Setup the RecyclerView
         recyclerViewChatDetail.setLayoutManager(new LinearLayoutManager(this));
         messageList = new ArrayList<>();
 
-        // pass my user key so adapter knows how to differentiate "mine" vs "theirs"
         String myEmail = MainActivity.currentUserEmail;
         myUserKey = (myEmail != null) ? myEmail.replace(".", ",") : "NO_USER";
 
         chatDetailAdapter = new ChatDetailAdapter(messageList, myUserKey);
         recyclerViewChatDetail.setAdapter(chatDetailAdapter);
 
-        // 1) Get chatId from Intent
         chatId = getIntent().getStringExtra("CHAT_ID");
-
-        // 2) Reference "chats/<chatId>" in DB
         chatRef = FirebaseDatabase.getInstance().getReference("chats").child(chatId);
 
         loadMessages();
         setupSendButton();
     }
 
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            finish();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
     private void loadMessages() {
         DatabaseReference messagesRef = chatRef.child("messages");
-        // Listen in real-time for new/changed messages
         messagesRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -82,10 +98,8 @@ public class ChatDetailActivity extends AppCompatActivity {
                         messageList.add(msg);
                     }
                 }
-                // Sort by timestamp ascending
                 Collections.sort(messageList, Comparator.comparingLong(m -> m.timestamp));
                 chatDetailAdapter.notifyDataSetChanged();
-                // Scroll to bottom
                 recyclerViewChatDetail.scrollToPosition(messageList.size() - 1);
             }
 
@@ -95,26 +109,28 @@ public class ChatDetailActivity extends AppCompatActivity {
     }
 
     private void setupSendButton() {
-        buttonSend.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                String text = editTextMessageInput.getText().toString().trim();
-                if (TextUtils.isEmpty(text)) {
-                    return;
-                }
-                // Build message
-                Message msg = new Message();
-                msg.senderId = myUserKey;
-                msg.content = text;
-                msg.timestamp = System.currentTimeMillis();
-                msg.status = "SENT";
-
-                // Push to DB
-                DatabaseReference pushRef = chatRef.child("messages").push();
-                pushRef.setValue(msg);
-
-                editTextMessageInput.setText("");
+        buttonSend.setOnClickListener(view -> {
+            String text = editTextMessageInput.getText().toString().trim();
+            if (TextUtils.isEmpty(text)) {
+                return;
             }
+            Message msg = new Message();
+            msg.senderId = myUserKey;
+            msg.content = text;
+            msg.timestamp = System.currentTimeMillis();
+            msg.status = "SENT";
+
+            DatabaseReference pushRef = chatRef.child("messages").push();
+            pushRef.setValue(msg);
+
+            editTextMessageInput.setText("");
         });
+    }
+
+    public static void openChatDetail(AppCompatActivity activity, String chatId, String friendUsername) {
+        Intent intent = new Intent(activity, ChatDetailActivity.class);
+        intent.putExtra("CHAT_ID", chatId);
+        intent.putExtra("FRIEND_USERNAME", friendUsername);
+        activity.startActivity(intent);
     }
 }
