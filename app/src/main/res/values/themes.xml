@@ -3,7 +3,9 @@
     <style name="Base.Theme.Guildly" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Customize your light theme here. -->
         <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
-
+        <item name="colorPrimary">#365486</item>
+        <item name="colorPrimaryVariant">@color/colorPrimaryDark</item>
+        <item name="colorOnPrimary">@color/white</item>
     </style>
 
     <style name="Theme.Guildly" parent="Base.Theme.Guildly" />

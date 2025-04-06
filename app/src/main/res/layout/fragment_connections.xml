@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fillViewport="true"
-    android:background="#FAF5FF">
+    android:background="#FDF6E3">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -25,10 +25,11 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Connections"
+                android:text="CONNECTIONS"
                 android:textSize="24sp"
                 android:textStyle="bold"
-                android:textColor="#333" />
+                android:textColor="#1B1F3B"
+                android:fontFamily="@font/montserrat_black" />
 
             <ImageView
                 android:id="@+id/buttonOpenChatList"
@@ -54,7 +55,9 @@
                 android:hint="Type a friend's username to add them"
                 android:padding="12dp"
                 android:background="@android:color/transparent"
-                android:textColorHint="#888" />
+                android:textColorHint="#888"
+                android:textColor="#1B1F3B"
+                android:fontFamily="@font/montserrat_black" />
         </androidx.cardview.widget.CardView>
 
         <!-- Buttons Row -->
@@ -70,8 +73,10 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Add Friend"
-                android:backgroundTint="#7E57C2"
                 android:textColor="@android:color/white"
+                android:textSize="12sp"
+                android:backgroundTint="#7E57C2"
+                android:fontFamily="@font/montserrat_black"
                 android:layout_marginEnd="16dp" />
 
             <FrameLayout
@@ -83,8 +88,10 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Friend Requests"
+                    android:textColor="@android:color/white"
+                    android:textSize="12sp"
                     android:backgroundTint="#9575CD"
-                    android:textColor="@android:color/white" />
+                    android:fontFamily="@font/montserrat_black" />
 
                 <TextView
                     android:id="@+id/friendRequestsBadge"
@@ -108,6 +115,8 @@
             android:text="Your Friends"
             android:textSize="18sp"
             android:textStyle="bold"
+            android:textColor="#1B1F3B"
+            android:fontFamily="@font/montserrat_black"
             android:paddingTop="24dp"
             android:paddingBottom="8dp" />
 
@@ -126,6 +135,8 @@
             android:text="Global Leaderboard"
             android:textSize="18sp"
             android:textStyle="bold"
+            android:textColor="#1B1F3B"
+            android:fontFamily="@font/montserrat_black"
             android:paddingTop="24dp"
             android:paddingBottom="8dp" />
 

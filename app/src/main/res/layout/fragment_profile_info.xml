@@ -4,6 +4,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="#FDF6E3"
     android:padding="24dp">
 
     <LinearLayout
@@ -14,85 +15,86 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Your Profile Information"
-            android:textSize="18sp"
-            android:textStyle="bold"
+            android:text="YOUR PROFILE INFO"
+            android:textSize="14sp"
+            android:fontFamily="@font/montserrat_black"
+            android:textColor="#1B1F3B"
             android:layout_marginBottom="16dp" />
 
-        <com.google.android.material.textfield.TextInputLayout
+        <!-- Username -->
+        <EditText
+            android:id="@+id/etUsername"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+            android:hint="USERNAME"
+            android:inputType="text"
+            android:background="@drawable/rounded_input_bg"
+            android:textColor="#1B1F3B"
+            android:textColorHint="#999999"
+            android:fontFamily="@font/montserrat_black"
+            android:textSize="12sp"
+            android:padding="14dp"
+            android:layout_marginTop="8dp" />
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etUsername"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Username"
-                android:inputType="text" />
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <com.google.android.material.textfield.TextInputLayout
+        <!-- Email -->
+        <EditText
+            android:id="@+id/etEmail"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            app:startIconDrawable="@drawable/ic_email"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+            android:hint="EMAIL"
+            android:inputType="textEmailAddress"
+            android:background="@drawable/rounded_input_bg"
+            android:textColor="#1B1F3B"
+            android:textColorHint="#999999"
+            android:fontFamily="@font/montserrat_black"
+            android:textSize="12sp"
+            android:padding="14dp"
+            android:layout_marginTop="16dp" />
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etEmail"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Email"
-                android:inputType="textEmailAddress" />
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <com.google.android.material.textfield.TextInputLayout
+        <!-- Password -->
+        <EditText
+            android:id="@+id/etPassword"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            app:startIconDrawable="@drawable/ic_lock"
-            app:endIconMode="password_toggle"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+            android:hint="PASSWORD"
+            android:inputType="textPassword"
+            android:background="@drawable/rounded_input_bg"
+            android:textColor="#1B1F3B"
+            android:textColorHint="#999999"
+            android:fontFamily="@font/montserrat_black"
+            android:textSize="12sp"
+            android:padding="14dp"
+            android:layout_marginTop="16dp" />
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etPassword"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Password"
-                android:inputType="textPassword" />
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <com.google.android.material.textfield.TextInputLayout
+        <!-- Confirm Password -->
+        <EditText
+            android:id="@+id/etConfirmPassword"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            app:startIconDrawable="@drawable/ic_lock"
-            app:endIconMode="password_toggle"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+            android:hint="CONFIRM PASSWORD"
+            android:inputType="textPassword"
+            android:background="@drawable/rounded_input_bg"
+            android:textColor="#1B1F3B"
+            android:textColorHint="#999999"
+            android:fontFamily="@font/montserrat_black"
+            android:textSize="12sp"
+            android:padding="14dp"
+            android:layout_marginTop="16dp" />
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etConfirmPassword"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Confirm Password"
-                android:inputType="textPassword" />
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <com.google.android.material.textfield.TextInputLayout
+        <!-- About Me -->
+        <EditText
+            android:id="@+id/etAboutMe"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etAboutMe"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="About me (optional)"
-                android:inputType="textMultiLine"
-                android:minLines="3" />
-        </com.google.android.material.textfield.TextInputLayout>
+            android:hint="ABOUT ME (OPTIONAL)"
+            android:inputType="textMultiLine"
+            android:minLines="3"
+            android:background="@drawable/rounded_input_bg"
+            android:textColor="#1B1F3B"
+            android:textColorHint="#999999"
+            android:fontFamily="@font/montserrat_black"
+            android:textSize="12sp"
+            android:padding="14dp"
+            android:layout_marginTop="16dp" />
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>

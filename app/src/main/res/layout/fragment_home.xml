@@ -5,8 +5,10 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="#FDF6E3"
     tools:context=".HomeFragment">
 
+<!--    TODO: change the header layout-->
     <LinearLayout
         android:id="@+id/header_hs"
         android:layout_width="match_parent"
@@ -14,22 +16,25 @@
         android:orientation="horizontal"
         tools:ignore="MissingConstraints">
 
-        <!-- 1) A dynamic welcome message -->
         <TextView
             android:id="@+id/user_name"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Welcome!"
-            android:textSize="18sp"
+            android:text="WELCOME!"
+            android:textSize="16sp"
             android:textStyle="bold"
+            android:textColor="#1B1F3B"
+            android:fontFamily="@font/montserrat_black"
             android:padding="16dp" />
 
-        <!-- 2) A dynamic streak message -->
         <TextView
             android:id="@+id/textViewStreak"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text=""
+            android:textSize="14sp"
+            android:textColor="#1B1F3B"
+            android:fontFamily="@font/montserrat_black"
             android:padding="16dp" />
     </LinearLayout>
 
@@ -37,7 +42,7 @@
         android:id="@+id/divider"
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:background="@android:color/darker_gray"
+        android:background="#E0E0E0"
         app:layout_constraintTop_toBottomOf="@id/header_hs"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
@@ -59,6 +64,8 @@
             android:text="@string/habits"
             android:textSize="30sp"
             android:textStyle="bold"
+            android:textColor="#1B1F3B"
+            android:fontFamily="@font/montserrat_black"
             android:layout_weight="1" />
 
         <Button
@@ -66,6 +73,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/add_habit"
+            android:textColor="#1B1F3B"
+            android:textSize="12sp"
+            android:fontFamily="@font/montserrat_black"
             android:padding="8dp" />
     </LinearLayout>
 
@@ -96,8 +106,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Connection &amp; Friends"
-            android:textSize="16sp"
+            android:textSize="20sp"
             android:textColor="#666666"
+            android:fontFamily="@font/montserrat_black"
             android:paddingTop="16dp"
             android:paddingLeft="16dp"
             android:paddingRight="16dp"
@@ -107,10 +118,11 @@
             android:id="@+id/leaderboard_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Leaderboard"
-            android:textSize="24sp"
+            android:text="LEADERBOARD"
+            android:textSize="30sp"
             android:textStyle="bold"
             android:textColor="#333333"
+            android:fontFamily="@font/montserrat_black"
             android:paddingTop="0dp"
             android:paddingLeft="16dp"
             android:paddingRight="16dp"
