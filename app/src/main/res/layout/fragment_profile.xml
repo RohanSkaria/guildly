@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#F5F5F5"
-    tools:context=".ProfileActivity">
+    tools:context=".ProfileFragment">
 
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBarLayout"
@@ -25,8 +25,9 @@
                 android:layout_gravity="center"
                 android:text="GUILDLY"
                 android:textColor="@android:color/black"
-                android:textSize="18sp"
-                android:textStyle="bold" />
+                android:textSize="30sp"
+                android:textStyle="bold"
+                android:fontFamily="@font/montserrat_black" />
 
             <ImageView
                 android:id="@+id/settings_button"

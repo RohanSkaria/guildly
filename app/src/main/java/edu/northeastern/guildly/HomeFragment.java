@@ -60,7 +60,7 @@ public class HomeFragment extends Fragment {
 
         View view = inflater.inflate(R.layout.fragment_home, container, false);
 
-        tvUserName = view.findViewById(R.id.user_name);
+//        tvUserName = view.findViewById(R.id.user_name);
         tvStreak   = view.findViewById(R.id.textViewStreak);
         habitRecyclerView = view.findViewById(R.id.habit_list);
         btnAddHabit = view.findViewById(R.id.btn_add_habit);
@@ -94,11 +94,11 @@ public class HomeFragment extends Fragment {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 User user = snapshot.getValue(User.class);
-                if (user != null && user.username != null) {
-                    tvUserName.setText("Welcome, " + user.username + "!");
-                } else {
-                    tvUserName.setText("Welcome!");
-                }
+//                if (user != null && user.username != null) {
+//                    tvUserName.setText("Welcome, " + user.username + "!");
+//                } else {
+//                    tvUserName.setText("Welcome!");
+//                }
             }
             @Override
             public void onCancelled(@NonNull DatabaseError error) { }
