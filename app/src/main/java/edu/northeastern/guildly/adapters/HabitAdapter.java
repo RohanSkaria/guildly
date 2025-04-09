@@ -1,13 +1,17 @@
 package edu.northeastern.guildly.adapters;
 
+import android.annotation.SuppressLint;
+import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.firebase.database.DatabaseReference;
@@ -67,6 +71,8 @@ public class HabitAdapter extends RecyclerView.Adapter<HabitAdapter.ViewHolder> 
         TextView habitStreak;
         CheckBox habitCheckBox;
         TextView lockMessage;
+        LinearLayout itemHabit;
+        Context context;
 
         ViewHolder(View itemView) {
             super(itemView);
@@ -75,11 +81,17 @@ public class HabitAdapter extends RecyclerView.Adapter<HabitAdapter.ViewHolder> 
             habitStreak  = itemView.findViewById(R.id.habit_streak);
             habitCheckBox= itemView.findViewById(R.id.habit_item);
             lockMessage  = itemView.findViewById(R.id.lockMessage);
+            itemHabit = itemView.findViewById(R.id.item_habit);
+            context = itemView.getContext();
         }
 
+        @SuppressLint("SetTextI18n")
         void bind(Habit habit) {
             habitImage.setImageResource(habit.getIconResId());
             habitName.setText(habit.getHabitName());
+
+            // set background
+            itemHabit.setBackgroundResource(R.drawable.habit_item_border);
 
             // If "Selection mode," the CheckBox means "isTracked"
             // If "Home mode," the CheckBox means daily completion for "completedToday"
@@ -112,18 +124,18 @@ public class HabitAdapter extends RecyclerView.Adapter<HabitAdapter.ViewHolder> 
                 habitStreak.setVisibility(View.VISIBLE);
                 habitStreak.setText("Streak: " + habit.getStreakCount());
 
-                // Decide if locked or available
-                if (now < habit.getNextAvailableTime()) {
-                    // LOCKED
-                    habitCheckBox.setVisibility(View.GONE);
-                    lockMessage.setVisibility(View.VISIBLE);
-                } else {
-                    // AVAILABLE => show the "completedToday" checkbox
-                    habitCheckBox.setVisibility(View.VISIBLE);
-                    lockMessage.setVisibility(View.GONE);
 
-                    habitCheckBox.setOnCheckedChangeListener(null);
-                    habitCheckBox.setChecked(habit.isCompletedToday());
+                if (habit.isCompletedToday()) {
+                    habitCheckBox.setVisibility(View.VISIBLE);
+                    habitCheckBox.setChecked(true);
+                    habitCheckBox.setEnabled(false);
+                    lockMessage.setVisibility(View.GONE);
+                    itemHabit.setBackground(ContextCompat.getDrawable(context, R.drawable.habit_item_border_tint));
+                } else {
+                    habitCheckBox.setVisibility(View.VISIBLE);
+                    habitCheckBox.setEnabled(true);
+                    habitCheckBox.setChecked(false);
+                    lockMessage.setVisibility(View.GONE);
 
                     habitCheckBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
                         if (isChecked) {
@@ -131,11 +143,35 @@ public class HabitAdapter extends RecyclerView.Adapter<HabitAdapter.ViewHolder> 
                                 handleCompletion(habit);
                             }
                         } else {
-                            // no uncheck after done
-                            habitCheckBox.setChecked(true);
+                            habitCheckBox.setChecked(true); // disallow uncheck
                         }
                     });
                 }
+
+//                // Decide if locked or available
+//                if (now < habit.getNextAvailableTime()) {
+//                    // LOCKED
+//                    habitCheckBox.setVisibility(View.GONE);
+//                    lockMessage.setVisibility(View.VISIBLE);
+//                } else {
+//                    // AVAILABLE => show the "completedToday" checkbox
+//                    habitCheckBox.setVisibility(View.VISIBLE);
+//                    lockMessage.setVisibility(View.GONE);
+//
+//                    habitCheckBox.setOnCheckedChangeListener(null);
+//                    habitCheckBox.setChecked(habit.isCompletedToday());
+//
+//                    habitCheckBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
+//                        if (isChecked) {
+//                            if (!habit.isCompletedToday()) {
+//                                handleCompletion(habit);
+//                            }
+//                        } else {
+//                            // no uncheck after done
+//                            habitCheckBox.setChecked(true);
+//                        }
+//                    });
+//                }
             }
         }
 

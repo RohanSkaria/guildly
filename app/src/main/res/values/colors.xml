@@ -6,4 +6,5 @@
     <color name="colorPrimaryDark">#3700B3</color> >
     <color name="colorAccent">#03DAC5</color>
     <color name="appBackground">#F5F5F5</color>
+    <color name="habitCompleted">#D6D6D6</color>
 </resources>
