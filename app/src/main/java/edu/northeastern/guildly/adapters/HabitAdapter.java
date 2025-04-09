@@ -125,7 +125,7 @@ public class HabitAdapter extends RecyclerView.Adapter<HabitAdapter.ViewHolder> 
                 habitStreak.setText("Streak: " + habit.getStreakCount());
 
 
-                if (habit.isCompletedToday()) {
+                if (now < habit.getNextAvailableTime()) {
                     habitCheckBox.setVisibility(View.VISIBLE);
                     habitCheckBox.setChecked(true);
                     habitCheckBox.setEnabled(false);
