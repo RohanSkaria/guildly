@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="24dp"
-    android:background="#FDF6E3">
+    android:background="#F5F5F5">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -15,7 +15,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="REVIEW YOUR INFORMATION"
+            android:text="@string/review_your_information"
             android:textSize="16sp"
             android:fontFamily="@font/montserrat_black"
             android:textColor="#1B1F3B"
@@ -59,7 +59,7 @@
                             android:id="@+id/tvUsername"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="Username"
+                            android:text="@string/username"
                             android:textSize="16sp"
                             android:fontFamily="@font/montserrat_black"
                             android:textColor="#1B1F3B"
@@ -69,7 +69,7 @@
                             android:id="@+id/tvEmail"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="email@example.com"
+                            android:text="@string/email_example_com"
                             android:textSize="12sp"
                             android:fontFamily="@font/montserrat_black"
                             android:textColor="#757575" />
@@ -86,7 +86,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="ABOUT ME"
+                    android:text="@string/about_me"
                     android:textSize="14sp"
                     android:fontFamily="@font/montserrat_black"
                     android:textColor="#1B1F3B"
@@ -96,7 +96,7 @@
                     android:id="@+id/tvAboutMe"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="No about me provided"
+                    android:text="@string/no_about_me_provided"
                     android:textSize="12sp"
                     android:fontFamily="@font/montserrat_black"
                     android:layout_marginTop="4dp"
@@ -105,7 +105,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="SELECTED HABITS"
+                    android:text="@string/selected_habits"
                     android:textSize="14sp"
                     android:fontFamily="@font/montserrat_black"
                     android:textColor="#1B1F3B"
@@ -115,7 +115,7 @@
                     android:id="@+id/tvHabits"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="No habits selected"
+                    android:text="@string/no_habits_selected"
                     android:textSize="12sp"
                     android:fontFamily="@font/montserrat_black"
                     android:layout_marginTop="4dp" />
@@ -125,7 +125,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Ready to create your account? Click 'Create Account' below to get started!"
+            android:text="@string/ready_to_create_your_account_click_create_account_below_to_get_started"
             android:textSize="12sp"
             android:fontFamily="@font/montserrat_black"
             android:textColor="#757575"

@@ -1,11 +1,13 @@
 package edu.northeastern.guildly;
 
+import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -27,11 +29,12 @@ import edu.northeastern.guildly.data.User;
 
 public class HomeFragment extends Fragment {
 
-    private TextView tvUserName, tvStreak;
+    private TextView tvUserName, tvStreak,tvWeeklyChallenge;
+    private ImageView weeeklyChallengeIcon;
     private RecyclerView habitRecyclerView;
     private Button btnAddHabit;
 
-    private HabitAdapter habitAdapter;
+    private HabitAdapter habitAdapter,weeklyHabitAdapter;
     private final List<Habit> habitList = new ArrayList<>();
 
     private DatabaseReference userRef;       // /users/<myUserKey>
@@ -49,6 +52,17 @@ public class HomeFragment extends Fragment {
             new Habit("No phone after 10PM", R.drawable.ic_phonebanned)
     );
 
+    private final List<Habit> weeklyChallengeOptions = Arrays.asList(
+            // TODO: add to the backend
+            new Habit("Take a walk outside", R.drawable.ic_walk_icon),
+            new Habit("Drink tea instead of coffee", R.drawable.ic_tea),
+            new Habit("Compliment someone", R.drawable.ic_compliment),
+            new Habit("Journal for 5 minutes", R.drawable.ic_journal),
+            new Habit("No social media today", R.drawable.ic_nosocial),
+            new Habit("Stretch for 10 minutes", R.drawable.ic_stretch),
+            new Habit("Sleep 8+ hours", R.drawable.ic_sleep)
+    );
+
     public HomeFragment() {
     }
 
@@ -64,6 +78,14 @@ public class HomeFragment extends Fragment {
         tvStreak   = view.findViewById(R.id.textViewStreak);
         habitRecyclerView = view.findViewById(R.id.habit_list);
         btnAddHabit = view.findViewById(R.id.btn_add_habit);
+        tvWeeklyChallenge = view.findViewById(R.id.weekly_challenge_text);
+        weeeklyChallengeIcon = view.findViewById(R.id.weekly_challenge_icon);
+
+        // weekly challenge
+        Habit challenge = getWeeklyChallenge();
+        tvWeeklyChallenge.setText(challenge.getHabitName());
+        weeeklyChallengeIcon.setImageResource(challenge.getIconResId());
+
 
         String myEmail = MainActivity.currentUserEmail;
         if (!TextUtils.isEmpty(myEmail)) {
@@ -144,10 +166,9 @@ public class HomeFragment extends Fragment {
             newHabit.setTracked(alreadyTracked);
             cloneList.add(newHabit);
         }
-
-        // We'll show them in a small RecyclerView using the same HabitAdapter in "selection mode."
         View dialogView = LayoutInflater.from(getContext())
                 .inflate(R.layout.dialog_predefined_habits, null);
+
         RecyclerView rv = dialogView.findViewById(R.id.predefinedHabitsRecycler);
         rv.setLayoutManager(new LinearLayoutManager(getContext()));
 
@@ -183,6 +204,7 @@ public class HomeFragment extends Fragment {
                 .show();
     }
 
+    @SuppressLint("SetTextI18n")
     private void updateStreakText() {
         if (habitList.isEmpty()) {
             tvStreak.setText("Start a streak today!");
@@ -197,9 +219,18 @@ public class HomeFragment extends Fragment {
             }
         }
         if (bestStreak > 0 && bestHabitName != null) {
-            tvStreak.setText("You have " + bestStreak + " days of " + bestHabitName + "!");
+//            tvStreak.setText("You have " + bestStreak + " days of " + bestHabitName + "!");
+            if(bestStreak == 1) {
+                tvStreak.setText(bestStreak + " day streak!");
+            }
+            tvStreak.setText(bestStreak + " day streak!");
         } else {
             tvStreak.setText("Start a streak today!");
         }
+    }
+
+    private Habit getWeeklyChallenge() {
+        int randomIndex = (int) (Math.random() * weeklyChallengeOptions.size());
+        return weeklyChallengeOptions.get(randomIndex);
     }
 }

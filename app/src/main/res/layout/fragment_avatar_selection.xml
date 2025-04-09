@@ -5,13 +5,13 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="24dp"
-    android:background="#FDF6E3">
+    android:background="#F5F5F5">
 
     <TextView
         android:id="@+id/tvAvatarTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="CHOOSE YOUR AVATAR"
+        android:text="@string/choose_your_avatar"
         android:textSize="20sp"
         android:fontFamily="@font/montserrat_black"
         android:textColor="#1B1F3B"
@@ -21,7 +21,7 @@
         android:id="@+id/tvAvatarSubtitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Upload a profile picture to personalize your account"
+        android:text="@string/upload_a_profile_picture_to_personalize_your_account"
         android:textSize="16sp"
         android:fontFamily="@font/montserrat_black"
         android:textColor="#757575"
@@ -45,7 +45,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="24dp"
-        android:text="CHOOSE IMAGE"
+        android:text="@string/choose_image"
         android:fontFamily="@font/montserrat_black"
         android:textSize="16sp"
         android:backgroundTint="#1B1F3B"
@@ -61,7 +61,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="This step is optional. You can always add a profile picture later."
+        android:text="@string/this_step_is_optional_you_can_always_add_a_profile_picture_later"
         android:textSize="16sp"
         android:fontFamily="@font/montserrat_black"
         android:textColor="#757575"

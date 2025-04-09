@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:background="#FDF6E3"
+    android:background="#F5F5F5"
     android:padding="24dp">
 
     <LinearLayout
@@ -14,7 +14,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Select Your Habits"
+            android:text="@string/select_your_habits"
             android:textSize="20sp"
             android:fontFamily="@font/montserrat_black"
             android:textColor="#1B1F3B"

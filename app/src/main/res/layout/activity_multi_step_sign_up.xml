@@ -4,7 +4,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FDF6E3"
+    android:background="#F5F5F5"
     android:padding="16dp">
 
     <!-- Header -->
@@ -13,7 +13,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="32dp"
-        android:text="CREATE ACCOUNT 🎯"
+        android:text="@string/create_account"
         android:textSize="20sp"
         android:fontFamily="@font/montserrat_black"
         android:textColor="#1B1F3B"
@@ -26,7 +26,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:text="STEP 1 OF 4"
+        android:text="@string/step_1_of_4"
         android:textSize="16sp"
         android:fontFamily="@font/montserrat_black"
         android:textColor="#365486"
@@ -65,10 +65,10 @@
             android:layout_height="wrap_content"
             android:layout_marginEnd="8dp"
             android:layout_weight="1"
-            android:text="BACK"
+            android:text="@string/back"
             android:fontFamily="@font/montserrat_black"
             android:textSize="16sp"
-            android:textColor="#FDF6E3"
+            android:textColor="#F5F5F5"
             android:backgroundTint="#F26CA7"
             android:background="@drawable/rounded_button_bg"
             android:padding="14dp" />
@@ -79,10 +79,10 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
             android:layout_weight="1"
-            android:text="NEXT"
+            android:text="@string/next"
             android:fontFamily="@font/montserrat_black"
             android:textSize="16sp"
-            android:textColor="#FDF6E3"
+            android:textColor="#F5F5F5"
             android:backgroundTint="#4DD0E1"
             android:background="@drawable/rounded_button_bg"
             android:padding="14dp" />

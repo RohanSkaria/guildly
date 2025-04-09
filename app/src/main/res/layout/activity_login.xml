@@ -5,7 +5,7 @@
     android:id="@+id/layoutLogin"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FDF6E3"
+    android:background="#F5F5F5"
     android:padding="16dp">
 
     <!-- Logo -->
@@ -15,7 +15,7 @@
         android:layout_height="100dp"
         android:layout_marginTop="32dp"
         android:src="@drawable/app_logo"
-        android:contentDescription="App Logo"
+        android:contentDescription="@string/app_logo"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
@@ -25,7 +25,7 @@
         android:id="@+id/textViewAppName"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="GUILDLY ✨"
+        android:text="@string/guildly"
         android:textSize="40sp"
         android:fontFamily="@font/montserrat_black"
         android:textColor="#1B1F3B"
@@ -39,7 +39,7 @@
         android:id="@+id/textViewSlogan"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Build Habits Together"
+        android:text="@string/build_habits_together"
         android:textSize="16sp"
         android:fontFamily="@font/montserrat_black"
         android:textColor="#365486"
@@ -70,7 +70,7 @@
             android:text="LOGIN 🚀"
             android:textSize="16sp"
             android:fontFamily="@font/montserrat_black"
-            android:textColor="#FFAD05"
+            android:textColor="#D1C0E0"
             android:layout_marginBottom="16dp"/>
 
         <!-- Email -->
@@ -78,7 +78,7 @@
             android:id="@+id/editTextEmailLogin"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="EMAIL"
+            android:hint="@string/email"
             android:background="@drawable/rounded_input_bg"
             android:inputType="textEmailAddress"
             android:textColor="#1B1F3B"
@@ -93,7 +93,7 @@
             android:id="@+id/editTextPasswordLogin"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="PASSWORD"
+            android:hint="@string/password"
             android:background="@drawable/rounded_input_bg"
             android:inputType="textPassword"
             android:textColor="#1B1F3B"
@@ -108,7 +108,7 @@
             android:id="@+id/textViewForgotPassword"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="FORGOT?"
+            android:text="@string/forgot"
             android:textColor="#FFAD05"
             android:textSize="16sp"
             android:fontFamily="@font/montserrat_black"
@@ -120,7 +120,7 @@
             android:id="@+id/buttonLogin"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="ENTER"
+            android:text="@string/enter"
             android:fontFamily="@font/montserrat_black"
             android:textColor="#FDF6E3"
             android:backgroundTint="#4DD0E1"
@@ -142,7 +142,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="NO ACCOUNT?"
+            android:text="@string/no_account"
             android:textSize="16sp"
             android:textColor="#888888"
             android:fontFamily="@font/montserrat_black"/>
@@ -151,7 +151,7 @@
             android:id="@+id/buttonGoToSignUp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text=" JOIN 🎉"
+            android:text="@string/join"
             android:textColor="#F26CA7"
             android:textSize="16sp"
             android:textStyle="bold"
