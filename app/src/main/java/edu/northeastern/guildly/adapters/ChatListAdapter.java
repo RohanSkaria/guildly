@@ -9,10 +9,17 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+
 import java.util.List;
 
 import edu.northeastern.guildly.R;
 import edu.northeastern.guildly.data.FriendChatItem;
+import edu.northeastern.guildly.data.User;
 
 public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ViewHolder> {
 
@@ -46,9 +53,42 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ViewHo
         holder.textTimestamp.setText(item.timestamp);
 
 
-        int avatarResourceId = R.drawable.unknown_profile;
+        holder.imageFriendAvatar.setImageResource(R.drawable.unknown_profile);
 
-        holder.imageFriendAvatar.setImageResource(avatarResourceId);
+
+        DatabaseReference friendRef = FirebaseDatabase.getInstance()
+                .getReference("users")
+                .child(item.friendKey);
+
+        friendRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                User friendUser = snapshot.getValue(User.class);
+                if (friendUser != null && friendUser.profilePicUrl != null) {
+
+                    int resourceId;
+                    switch (friendUser.profilePicUrl) {
+                        case "gamer":
+                            resourceId = R.drawable.gamer;
+                            break;
+                        case "man":
+                            resourceId = R.drawable.man;
+                            break;
+                        case "girl":
+                            resourceId = R.drawable.girl;
+                            break;
+                        default:
+                            resourceId = R.drawable.unknown_profile;
+                            break;
+                    }
+                    holder.imageFriendAvatar.setImageResource(resourceId);
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+            }
+        });
 
         if (item.lastMessageIconRes > 0) {
             holder.imageLastMessageStatus.setVisibility(View.VISIBLE);
