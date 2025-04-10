@@ -8,12 +8,14 @@
     android:paddingHorizontal="12dp"
     android:paddingVertical="6dp">
 
-    <ImageView
-        android:id="@+id/avatar"
-        android:layout_width="36dp"
-        android:layout_height="36dp"
+    <de.hdodenhof.circleimageview.CircleImageView
+        android:id="@+id/senderAvatar"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
         android:layout_marginEnd="8dp"
-        android:src="@drawable/unknown_profile" />
+        android:src="@drawable/unknown_profile"
+        app:civ_border_color="#FFFFFF"
+        app:civ_border_width="1dp" />
 
     <LinearLayout
         android:layout_width="wrap_content"

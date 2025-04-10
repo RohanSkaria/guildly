@@ -7,14 +7,23 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.text.DateFormat;
 import java.util.Date;
 import java.util.List;
 
+import de.hdodenhof.circleimageview.CircleImageView;
 import edu.northeastern.guildly.R;
 import edu.northeastern.guildly.data.Message;
+import edu.northeastern.guildly.data.User;
 
 public class ChatDetailAdapter extends RecyclerView.Adapter<ChatDetailAdapter.ViewHolder> {
 
@@ -40,7 +49,7 @@ public class ChatDetailAdapter extends RecyclerView.Adapter<ChatDetailAdapter.Vi
     }
 
     @Override
-    public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         int layout = (viewType == VIEW_TYPE_MINE)
                 ? R.layout.item_chat_mine
                 : R.layout.item_chat_their;
@@ -51,16 +60,16 @@ public class ChatDetailAdapter extends RecyclerView.Adapter<ChatDetailAdapter.Vi
 
     @SuppressLint("SetTextI18n")
     @Override
-    public void onBindViewHolder(ViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Message msg = messages.get(position);
 
         holder.textMessage.setText(msg.content);
 
-        // Format time
+
         String timeText = DateFormat.getTimeInstance(DateFormat.SHORT).format(new Date(msg.timestamp));
         holder.textTime.setText(timeText);
 
-        // Set status icon
+
         switch (msg.status) {
             case "SENT":
                 holder.imageStatus.setImageResource(R.drawable.ic_msg_solid);
@@ -70,6 +79,45 @@ public class ChatDetailAdapter extends RecyclerView.Adapter<ChatDetailAdapter.Vi
                 break;
             default:
                 holder.imageStatus.setImageResource(R.drawable.ic_msg_solid);
+        }
+
+
+        if (getItemViewType(position) == VIEW_TYPE_THEIR && holder.senderAvatar != null) {
+
+            DatabaseReference senderRef = FirebaseDatabase.getInstance()
+                    .getReference("users")
+                    .child(msg.senderId);
+
+            senderRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    User senderUser = snapshot.getValue(User.class);
+                    if (senderUser != null && senderUser.profilePicUrl != null) {
+
+                        int resourceId;
+                        switch (senderUser.profilePicUrl) {
+                            case "gamer":
+                                resourceId = R.drawable.gamer;
+                                break;
+                            case "man":
+                                resourceId = R.drawable.man;
+                                break;
+                            case "girl":
+                                resourceId = R.drawable.girl;
+                                break;
+                            default:
+                                resourceId = R.drawable.unknown_profile;
+                                break;
+                        }
+                        holder.senderAvatar.setImageResource(resourceId);
+                    }
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {
+
+                }
+            });
         }
     }
 
@@ -81,12 +129,19 @@ public class ChatDetailAdapter extends RecyclerView.Adapter<ChatDetailAdapter.Vi
     static class ViewHolder extends RecyclerView.ViewHolder {
         TextView textMessage, textTime;
         ImageView imageStatus;
+        CircleImageView senderAvatar;
 
         ViewHolder(View itemView) {
             super(itemView);
             textMessage = itemView.findViewById(R.id.textMessage);
             textTime = itemView.findViewById(R.id.textTime);
             imageStatus = itemView.findViewById(R.id.imageStatus);
+
+
+            if (itemView.findViewById(R.id.senderAvatar) != null) {
+                senderAvatar = itemView.findViewById(R.id.senderAvatar);
+            }
         }
     }
+
 }
