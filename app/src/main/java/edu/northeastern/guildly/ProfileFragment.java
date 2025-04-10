@@ -153,9 +153,9 @@ public class ProfileFragment extends Fragment {
                         profileAboutMe.setText("Add a bio...");
                     }
 
-                    // Avatar
+
                     if (!TextUtils.isEmpty(user.profilePicUrl)) {
-                        updateProfileAvatar(user.profilePicUrl);
+                        updateProfileAvatar(user.profilePicUrl, false);
                     }
 
                     // Now load top 3 habits
@@ -620,22 +620,22 @@ public class ProfileFragment extends Fragment {
                 .create();
 
         avatarGamer.setOnClickListener(v -> {
-            updateProfileAvatar("gamer");
+            updateProfileAvatar("gamer", true);
             dialog.dismiss();
         });
         avatarMan.setOnClickListener(v -> {
-            updateProfileAvatar("man");
+            updateProfileAvatar("man", true);
             dialog.dismiss();
         });
         avatarGirl.setOnClickListener(v -> {
-            updateProfileAvatar("girl");
+            updateProfileAvatar("girl", true);
             dialog.dismiss();
         });
 
         dialog.show();
     }
 
-    private void updateProfileAvatar(String avatarName) {
+    private void updateProfileAvatar(String avatarName, boolean showToast) {
         int resourceId;
         switch (avatarName) {
             case "gamer":
@@ -653,14 +653,17 @@ public class ProfileFragment extends Fragment {
         }
         profileImage.setImageResource(resourceId);
 
-        userRef.child("profilePicUrl").setValue(avatarName)
-                .addOnSuccessListener(aVoid ->
-                        Toast.makeText(getContext(),
-                                "Avatar updated", Toast.LENGTH_SHORT).show()
-                )
-                .addOnFailureListener(e ->
-                        Toast.makeText(getContext(),
-                                "Failed to update avatar", Toast.LENGTH_SHORT).show()
-                );
+
+        if (showToast) {
+            userRef.child("profilePicUrl").setValue(avatarName)
+                    .addOnSuccessListener(aVoid ->
+                            Toast.makeText(getContext(),
+                                    "Avatar updated", Toast.LENGTH_SHORT).show()
+                    )
+                    .addOnFailureListener(e ->
+                            Toast.makeText(getContext(),
+                                    "Failed to update avatar", Toast.LENGTH_SHORT).show()
+                    );
+        }
     }
 }
