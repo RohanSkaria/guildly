@@ -17,24 +17,31 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.firebase.database.*;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import edu.northeastern.guildly.R;
+import edu.northeastern.guildly.MainActivity;
 import edu.northeastern.guildly.adapters.HabitAdapter;
 import edu.northeastern.guildly.data.Habit;
 import edu.northeastern.guildly.data.User;
+import edu.northeastern.guildly.WeeklyChallengeManager;
 
 public class HomeFragment extends Fragment {
 
-    private TextView tvUserName, tvStreak,tvWeeklyChallenge;
+    private TextView tvUserName, tvStreak, tvWeeklyChallenge;
     private ImageView weeeklyChallengeIcon;
     private RecyclerView habitRecyclerView;
     private Button btnAddHabit;
 
-    private HabitAdapter habitAdapter,weeklyHabitAdapter;
+    private HabitAdapter habitAdapter, weeklyHabitAdapter;
     private final List<Habit> habitList = new ArrayList<>();
 
     private DatabaseReference userRef;       // /users/<myUserKey>
@@ -52,8 +59,8 @@ public class HomeFragment extends Fragment {
             new Habit("No phone after 10PM", R.drawable.ic_phonebanned)
     );
 
+    // You can keep this list if you want, but we are no longer using getWeeklyChallenge() for the actual logic
     private final List<Habit> weeklyChallengeOptions = Arrays.asList(
-            // TODO: add to the backend
             new Habit("Take a walk outside", R.drawable.ic_walk_icon),
             new Habit("Drink tea instead of coffee", R.drawable.ic_tea),
             new Habit("Compliment someone", R.drawable.ic_compliment),
@@ -62,6 +69,9 @@ public class HomeFragment extends Fragment {
             new Habit("Stretch for 10 minutes", R.drawable.ic_stretch),
             new Habit("Sleep 8+ hours", R.drawable.ic_sleep)
     );
+
+    // WeeklyChallengeManager instance
+    private WeeklyChallengeManager weeklyChallengeManager;
 
     public HomeFragment() {
     }
@@ -75,22 +85,44 @@ public class HomeFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_home, container, false);
 
 //        tvUserName = view.findViewById(R.id.user_name);
-        tvStreak   = view.findViewById(R.id.textViewStreak);
+        tvStreak = view.findViewById(R.id.textViewStreak);
         habitRecyclerView = view.findViewById(R.id.habit_list);
         btnAddHabit = view.findViewById(R.id.btn_add_habit);
         tvWeeklyChallenge = view.findViewById(R.id.weekly_challenge_text);
         weeeklyChallengeIcon = view.findViewById(R.id.weekly_challenge_icon);
 
-        // weekly challenge
-        Habit challenge = getWeeklyChallenge();
-        tvWeeklyChallenge.setText(challenge.getHabitName());
-        weeeklyChallengeIcon.setImageResource(challenge.getIconResId());
+        // -----------------------------------------------------------------------------------------
+        // REPLACE THE OLD HARDCODED RANDOM CHALLENGE LOGIC WITH WeeklyChallengeManager
+        // -----------------------------------------------------------------------------------------
+        weeklyChallengeManager = new WeeklyChallengeManager();
+        // 1) Check if current challenge is expired/missing. If so, pick new.
+        weeklyChallengeManager.checkAndUpdateWeeklyChallenge(() -> {
+            // 2) Then load the final challenge from Firebase and show it
+            weeklyChallengeManager.loadWeeklyChallenge(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    String habitName = snapshot.child("habitName").getValue(String.class);
+                    Long iconResId = snapshot.child("iconResId").getValue(Long.class);
+                    if (habitName != null && iconResId != null) {
+                        tvWeeklyChallenge.setText(habitName);
+                        weeeklyChallengeIcon.setImageResource(iconResId.intValue());
+                    } else {
+                        tvWeeklyChallenge.setText("No weekly challenge set");
+                    }
+                }
 
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {
+                    // Handle errors if needed
+                }
+            });
+        });
 
+        // Everything else remains exactly the same as before
         String myEmail = MainActivity.currentUserEmail;
         if (!TextUtils.isEmpty(myEmail)) {
             myUserKey = myEmail.replace(".", ",");
-            userRef       = FirebaseDatabase.getInstance().getReference("users").child(myUserKey);
+            userRef = FirebaseDatabase.getInstance().getReference("users").child(myUserKey);
             userHabitsRef = userRef.child("habits");
             loadUserInfo();
         } else {
@@ -157,7 +189,6 @@ public class HomeFragment extends Fragment {
             boolean alreadyTracked = false;
             Habit existingHabit = null;
 
-
             for (Habit current : habitList) {
                 if (current.getHabitName().equals(ph.getHabitName())) {
                     alreadyTracked = true;
@@ -166,10 +197,8 @@ public class HomeFragment extends Fragment {
                 }
             }
 
-
             Habit newHabit = new Habit(ph.getHabitName(), ph.getIconResId());
             newHabit.setTracked(alreadyTracked);
-
 
             if (alreadyTracked && existingHabit != null) {
                 newHabit.setStreakCount(existingHabit.getStreakCount());
@@ -181,12 +210,10 @@ public class HomeFragment extends Fragment {
             cloneList.add(newHabit);
         }
 
-
         View dialogView = LayoutInflater.from(getContext())
                 .inflate(R.layout.dialog_predefined_habits, null);
         RecyclerView rv = dialogView.findViewById(R.id.predefinedHabitsRecycler);
         rv.setLayoutManager(new LinearLayoutManager(getContext()));
-
 
         HabitAdapter tempAdapter = new HabitAdapter(cloneList, userHabitsRef, /* isSelectionMode= */ true);
         rv.setAdapter(tempAdapter);
@@ -196,12 +223,9 @@ public class HomeFragment extends Fragment {
                 .setView(dialogView)
                 .setPositiveButton("Done", (dialog, which) -> {
 
-
                     for (Habit h : cloneList) {
                         DatabaseReference habitRef = userHabitsRef.child(h.getHabitName());
-
                         if (h.isTracked()) {
-
                             boolean existsInCurrent = false;
                             Habit existingHabit = null;
 
@@ -214,18 +238,14 @@ public class HomeFragment extends Fragment {
                             }
 
                             if (existsInCurrent && existingHabit != null) {
-
                                 habitRef.child("tracked").setValue(true);
                             } else {
-
                                 habitRef.setValue(h);
                             }
                         } else {
-
                             habitRef.removeValue();
                         }
                     }
-
 
                     loadHabitsFromFirebase();
                 })
@@ -250,16 +270,20 @@ public class HomeFragment extends Fragment {
             }
         }
         if (bestStreak > 0 && bestHabitName != null) {
-//            tvStreak.setText("You have " + bestStreak + " days of " + bestHabitName + "!");
-            if(bestStreak == 1) {
+            // if it's exactly 1 day, show "1 day streak!"
+            if (bestStreak == 1) {
                 tvStreak.setText(bestStreak + " day streak!");
             }
+            // otherwise just show "X day streak!"
             tvStreak.setText(bestStreak + " day streak!");
         } else {
             tvStreak.setText("Start a streak today!");
         }
     }
 
+    // We keep this method so we don't remove anything from your code,
+    // but we are no longer calling it. The actual weekly challenge
+    // is now handled by WeeklyChallengeManager above.
     private Habit getWeeklyChallenge() {
         int randomIndex = (int) (Math.random() * weeklyChallengeOptions.size());
         return weeklyChallengeOptions.get(randomIndex);
