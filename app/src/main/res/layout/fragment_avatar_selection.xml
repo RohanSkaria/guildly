@@ -4,23 +4,26 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="24dp">
+    android:padding="24dp"
+    android:background="#F5F5F5">
 
     <TextView
         android:id="@+id/tvAvatarTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Choose Your Avatar"
-        android:textSize="18sp"
-        android:textStyle="bold"
+        android:text="@string/choose_your_avatar"
+        android:textSize="20sp"
+        android:fontFamily="@font/montserrat_black"
+        android:textColor="#1B1F3B"
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:id="@+id/tvAvatarSubtitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Upload a profile picture to personalize your account"
-        android:textSize="14sp"
+        android:text="@string/upload_a_profile_picture_to_personalize_your_account"
+        android:textSize="16sp"
+        android:fontFamily="@font/montserrat_black"
         android:textColor="#757575"
         android:layout_marginTop="8dp"
         app:layout_constraintTop_toBottomOf="@id/tvAvatarTitle" />
@@ -31,8 +34,8 @@
         android:layout_height="200dp"
         android:layout_marginTop="32dp"
         android:src="@drawable/unknown_profile"
-        app:civ_border_width="2dp"
-        app:civ_border_color="#5C6BC0"
+        app:civ_border_width="4dp"
+        app:civ_border_color="#1B1F3B"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tvAvatarSubtitle" />
@@ -42,9 +45,15 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="24dp"
-        android:text="Choose Image"
+        android:text="@string/choose_image"
+        android:fontFamily="@font/montserrat_black"
+        android:textSize="16sp"
+        android:backgroundTint="#1B1F3B"
+        android:textColor="#FFFFFF"
         android:drawableStart="@drawable/unknown_profile"
         android:drawablePadding="8dp"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/imageViewProfilePic" />
@@ -52,8 +61,9 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="This step is optional. You can always add a profile picture later."
-        android:textSize="14sp"
+        android:text="@string/this_step_is_optional_you_can_always_add_a_profile_picture_later"
+        android:textSize="16sp"
+        android:fontFamily="@font/montserrat_black"
         android:textColor="#757575"
         android:layout_marginTop="16dp"
         android:textAlignment="center"

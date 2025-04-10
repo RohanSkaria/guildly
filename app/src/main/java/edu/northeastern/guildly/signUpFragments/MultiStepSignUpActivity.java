@@ -2,18 +2,23 @@ package edu.northeastern.guildly.signUpFragments;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentTransaction;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -23,11 +28,8 @@ import java.util.Map;
 import edu.northeastern.guildly.MainActivity;
 import edu.northeastern.guildly.R;
 import edu.northeastern.guildly.data.User;
+import edu.northeastern.guildly.MainActivity;
 
-/**
- * Multi-step sign-up flow, storing user info (username, email, etc.).
- * The HabitSelectionFragment writes each habit to /users/<userId>/habits with isTracked.
- */
 public class MultiStepSignUpActivity extends AppCompatActivity {
 
     private TextView tvStepIndicator;
@@ -66,7 +68,7 @@ public class MultiStepSignUpActivity extends AppCompatActivity {
                     currentStep++;
                     navigateToStep(currentStep);
                 } else {
-                    completeSignUp();
+                    checkUsernameUniquenessAndSignUp();
                 }
                 updateStepIndicator();
             }
@@ -103,8 +105,8 @@ public class MultiStepSignUpActivity extends AppCompatActivity {
         btnBack.setVisibility(View.VISIBLE);
     }
 
-    private void loadFragment(Fragment fragment) {
-        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+    private void loadFragment(androidx.fragment.app.Fragment fragment) {
+        androidx.fragment.app.FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
         transaction.replace(R.id.fragmentContainer, fragment);
         transaction.commit();
     }
@@ -132,56 +134,68 @@ public class MultiStepSignUpActivity extends AppCompatActivity {
         return false;
     }
 
+    private void checkUsernameUniquenessAndSignUp() {
+        String username = signUpData.getString("username");
+        DatabaseReference usernameRef = FirebaseDatabase.getInstance().getReference("usernames").child(username);
+
+        usernameRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+                if (snapshot.exists()) {
+                    Toast.makeText(MultiStepSignUpActivity.this, "Username already taken.", Toast.LENGTH_SHORT).show();
+                } else {
+                    completeSignUp();
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError error) {
+                Toast.makeText(MultiStepSignUpActivity.this, "Error checking username.", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
     private void completeSignUp() {
         String username = signUpData.getString("username");
         String email = signUpData.getString("email");
         String password = signUpData.getString("password");
         String aboutMe = signUpData.getString("aboutMe", "");
         String profileImageUri = signUpData.getString("profileImageUri", "");
-        // Retrieve the sanitized userId from the data
         String userId = signUpData.getString("userId");
 
-        List<String> newFriends = new ArrayList<>();
-        Map<String, String> newFriendRequests = new HashMap<>();
-        Map<String, Boolean> newChats = new HashMap<>();
+        FirebaseAuth.getInstance()
+                .createUserWithEmailAndPassword(email, password)
+                .addOnSuccessListener(authResult -> {
+                    List<String> newFriends = new ArrayList<>();
+                    Map<String, String> newFriendRequests = new HashMap<>();
+                    Map<String, Boolean> newChats = new HashMap<>();
 
-        // Construct a User object but do NOT include any habit list
-        User user = new User(
-                username,
-                email,
-                password,
-                profileImageUri,
-                aboutMe,
-                newFriends,
-                newFriendRequests,
-                newChats
-        );
+                    Map<String, Object> userMap = new HashMap<>();
+                    userMap.put("username", username);
+                    userMap.put("email", email);
+                    userMap.put("profilePicUrl", profileImageUri);
+                    userMap.put("aboutMe", aboutMe);
+                    userMap.put("friends", newFriends);
+                    userMap.put("friendRequests", newFriendRequests);
+                    userMap.put("chats", newChats);
 
-        // Instead of setValue(user), we'll use updateChildren to avoid overwriting "habits"
-        DatabaseReference userRef = FirebaseDatabase.getInstance()
-                .getReference("users")
-                .child(userId);
+                    String sanitizedEmailKey = email.replace(".", ",");
+                    DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(sanitizedEmailKey);
+                    DatabaseReference usernameRef = FirebaseDatabase.getInstance().getReference("usernames").child(username);
 
-        Map<String, Object> userMap = new HashMap<>();
-        userMap.put("username", username);
-        userMap.put("email", email);
-        userMap.put("password", password);
-        userMap.put("profilePicUrl", profileImageUri);
-        userMap.put("aboutMe", aboutMe);
-        // friends, friendRequests, chats if you want them at top-level:
-        userMap.put("friends", newFriends);
-        userMap.put("friendRequests", newFriendRequests);
-        userMap.put("chats", newChats);
-
-        userRef.updateChildren(userMap)
-                .addOnSuccessListener(aVoid -> {
-                    MainActivity.currentUserEmail = email;
-                    startActivity(new Intent(this, MainActivity.class));
-                    finish();
+                    userRef.updateChildren(userMap)
+                            .addOnSuccessListener(aVoid -> {
+                                usernameRef.setValue(sanitizedEmailKey);
+                                MainActivity.currentUserEmail = email;
+                                startActivity(new Intent(this, MainActivity.class));
+                                finish();
+                            })
+                            .addOnFailureListener(e -> {
+                                Toast.makeText(this, "Saving user data failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                            });
                 })
                 .addOnFailureListener(e -> {
-                    Toast.makeText(this, "Registration failed: " + e.getMessage(),
-                            Toast.LENGTH_LONG).show();
+                    Toast.makeText(this, "Registration failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
                 });
     }
 }

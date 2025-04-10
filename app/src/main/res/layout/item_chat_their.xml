@@ -8,6 +8,13 @@
     android:paddingHorizontal="12dp"
     android:paddingVertical="6dp">
 
+    <ImageView
+        android:id="@+id/avatar"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:layout_marginEnd="8dp"
+        android:src="@drawable/unknown_profile" />
+
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

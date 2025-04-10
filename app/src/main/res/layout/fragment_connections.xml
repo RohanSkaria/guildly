@@ -1,139 +1,189 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.core.widget.NestedScrollView
+<androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true"
-    android:background="#FAF5FF">
-
-    <LinearLayout
+    android:background="#F5F5F5"
+    tools:context=".ConnectionsFragment"
+    >
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp">
+        android:background="@android:color/white"
+        tools:ignore="MissingConstraints">
 
-        <!-- Title and Chat Icon -->
-        <LinearLayout
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:paddingVertical="8dp">
+            android:layout_height="?attr/actionBarSize"
+            android:background="@android:color/white">
 
             <TextView
-                android:layout_width="0dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Connections"
-                android:textSize="24sp"
+                android:layout_gravity="center"
+                android:text="GUILDLY"
+                android:textColor="@android:color/black"
+                android:textSize="30sp"
                 android:textStyle="bold"
-                android:textColor="#333" />
+                android:fontFamily="@font/montserrat_black"/>
 
-            <ImageView
-                android:id="@+id/buttonOpenChatList"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:src="@drawable/ic_envelope"
-                android:contentDescription="Open Chat List"
-                android:padding="8dp" />
-        </LinearLayout>
+        </androidx.appcompat.widget.Toolbar>
 
-        <!-- Input Field with Card -->
-        <androidx.cardview.widget.CardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:cardElevation="4dp"
-            app:cardCornerRadius="12dp"
-            android:layout_marginTop="12dp">
+    </com.google.android.material.appbar.AppBarLayout>
 
-            <EditText
-                android:id="@+id/editTextFriendUsername"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Type a friend's username to add them"
-                android:padding="12dp"
-                android:background="@android:color/transparent"
-                android:textColorHint="#888" />
-        </androidx.cardview.widget.CardView>
+    <LinearLayout
+        android:id="@+id/connections_header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="16dp"
+        android:gravity="center_vertical"
+        app:layout_constraintTop_toBottomOf="@id/appBarLayout"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
 
-        <!-- Buttons Row -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center"
-            android:layout_marginTop="12dp">
-
-            <Button
-                android:id="@+id/buttonAddFriend"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Add Friend"
-                android:backgroundTint="#7E57C2"
-                android:textColor="@android:color/white"
-                android:layout_marginEnd="16dp" />
-
-            <FrameLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content">
-
-                <Button
-                    android:id="@+id/buttonFriendRequests"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Friend Requests"
-                    android:backgroundTint="#9575CD"
-                    android:textColor="@android:color/white" />
-
-                <TextView
-                    android:id="@+id/friendRequestsBadge"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:background="@drawable/badge_background"
-                    android:textColor="@android:color/white"
-                    android:padding="4dp"
-                    android:textSize="12sp"
-                    android:visibility="gone"
-                    android:layout_gravity="end|top"
-                    android:translationX="8dp"
-                    android:translationY="-4dp" />
-            </FrameLayout>
-        </LinearLayout>
-
-        <!-- Friends Header -->
         <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="CONNECTIONS"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textColor="#1B1F3B"
+            android:fontFamily="@font/montserrat_black" />
+
+        <ImageView
+            android:id="@+id/buttonOpenChatList"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Your Friends"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:paddingTop="24dp"
-            android:paddingBottom="8dp" />
-
-        <!-- Friends List -->
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/connections_list"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:nestedScrollingEnabled="false" />
-
-        <!-- Leaderboard Header -->
-        <TextView
-            android:id="@+id/global_header"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Global Leaderboard"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:paddingTop="24dp"
-            android:paddingBottom="8dp" />
-
-        <!-- Leaderboard List -->
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/leaderboard"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:src="@drawable/ic_envelope"
+            android:contentDescription="Open Chat List"
+            android:padding="8dp" />
 
     </LinearLayout>
-</androidx.core.widget.NestedScrollView>
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cardFriendInput"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:cardElevation="4dp"
+        app:cardCornerRadius="12dp"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="8dp"
+        app:layout_constraintTop_toBottomOf="@id/connections_header"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <EditText
+            android:id="@+id/editTextFriendUsername"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Type a friend's username"
+            android:padding="12dp"
+            android:background="@android:color/transparent"
+            android:textColorHint="#888"
+            android:textColor="#1B1F3B"
+            android:fontFamily="@font/montserrat_black" />
+    </androidx.cardview.widget.CardView>
+
+    <LinearLayout
+        android:id="@+id/button_container"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginTop="12dp"
+        app:layout_constraintTop_toBottomOf="@id/cardFriendInput"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <Button
+            android:id="@+id/buttonAddFriend"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Add Friend"
+            android:textColor="@android:color/white"
+            android:textSize="12sp"
+            android:fontFamily="@font/montserrat_black"
+            android:layout_marginEnd="16dp"/>
+
+        <FrameLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <Button
+                android:id="@+id/buttonFriendRequests"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Friend Requests"
+                android:textColor="@android:color/white"
+                android:textSize="12sp"
+                android:fontFamily="@font/montserrat_black"
+                android:backgroundTint="#9575CD" />
+
+            <TextView
+                android:id="@+id/friendRequestsBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/badge_background"
+                android:textColor="@android:color/white"
+                android:padding="4dp"
+                android:textSize="12sp"
+                android:visibility="gone"
+                android:layout_gravity="end|top"
+                android:translationX="8dp"
+                android:translationY="-4dp" />
+        </FrameLayout>
+    </LinearLayout>
+
+
+    <!-- Friends Title -->
+    <TextView
+        android:id="@+id/friends_section_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Your Friends"
+        android:textSize="20sp"
+        android:textColor="#1B1F3B"
+        android:fontFamily="@font/montserrat_black"
+        android:paddingTop="24dp"
+        app:layout_constraintTop_toBottomOf="@id/button_container"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginStart="16dp"/>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/connections_list"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="16dp"
+        app:layout_constraintTop_toBottomOf="@id/friends_section_title"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+    <TextView
+        android:id="@+id/global_header"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Global Leaderboard"
+        android:textSize="20sp"
+        android:textColor="#1B1F3B"
+        android:fontFamily="@font/montserrat_black"
+        android:paddingTop="24dp"
+        app:layout_constraintTop_toBottomOf="@id/connections_list"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginStart="16dp"/>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/leaderboard"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="16dp"
+        app:layout_constraintTop_toBottomOf="@id/global_header"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
