@@ -49,7 +49,7 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ViewHo
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        holder.imageUnreadIcon.setVisibility(View.GONE);
+//        holder.imageUnreadIcon.setVisibility(View.GONE);
         FriendChatItem item = friendChatList.get(position);
 
         holder.textFriendUsername.setText(item.friendUsername);
@@ -100,15 +100,21 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ViewHo
         messagesRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                boolean hasUnread = false;
+                int unreadCount = 0;
                 for (DataSnapshot msgSnap : snapshot.getChildren()) {
                     Message msg = msgSnap.getValue(Message.class);
                     if (msg != null && !msg.senderId.equals(currentUserId) && "SENT".equals(msg.status)) {
-                        hasUnread = true;
-                        break;
+                        unreadCount++;
                     }
                 }
-                holder.imageUnreadIcon.setVisibility(hasUnread ? View.VISIBLE : View.GONE);
+                if (unreadCount > 0) {
+//                    holder.imageUnreadIcon.setVisibility(View.VISIBLE);
+                    holder.textUnreadCount.setVisibility(View.VISIBLE);
+                    holder.textUnreadCount.setText(String.valueOf(unreadCount));
+                } else {
+//                    holder.imageUnreadIcon.setVisibility(View.GONE);
+                    holder.textUnreadCount.setVisibility(View.GONE);
+                }
             }
 
             @Override
@@ -129,16 +135,18 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ViewHo
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
-        TextView textFriendUsername, textLastMessage, textTimestamp;
-        ImageView imageFriendAvatar, imageUnreadIcon;
+        TextView textFriendUsername, textLastMessage, textTimestamp, textUnreadCount;
+        ImageView imageFriendAvatar;
+//        ImageView imageUnreadIcon;
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
             textFriendUsername = itemView.findViewById(R.id.textFriendUsername);
             textLastMessage = itemView.findViewById(R.id.textLastMessage);
             textTimestamp = itemView.findViewById(R.id.textTimestamp);
+            textUnreadCount = itemView.findViewById(R.id.textUnreadCount);
             imageFriendAvatar = itemView.findViewById(R.id.imageFriendAvatar);
-            imageUnreadIcon = itemView.findViewById(R.id.imageUnreadIcon);
+//            imageUnreadIcon = itemView.findViewById(R.id.imageUnreadIcon);
         }
     }
 }

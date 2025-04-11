@@ -55,14 +55,20 @@
             android:textSize="14sp"
             android:textColor="#666" />
 
-        <ImageView
-            android:id="@+id/imageUnreadIcon"
-            android:layout_width="20dp"
-            android:layout_height="20dp"
+        <TextView
+            android:id="@+id/textUnreadCount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:layout_alignBottom="@id/textLastMessage"
             android:layout_alignParentEnd="true"
-            android:layout_marginStart="8dp"
-            android:src="@drawable/ic_email"
+            android:layout_marginEnd="4dp"
+            android:text="99"
+            android:textSize="10sp"
+            android:textColor="@android:color/white"
+            android:background="@drawable/unread_count"
+            android:padding="2dp"
+            android:minWidth="16dp"
+            android:gravity="center"
             android:visibility="gone" />
 
     </RelativeLayout>
