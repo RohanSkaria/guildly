@@ -70,15 +70,23 @@ public class ChatDetailAdapter extends RecyclerView.Adapter<ChatDetailAdapter.Vi
         holder.textTime.setText(timeText);
 
 
-        switch (msg.status) {
-            case "SENT":
-                holder.imageStatus.setImageResource(R.drawable.ic_msg_solid);
-                break;
-            case "READ":
-                holder.imageStatus.setImageResource(R.drawable.ic_msg_hollow);
-                break;
-            default:
-                holder.imageStatus.setImageResource(R.drawable.ic_msg_solid);
+        // I set 1s to show the difference for other's message(although I think it's unnecessary)
+        if (msg.senderId.equals(myUserKey)) {
+            // my message
+            if ("READ".equals(msg.status)) {
+                holder.imageStatus.setImageResource(R.drawable.ic_eye);     // sent and opened
+            } else {
+                holder.imageStatus.setImageResource(R.drawable.ic_check);   // sent and not opened
+            }
+        } else {
+            // other's message
+            if ("READ".equals(msg.status)) {
+                holder.imageStatus.setImageResource(R.drawable.ic_msg_hollow); // received and opened
+                holder.imageStatus.setVisibility(View.VISIBLE);
+            } else {
+                holder.imageStatus.setImageResource(R.drawable.ic_msg_solid);  // received and not opened
+                holder.imageStatus.setVisibility(View.VISIBLE);
+            }
         }
 
 
@@ -88,7 +96,7 @@ public class ChatDetailAdapter extends RecyclerView.Adapter<ChatDetailAdapter.Vi
                     .getReference("users")
                     .child(msg.senderId);
 
-            senderRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            senderRef.addValueEventListener(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot snapshot) {
                     User senderUser = snapshot.getValue(User.class);

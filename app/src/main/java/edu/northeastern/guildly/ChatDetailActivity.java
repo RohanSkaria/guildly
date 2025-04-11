@@ -99,7 +99,7 @@ public class ChatDetailActivity extends AppCompatActivity {
                         if (!msg.senderId.equals(myUserKey) && "SENT".equals(msg.status)) {
                             recyclerViewChatDetail.postDelayed(() -> {
                                 msgSnap.getRef().child("status").setValue("READ");
-                            }, 800);
+                            }, 1000);
                         }
                     }
                 }
