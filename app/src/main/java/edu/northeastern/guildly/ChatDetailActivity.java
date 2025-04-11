@@ -96,6 +96,11 @@ public class ChatDetailActivity extends AppCompatActivity {
                     Message msg = msgSnap.getValue(Message.class);
                     if (msg != null) {
                         messageList.add(msg);
+                        if (!msg.senderId.equals(myUserKey) && "SENT".equals(msg.status)) {
+                            recyclerViewChatDetail.postDelayed(() -> {
+                                msgSnap.getRef().child("status").setValue("READ");
+                            }, 1000);
+                        }
                     }
                 }
                 Collections.sort(messageList, Comparator.comparingLong(m -> m.timestamp));
