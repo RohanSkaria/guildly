@@ -70,6 +70,12 @@ public class ChatListActivity extends AppCompatActivity {
         loadAllMyFriends();
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        chatListAdapter.notifyDataSetChanged();
+    }
+
     private void loadAllMyFriends() {
         usersRef.child(myUserKey).child("friends")
                 .addListenerForSingleValueEvent(new ValueEventListener() {

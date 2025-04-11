@@ -19,6 +19,7 @@ import java.util.List;
 
 import edu.northeastern.guildly.R;
 import edu.northeastern.guildly.data.FriendChatItem;
+import edu.northeastern.guildly.data.Message;
 import edu.northeastern.guildly.data.User;
 
 public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ViewHolder> {
@@ -29,11 +30,13 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ViewHo
 
     private List<FriendChatItem> friendChatList;
     private OnFriendChatClick listener;
+    private String currentUserId;
 
     public ChatListAdapter(List<FriendChatItem> friendChatList,
                            OnFriendChatClick listener) {
         this.friendChatList = friendChatList;
         this.listener = listener;
+        this.currentUserId = edu.northeastern.guildly.MainActivity.currentUserEmail.replace(".", ",");
     }
 
     @NonNull
@@ -46,15 +49,14 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ViewHo
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+        holder.imageUnreadIcon.setVisibility(View.GONE);
         FriendChatItem item = friendChatList.get(position);
 
         holder.textFriendUsername.setText(item.friendUsername);
         holder.textLastMessage.setText(item.lastMessage);
         holder.textTimestamp.setText(item.timestamp);
 
-
         holder.imageFriendAvatar.setImageResource(R.drawable.unknown_profile);
-
 
         DatabaseReference friendRef = FirebaseDatabase.getInstance()
                 .getReference("users")
@@ -90,12 +92,29 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ViewHo
             }
         });
 
-        if (item.lastMessageIconRes > 0) {
-            holder.imageLastMessageStatus.setVisibility(View.VISIBLE);
-            holder.imageLastMessageStatus.setImageResource(item.lastMessageIconRes);
-        } else {
-            holder.imageLastMessageStatus.setVisibility(View.GONE);
-        }
+        DatabaseReference messagesRef = FirebaseDatabase.getInstance()
+                .getReference("chats")
+                .child(item.chatId)
+                .child("messages");
+
+        messagesRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                boolean hasUnread = false;
+                for (DataSnapshot msgSnap : snapshot.getChildren()) {
+                    Message msg = msgSnap.getValue(Message.class);
+                    if (msg != null && !msg.senderId.equals(currentUserId) && "SENT".equals(msg.status)) {
+                        hasUnread = true;
+                        break;
+                    }
+                }
+                holder.imageUnreadIcon.setVisibility(hasUnread ? View.VISIBLE : View.GONE);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+            }
+        });
 
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) {
@@ -111,15 +130,15 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ViewHo
 
     static class ViewHolder extends RecyclerView.ViewHolder {
         TextView textFriendUsername, textLastMessage, textTimestamp;
-        ImageView imageLastMessageStatus, imageFriendAvatar;
+        ImageView imageFriendAvatar, imageUnreadIcon;
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
             textFriendUsername = itemView.findViewById(R.id.textFriendUsername);
             textLastMessage = itemView.findViewById(R.id.textLastMessage);
             textTimestamp = itemView.findViewById(R.id.textTimestamp);
-            imageLastMessageStatus = itemView.findViewById(R.id.imageLastMessageStatus);
             imageFriendAvatar = itemView.findViewById(R.id.imageFriendAvatar);
+            imageUnreadIcon = itemView.findViewById(R.id.imageUnreadIcon);
         }
     }
 }

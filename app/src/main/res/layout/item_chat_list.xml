@@ -56,13 +56,14 @@
             android:textColor="#666" />
 
         <ImageView
-            android:id="@+id/imageLastMessageStatus"
+            android:id="@+id/imageUnreadIcon"
             android:layout_width="20dp"
             android:layout_height="20dp"
-            android:src="@drawable/ic_msg_solid"
-            android:layout_alignParentEnd="true"
             android:layout_alignBottom="@id/textLastMessage"
-            android:layout_marginStart="8dp" />
+            android:layout_alignParentEnd="true"
+            android:layout_marginStart="8dp"
+            android:src="@drawable/ic_email"
+            android:visibility="gone" />
 
     </RelativeLayout>
 </androidx.cardview.widget.CardView>
