@@ -14,6 +14,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Observer;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -34,6 +35,10 @@ import edu.northeastern.guildly.data.Habit;
 import edu.northeastern.guildly.data.User;
 import edu.northeastern.guildly.WeeklyChallengeManager;
 
+/**
+ * Your HomeFragment now updates in real time via GuildlyDataManager,
+ * while keeping all existing code intact.
+ */
 public class HomeFragment extends Fragment {
 
     private TextView tvUserName, tvStreak, tvWeeklyChallenge;
@@ -85,7 +90,7 @@ public class HomeFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_home, container, false);
 
 //        tvUserName = view.findViewById(R.id.user_name);
-        tvStreak = view.findViewById(R.id.textViewStreak);
+        tvStreak   = view.findViewById(R.id.textViewStreak);
         habitRecyclerView = view.findViewById(R.id.habit_list);
         btnAddHabit = view.findViewById(R.id.btn_add_habit);
         tvWeeklyChallenge = view.findViewById(R.id.weekly_challenge_text);
@@ -122,7 +127,7 @@ public class HomeFragment extends Fragment {
         String myEmail = MainActivity.currentUserEmail;
         if (!TextUtils.isEmpty(myEmail)) {
             myUserKey = myEmail.replace(".", ",");
-            userRef = FirebaseDatabase.getInstance().getReference("users").child(myUserKey);
+            userRef       = FirebaseDatabase.getInstance().getReference("users").child(myUserKey);
             userHabitsRef = userRef.child("habits");
             loadUserInfo();
         } else {
@@ -134,8 +139,33 @@ public class HomeFragment extends Fragment {
         habitRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         habitRecyclerView.setAdapter(habitAdapter);
 
+        // --------------------------------------------------------------------
+        //  1) Keep your existing single-value read (so we "change nothing else")
+        //     but ALSO set up GuildlyDataManager for real-time updates.
+        // --------------------------------------------------------------------
         if (userHabitsRef != null) {
+            // Your original single-value read
             loadHabitsFromFirebase();
+
+            // Now also attach real-time listener from GuildlyDataManager
+            GuildlyDataManager dataManager = GuildlyDataManager.getInstance();
+            dataManager.init(myUserKey);
+
+            // Observe the habitsLiveData. Whenever data changes, we update the list.
+            dataManager.getHabitsLiveData().observe(getViewLifecycleOwner(), new Observer<List<Habit>>() {
+                @Override
+                public void onChanged(List<Habit> updatedHabits) {
+                    // Clear existing, add only tracked
+                    habitList.clear();
+                    for (Habit h : updatedHabits) {
+                        if (h.isTracked()) {
+                            habitList.add(h);
+                        }
+                    }
+                    habitAdapter.notifyDataSetChanged();
+                    updateStreakText();
+                }
+            });
         }
 
         btnAddHabit.setOnClickListener(v -> showPredefinedHabitsDialog());
@@ -160,6 +190,7 @@ public class HomeFragment extends Fragment {
     }
 
     private void loadHabitsFromFirebase() {
+        // This is your existing single-value read method
         userHabitsRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -222,7 +253,6 @@ public class HomeFragment extends Fragment {
                 .setTitle("Select Habits to Track")
                 .setView(dialogView)
                 .setPositiveButton("Done", (dialog, which) -> {
-
                     for (Habit h : cloneList) {
                         DatabaseReference habitRef = userHabitsRef.child(h.getHabitName());
                         if (h.isTracked()) {
@@ -247,6 +277,8 @@ public class HomeFragment extends Fragment {
                         }
                     }
 
+                    // We still call your old single-value reload:
+                    // (But the real-time manager will also update automatically.)
                     loadHabitsFromFirebase();
                 })
                 .setNegativeButton("Cancel", (dialog, which) -> {

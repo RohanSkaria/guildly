@@ -28,6 +28,7 @@ import edu.northeastern.guildly.data.User;
 public class ChatDetailAdapter extends RecyclerView.Adapter<ChatDetailAdapter.ViewHolder> {
 
     private static final int VIEW_TYPE_MINE = 1;
+
     private static final int VIEW_TYPE_THEIR = 2;
 
     private List<Message> messages;

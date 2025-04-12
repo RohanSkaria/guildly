@@ -15,6 +15,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Observer;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -35,7 +36,6 @@ import edu.northeastern.guildly.SettingsActivity;
 import edu.northeastern.guildly.MainActivity;
 import edu.northeastern.guildly.adapters.AllHabitsAdapter;
 import edu.northeastern.guildly.adapters.FriendsAdapter;
-import edu.northeastern.guildly.adapters.HabitAdapter;
 import edu.northeastern.guildly.data.Habit;
 import edu.northeastern.guildly.data.User;
 
@@ -94,8 +94,69 @@ public class ProfileFragment extends Fragment {
         userRef = FirebaseDatabase.getInstance().getReference("users").child(myUserKey);
 
         initViews(view);
-        loadUserDataFromFirebase();
+        loadUserDataFromFirebase(); // <-- original single-value approach
         setupClickListeners();
+
+        // ------------------------------------------------------------------------------------------
+        // ADD: GuildlyDataManager for REAL-TIME habit updates (without removing existing code)
+        // ------------------------------------------------------------------------------------------
+        if (!"NO_USER".equals(myUserKey)) {
+            GuildlyDataManager manager = GuildlyDataManager.getInstance();
+            manager.init(myUserKey);
+
+            // Observe the habitsLiveData. Whenever data changes in Firebase, update top-3 habits:
+            manager.getHabitsLiveData().observe(getViewLifecycleOwner(), new Observer<List<Habit>>() {
+                @Override
+                public void onChanged(List<Habit> updatedHabits) {
+                    if (updatedHabits == null) return;
+
+                    // Filter only tracked habits
+                    List<Habit> tracked = new ArrayList<>();
+                    for (Habit h : updatedHabits) {
+                        if (h != null && h.isTracked()) {
+                            tracked.add(h);
+                        }
+                    }
+                    // This replicates the logic in loadTrackedHabitsAndSort():
+                    if (tracked.isEmpty()) {
+                        tvNoHabitsMessage.setVisibility(View.VISIBLE);
+                        ivTopHabit1.setVisibility(View.GONE);
+                        ivTopHabit2.setVisibility(View.GONE);
+                        ivTopHabit3.setVisibility(View.GONE);
+                        tvTopHabit1.setVisibility(View.GONE);
+                        tvTopHabit2.setVisibility(View.GONE);
+                        tvTopHabit3.setVisibility(View.GONE);
+
+                        streakDescription.setText("No streak yet!");
+                    } else {
+                        tvNoHabitsMessage.setVisibility(View.GONE);
+
+                        // Sort by streak desc
+                        Collections.sort(tracked, new Comparator<Habit>() {
+                            @Override
+                            public int compare(Habit o1, Habit o2) {
+                                return o2.getStreakCount() - o1.getStreakCount();
+                            }
+                        });
+
+                        // The first => best streak
+                        Habit top = tracked.get(0);
+                        if (top.getStreakCount() > 0) {
+                            streakDescription.setText("Longest streak: " +
+                                    top.getStreakCount() + " days of " +
+                                    top.getHabitName() + "!");
+                        } else {
+                            streakDescription.setText("No streak yet!");
+                        }
+
+                        // Fill top 3
+                        setTopHabitSlot(0, tracked);
+                        setTopHabitSlot(1, tracked);
+                        setTopHabitSlot(2, tracked);
+                    }
+                }
+            });
+        }
     }
 
     private void initViews(View view) {
@@ -134,7 +195,7 @@ public class ProfileFragment extends Fragment {
 
     /**
      * Loads user-level data (username, aboutMe, avatar).
-     * Then loads top 3 tracked habits & top 3 friends.
+     * Then loads top 3 tracked habits & top 3 friends (single-value).
      */
     private void loadUserDataFromFirebase() {
         userRef.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -153,12 +214,11 @@ public class ProfileFragment extends Fragment {
                         profileAboutMe.setText("Add a bio...");
                     }
 
-
                     if (!TextUtils.isEmpty(user.profilePicUrl)) {
                         updateProfileAvatar(user.profilePicUrl, false);
                     }
 
-                    // Now load top 3 habits
+                    // Now load top 3 habits (single-value read)
                     loadTrackedHabitsAndSort();
 
                     // Now load top 3 friends
@@ -176,7 +236,7 @@ public class ProfileFragment extends Fragment {
     }
 
     /**
-     * Load only tracked habits => find best streak => fill top 3 icons
+     * Load only tracked habits => find best streak => fill top 3 icons (single-value).
      */
     private void loadTrackedHabitsAndSort() {
         userRef.child("habits").addListenerForSingleValueEvent(new ValueEventListener() {
@@ -445,13 +505,11 @@ public class ProfileFragment extends Fragment {
                     }
                 }
 
-
                 View dialogView = LayoutInflater.from(getContext())
                         .inflate(R.layout.dialog_all_habits, null);
 
                 RecyclerView rv = dialogView.findViewById(R.id.habit_list_view);
                 rv.setLayoutManager(new LinearLayoutManager(getContext()));
-
 
                 AllHabitsAdapter adapter = new AllHabitsAdapter(trackedHabits);
                 rv.setAdapter(adapter);
@@ -480,21 +538,17 @@ public class ProfileFragment extends Fragment {
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 User me = snapshot.getValue(User.class);
                 if (me == null || me.friends == null || me.friends.isEmpty()) {
-
                     Toast.makeText(getContext(),
                             "You have no friends!", Toast.LENGTH_SHORT).show();
                     return;
                 }
-
 
                 List<String> friendKeys = new ArrayList<>(me.friends);
                 loadAllFriendUsers(friendKeys, new ArrayList<>());
             }
 
             @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-
-            }
+            public void onCancelled(@NonNull DatabaseError error) {}
         });
     }
 
@@ -506,13 +560,11 @@ public class ProfileFragment extends Fragment {
             return;
         }
 
-
         View dialogView = LayoutInflater.from(getContext())
                 .inflate(R.layout.dialog_all_friends, null);
 
         RecyclerView rvFriends = dialogView.findViewById(R.id.rvAllFriends);
         rvFriends.setLayoutManager(new LinearLayoutManager(getContext()));
-
 
         FriendsAdapter adapter = new FriendsAdapter(friendUsers);
         rvFriends.setAdapter(adapter);
@@ -553,7 +605,6 @@ public class ProfileFragment extends Fragment {
             }
         });
     }
-
 
     private void loadAllFriendNames(List<String> friendKeys, List<String> friendUsernames) {
         if (friendKeys.isEmpty()) {
@@ -652,7 +703,6 @@ public class ProfileFragment extends Fragment {
                 break;
         }
         profileImage.setImageResource(resourceId);
-
 
         if (showToast) {
             userRef.child("profilePicUrl").setValue(avatarName)

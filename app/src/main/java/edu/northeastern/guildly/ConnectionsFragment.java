@@ -50,7 +50,6 @@ public class ConnectionsFragment extends Fragment {
     private View buttonAddFriend;
     private View buttonFriendRequests;
 
-    // We'll remove the hardcoded email and use MainActivity.currentUserEmail
     private String myEmail;
     private String myUserKey;  // sanitized email key
 
@@ -101,27 +100,55 @@ public class ConnectionsFragment extends Fragment {
         userRef = usersRef.child(myUserKey);
 
         if (myEmail != null) {
+            // Existing single-value approach:
             loadMyFriends();
+            // ADDED: Real-time listener so the list updates automatically:
+            attachRealtimeFriendsListener();
         }
 
         setupInputListener();
         setupFriendRequestsButton();
         updateFriendRequestsBadge();
 
-
         RecyclerView leaderboardRecyclerView = root.findViewById(R.id.leaderboard);
         leaderboardRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
-
         TextView globalHeader = root.findViewById(R.id.global_header);
         globalHeader.setText("Global Leaderboard");
-
 
         loadLeaderboardData(leaderboardRecyclerView);
 
         return root;
     }
 
+    /**
+     * ADDED: Attach a persistent listener for my "friends" node.
+     * Whenever the "friends" list changes, update the UI in real time.
+     */
+    private void attachRealtimeFriendsListener() {
+        userRef.child("friends").addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                myFriendsList.clear();
+                if (snapshot.exists()) {
+                    for (DataSnapshot friendSnap : snapshot.getChildren()) {
+                        String friendKey = friendSnap.getValue(String.class);
+                        if (friendKey != null) {
+                            myFriendsList.add(friendKey);
+                        }
+                    }
+                }
+                connectionsAdapter.notifyDataSetChanged();
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.e("ConnectionsFragment",
+                        "Real-time friends listener cancelled",
+                        error.toException());
+            }
+        });
+    }
 
     private void loadLeaderboardData(RecyclerView leaderboardRecyclerView) {
         // Example implementation - you'll need to populate with real data based on friend streaks
@@ -236,6 +263,7 @@ public class ConnectionsFragment extends Fragment {
 
     /**
      * Loads the current user's 'friends' list from DB and updates the RecyclerView.
+     * (Single-value approach; we keep this to avoid removing anything else.)
      */
     private void loadMyFriends() {
         usersRef.child(myUserKey).child("friends")
@@ -520,7 +548,7 @@ public class ConnectionsFragment extends Fragment {
                             Toast.LENGTH_LONG).show();
                 } else if (committed) {
                     addMeToRequesterFriends(requesterKey);
-                    loadMyFriends(); // refresh
+                    loadMyFriends(); // refresh single-value approach
                 }
             }
         });
