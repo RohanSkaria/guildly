@@ -63,14 +63,31 @@ public class MultiStepSignUpActivity extends AppCompatActivity {
         updateStepIndicator();
 
         btnNext.setOnClickListener(v -> {
-            if (validateCurrentStep()) {
-                if (currentStep < TOTAL_STEPS) {
-                    currentStep++;
-                    navigateToStep(currentStep);
-                } else {
-                    checkUsernameUniquenessAndSignUp();
-                }
-                updateStepIndicator();
+            // Now we validate each step individually
+            switch (currentStep) {
+                case 1: // Profile Info
+                    if (profileInfoFragment.validateAndSaveData(signUpData)) {
+                        checkUsernameUniqueness();
+                    }
+                    break;
+                case 2: // Habit Selection
+                    if (habitSelectionFragment.validateAndSaveData(signUpData)) {
+                        currentStep++;
+                        navigateToStep(currentStep);
+                        updateStepIndicator();
+                    }
+                    break;
+                case 3: // Avatar Selection
+                    if (avatarSelectionFragment.validateAndSaveData(signUpData)) {
+                        currentStep++;
+                        signUpReviewFragment.setArguments(signUpData);
+                        navigateToStep(currentStep);
+                        updateStepIndicator();
+                    }
+                    break;
+                case 4: // Sign Up Review - Final Step
+                    completeSignUp();
+                    break;
             }
         });
 
@@ -85,15 +102,43 @@ public class MultiStepSignUpActivity extends AppCompatActivity {
         });
     }
 
+    private void checkUsernameUniqueness() {
+        String username = signUpData.getString("username");
+        DatabaseReference usernameRef = FirebaseDatabase.getInstance().getReference("usernames").child(username);
+
+        usernameRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+                if (snapshot.exists()) {
+                    Toast.makeText(MultiStepSignUpActivity.this, "Username already taken.", Toast.LENGTH_SHORT).show();
+                } else {
+                    // Username is available, advance to next step
+                    currentStep++;
+                    navigateToStep(currentStep);
+                    updateStepIndicator();
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError error) {
+                Toast.makeText(MultiStepSignUpActivity.this, "Error checking username.", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
     private void navigateToStep(int step) {
         switch (step) {
             case 1:
                 loadFragment(profileInfoFragment);
                 break;
             case 2:
+                // Pass the previously collected data to the habit selection fragment
+                habitSelectionFragment.setArguments(signUpData);
                 loadFragment(habitSelectionFragment);
                 break;
             case 3:
+                // Pass data to avatar selection fragment
+                avatarSelectionFragment.setArguments(signUpData);
                 loadFragment(avatarSelectionFragment);
                 break;
             case 4:
@@ -120,41 +165,6 @@ public class MultiStepSignUpActivity extends AppCompatActivity {
         }
     }
 
-    private boolean validateCurrentStep() {
-        switch (currentStep) {
-            case 1:
-                return profileInfoFragment.validateAndSaveData(signUpData);
-            case 2:
-                return habitSelectionFragment.validateAndSaveData(signUpData);
-            case 3:
-                return avatarSelectionFragment.validateAndSaveData(signUpData);
-            case 4:
-                return true;
-        }
-        return false;
-    }
-
-    private void checkUsernameUniquenessAndSignUp() {
-        String username = signUpData.getString("username");
-        DatabaseReference usernameRef = FirebaseDatabase.getInstance().getReference("usernames").child(username);
-
-        usernameRef.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot snapshot) {
-                if (snapshot.exists()) {
-                    Toast.makeText(MultiStepSignUpActivity.this, "Username already taken.", Toast.LENGTH_SHORT).show();
-                } else {
-                    completeSignUp();
-                }
-            }
-
-            @Override
-            public void onCancelled(DatabaseError error) {
-                Toast.makeText(MultiStepSignUpActivity.this, "Error checking username.", Toast.LENGTH_SHORT).show();
-            }
-        });
-    }
-
     private void completeSignUp() {
         String username = signUpData.getString("username");
         String email = signUpData.getString("email");
@@ -173,6 +183,7 @@ public class MultiStepSignUpActivity extends AppCompatActivity {
                     Map<String, Object> userMap = new HashMap<>();
                     userMap.put("username", username);
                     userMap.put("email", email);
+                    userMap.put("password", password); // Note: Storing password in plain text is not secure
                     userMap.put("profilePicUrl", profileImageUri);
                     userMap.put("aboutMe", aboutMe);
                     userMap.put("friends", newFriends);

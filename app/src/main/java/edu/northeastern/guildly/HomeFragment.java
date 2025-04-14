@@ -3,6 +3,7 @@ package edu.northeastern.guildly;
 import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,6 +21,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseException;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.database.FirebaseDatabase;
@@ -190,16 +192,22 @@ public class HomeFragment extends Fragment {
     }
 
     private void loadHabitsFromFirebase() {
-        // This is your existing single-value read method
+        // This is your existing single-value read method with added error handling
         userHabitsRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 habitList.clear();
                 for (DataSnapshot ds : snapshot.getChildren()) {
-                    Habit h = ds.getValue(Habit.class);
-                    // Only show habits with isTracked = true
-                    if (h != null && h.isTracked()) {
-                        habitList.add(h);
+                    try {
+                        // Try to convert to Habit object, catch exceptions for non-Habit entries
+                        Habit h = ds.getValue(Habit.class);
+                        // Only show habits with isTracked = true
+                        if (h != null && h.isTracked()) {
+                            habitList.add(h);
+                        }
+                    } catch (DatabaseException e) {
+                        // Just skip entries that can't be converted to Habit objects
+                        Log.d("HomeFragment", "Skipping non-Habit entry: " + ds.getKey());
                     }
                 }
                 habitAdapter.notifyDataSetChanged();

@@ -2,6 +2,7 @@ package edu.northeastern.guildly.signUpFragments;
 
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Patterns;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -44,22 +45,43 @@ public class ProfileInfoFragment extends Fragment {
         String confirmPassword = etConfirmPassword.getText().toString();
         String aboutMe = etAboutMe.getText().toString().trim();
 
-        // Validation
+        // Validate username
         if (TextUtils.isEmpty(username)) {
             etUsername.setError("Username is required");
             return false;
         }
 
+        // Validate email with proper pattern
         if (TextUtils.isEmpty(email)) {
             etEmail.setError("Email is required");
             return false;
         }
 
+        // Check email format using Android's Patterns.EMAIL_ADDRESS
+        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            etEmail.setError("Please enter a valid email address");
+            return false;
+        }
+
+        // Additional email validation for common requirements
+        if (!isValidEmail(email)) {
+            etEmail.setError("Invalid email format");
+            return false;
+        }
+
+        // Validate password
         if (TextUtils.isEmpty(password)) {
             etPassword.setError("Password is required");
             return false;
         }
 
+        // Add password strength requirements
+        if (password.length() < 6) {
+            etPassword.setError("Password must be at least 6 characters");
+            return false;
+        }
+
+        // Confirm passwords match
         if (!password.equals(confirmPassword)) {
             etConfirmPassword.setError("Passwords don't match");
             return false;
@@ -74,6 +96,40 @@ public class ProfileInfoFragment extends Fragment {
         // IMPORTANT: Also store the sanitized email key so HabitSelection can write to DB
         String sanitizedEmailKey = email.replace(".", ",");
         data.putString("userId", sanitizedEmailKey);
+
+        return true;
+    }
+
+    /**
+     * Additional detailed email validation beyond Android's basic pattern
+     */
+    private boolean isValidEmail(String email) {
+        if (email == null) return false;
+
+        // Basic structure check
+        if (!email.contains("@")) return false;
+
+        // Split into local and domain parts
+        String[] parts = email.split("@");
+        if (parts.length != 2) return false;
+
+        String local = parts[0];
+        String domain = parts[1];
+
+        // Check local part
+        if (local.isEmpty() || local.length() > 64) return false;
+
+        // Check domain part
+        if (domain.isEmpty() || domain.length() > 255) return false;
+        if (!domain.contains(".")) return false;
+
+        // Domain should have at least one dot and valid characters
+        String[] domainParts = domain.split("\\.");
+        if (domainParts.length < 2) return false;
+
+        // Check last domain part (TLD)
+        String tld = domainParts[domainParts.length - 1];
+        if (tld.length() < 2) return false;
 
         return true;
     }

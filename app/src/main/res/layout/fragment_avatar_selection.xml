@@ -1,72 +1,86 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="24dp"
-    android:background="#F5F5F5">
+    android:orientation="vertical"
+    android:padding="16dp">
 
     <TextView
-        android:id="@+id/tvAvatarTitle"
+        android:id="@+id/tv_avatar_title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/choose_your_avatar"
-        android:textSize="20sp"
-        android:fontFamily="@font/montserrat_black"
-        android:textColor="#1B1F3B"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:text="Choose Your Avatar"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:textColor="@android:color/black"
+        android:gravity="center"
+        android:layout_marginTop="40dp"
+        android:layout_marginBottom="30dp" />
 
     <TextView
-        android:id="@+id/tvAvatarSubtitle"
+        android:id="@+id/tv_avatar_description"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/upload_a_profile_picture_to_personalize_your_account"
+        android:text="Select an avatar that represents you"
         android:textSize="16sp"
-        android:fontFamily="@font/montserrat_black"
-        android:textColor="#757575"
-        android:layout_marginTop="8dp"
-        app:layout_constraintTop_toBottomOf="@id/tvAvatarTitle" />
+        android:gravity="center"
+        android:layout_marginBottom="40dp" />
 
-    <de.hdodenhof.circleimageview.CircleImageView
-        android:id="@+id/imageViewProfilePic"
-        android:layout_width="200dp"
-        android:layout_height="200dp"
-        android:layout_marginTop="32dp"
-        android:src="@drawable/unknown_profile"
-        app:civ_border_width="4dp"
-        app:civ_border_color="#1B1F3B"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tvAvatarSubtitle" />
-
-    <Button
-        android:id="@+id/btnSelectPic"
-        android:layout_width="wrap_content"
+    <!-- Include your avatar selection layout -->
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:text="@string/choose_image"
-        android:fontFamily="@font/montserrat_black"
-        android:textSize="16sp"
-        android:backgroundTint="#1B1F3B"
-        android:textColor="#FFFFFF"
-        android:drawableStart="@drawable/unknown_profile"
-        android:drawablePadding="8dp"
-        android:paddingStart="16dp"
-        android:paddingEnd="16dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/imageViewProfilePic" />
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:padding="16dp">
+
+        <de.hdodenhof.circleimageview.CircleImageView
+            android:id="@+id/avatar_gamer"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:layout_margin="8dp"
+            android:src="@drawable/gamer"
+            app:civ_border_color="#FFFFFF"
+            app:civ_border_width="2dp"
+            app:civ_circle_background_color="#4CAF50" />
+
+        <de.hdodenhof.circleimageview.CircleImageView
+            android:id="@+id/avatar_man"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:layout_margin="8dp"
+            android:src="@drawable/man"
+            app:civ_border_color="#FFFFFF"
+            app:civ_border_width="2dp"
+            app:civ_circle_background_color="#2196F3" />
+
+        <de.hdodenhof.circleimageview.CircleImageView
+            android:id="@+id/avatar_girl"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:layout_margin="8dp"
+            android:src="@drawable/girl"
+            app:civ_border_color="#FFFFFF"
+            app:civ_border_width="2dp"
+            app:civ_circle_background_color="#FFC107" />
+    </LinearLayout>
 
     <TextView
+        android:id="@+id/tv_avatar_note"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/this_step_is_optional_you_can_always_add_a_profile_picture_later"
-        android:textSize="16sp"
-        android:fontFamily="@font/montserrat_black"
-        android:textColor="#757575"
-        android:layout_marginTop="16dp"
-        android:textAlignment="center"
-        app:layout_constraintTop_toBottomOf="@id/btnSelectPic" />
+        android:text="Your avatar will be visible to your friends"
+        android:textSize="14sp"
+        android:gravity="center"
+        android:layout_marginTop="20dp" />
+    <TextView
+        android:id="@+id/tv_avatar_note_2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="You can change this later"
+        android:textSize="14sp"
+        android:gravity="center"
+        android:layout_marginTop="5dp" />
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+</LinearLayout>

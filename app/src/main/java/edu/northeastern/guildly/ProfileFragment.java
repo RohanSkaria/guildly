@@ -249,9 +249,14 @@ public class ProfileFragment extends Fragment {
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 List<Habit> tracked = new ArrayList<>();
                 for (DataSnapshot ds : snapshot.getChildren()) {
-                    Habit h = ds.getValue(Habit.class);
-                    if (h != null && h.isTracked()) {
-                        tracked.add(h);
+                    try {
+                        Habit h = ds.getValue(Habit.class);
+                        if (h != null && h.isTracked()) {
+                            tracked.add(h);
+                        }
+                    } catch (Exception e) {
+                        // Skip entries that can't be converted to Habit objects
+                        Log.d("ProfileFragment", "Skipping non-Habit entry: " + ds.getKey());
                     }
                 }
 

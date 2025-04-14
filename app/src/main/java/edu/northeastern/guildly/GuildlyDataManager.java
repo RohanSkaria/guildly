@@ -1,11 +1,14 @@
 package edu.northeastern.guildly;
 
+import android.util.Log;
+
 import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseException;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
@@ -55,9 +58,14 @@ public class GuildlyDataManager {
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 List<Habit> newHabits = new ArrayList<>();
                 for (DataSnapshot ds : snapshot.getChildren()) {
-                    Habit h = ds.getValue(Habit.class);
-                    if (h != null) {
-                        newHabits.add(h);
+                    try {
+                        Habit h = ds.getValue(Habit.class);
+                        if (h != null) {
+                            newHabits.add(h);
+                        }
+                    } catch (DatabaseException e) {
+                        // Just skip entries that can't be converted to Habit objects
+                        Log.d("GuildlyDataManager", "Skipping non-Habit entry: " + ds.getKey());
                     }
                 }
                 // Post this updated list to LiveData
