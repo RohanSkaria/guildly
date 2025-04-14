@@ -1,14 +1,23 @@
 package edu.northeastern.guildly;
 
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 
+
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+
+import edu.northeastern.guildly.services.NotificationListenerService;
+import edu.northeastern.guildly.services.NotificationService;
 
 public class  MainActivity extends AppCompatActivity {
 
@@ -20,6 +29,8 @@ public class  MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);  // Sets your activity layout
 
+        NotificationService.createNotificationChannel(this);
+
         BottomNavigationView bottomNavigationView = findViewById(R.id.bottomNavigationView);
 
         if (savedInstanceState == null) {
@@ -27,6 +38,20 @@ public class  MainActivity extends AppCompatActivity {
                     .replace(R.id.flFragment, new HomeFragment())
                     .commit();
         }
+
+        if (getIntent().getBooleanExtra("openConnections", false)) {
+            getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.flFragment, new ConnectionsFragment())
+                    .commit();
+            bottomNavigationView.setSelectedItemId(R.id.connections);
+        } else if (savedInstanceState == null) {
+            getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.flFragment, new HomeFragment())
+                    .commit();
+        }
+
+        Intent serviceIntent = new Intent(this, NotificationListenerService.class);
+        startService(serviceIntent);
 
         bottomNavigationView.setOnItemSelectedListener(item -> {
             Fragment selectedFragment = null;
@@ -62,5 +87,15 @@ public class  MainActivity extends AppCompatActivity {
                 .addOnFailureListener(e -> {
                     Log.e("RealtimeDB", "Failed to write data", e);
                 });
+
+        // idt this applies since were using oreo but idk just in case ?
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) !=
+                    PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this,
+                        new String[]{android.Manifest.permission.POST_NOTIFICATIONS},
+                        100);
+            }
+        }
     }
 }

@@ -4,6 +4,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="edu.northeastern.guildly">
 
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -14,6 +16,12 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Guildly"
         tools:targetApi="31">
+
+        <service
+            android:name=".services.NotificationListenerService"
+            android:enabled="true"
+            android:exported="false" />
+
 
         <activity
             android:name=".LoginActivity"
