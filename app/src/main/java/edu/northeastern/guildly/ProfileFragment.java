@@ -3,6 +3,7 @@ package edu.northeastern.guildly;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -28,7 +29,9 @@ import com.google.firebase.database.FirebaseDatabase;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 import edu.northeastern.guildly.R;
@@ -36,7 +39,9 @@ import edu.northeastern.guildly.SettingsActivity;
 import edu.northeastern.guildly.MainActivity;
 import edu.northeastern.guildly.adapters.AllHabitsAdapter;
 import edu.northeastern.guildly.adapters.FriendsAdapter;
+import edu.northeastern.guildly.data.Chats;
 import edu.northeastern.guildly.data.Habit;
+import edu.northeastern.guildly.data.Message;
 import edu.northeastern.guildly.data.User;
 
 /**
@@ -326,31 +331,110 @@ public class ProfileFragment extends Fragment {
      */
     private void loadFriendsAndShowTop3(List<String> friendKeys) {
         if (friendKeys == null || friendKeys.isEmpty()) {
-            // no friends
-            tvNoFriendsMessage.setVisibility(View.VISIBLE);
 
+            tvNoFriendsMessage.setVisibility(View.VISIBLE);
             friendOne.setVisibility(View.GONE);
             friendOneName.setVisibility(View.GONE);
-
             friendTwo.setVisibility(View.GONE);
             friendTwoName.setVisibility(View.GONE);
-
             friendThree.setVisibility(View.GONE);
             friendThreeName.setVisibility(View.GONE);
-
             return;
         }
-        // else show up to 3
+
+
         tvNoFriendsMessage.setVisibility(View.GONE);
 
-        for (int i = 0; i < 3; i++) {
-            if (i >= friendKeys.size()) {
-                hideFriendSlot(i);
-            } else {
-                String friendKey = friendKeys.get(i);
-                showFriendSlot(i, friendKey);
+
+        DatabaseReference chatsRef = FirebaseDatabase.getInstance().getReference("chats");
+        chatsRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+
+                Map<String, Long> friendLastMessageMap = new HashMap<>();
+
+
+                for (DataSnapshot chatSnap : snapshot.getChildren()) {
+                    Chats chatObj = chatSnap.getValue(Chats.class);
+                    if (chatObj == null || chatObj.participants == null) continue;
+
+
+                    if (chatObj.participants.contains(myUserKey)) {
+
+                        String friendKey = null;
+                        for (String participant : chatObj.participants) {
+                            if (!participant.equals(myUserKey) && friendKeys.contains(participant)) {
+                                friendKey = participant;
+                                break;
+                            }
+                        }
+
+
+                        if (friendKey != null && chatObj.messages != null && !chatObj.messages.isEmpty()) {
+
+                            long maxTime = -1;
+                            for (Message msg : chatObj.messages.values()) {
+                                if (msg.timestamp > maxTime) {
+                                    maxTime = msg.timestamp;
+                                }
+                            }
+
+
+                            if (maxTime > -1) {
+                                if (friendLastMessageMap.containsKey(friendKey)) {
+                                    if (maxTime > friendLastMessageMap.get(friendKey)) {
+                                        friendLastMessageMap.put(friendKey, maxTime);
+                                    }
+                                } else {
+                                    friendLastMessageMap.put(friendKey, maxTime);
+                                }
+                            }
+                        }
+                    }
+                }
+
+
+                List<Map.Entry<String, Long>> sortedFriends = new ArrayList<>(friendLastMessageMap.entrySet());
+                Collections.sort(sortedFriends, (e1, e2) -> Long.compare(e2.getValue(), e1.getValue()));
+
+
+                List<String> orderedFriends = new ArrayList<>();
+                for (Map.Entry<String, Long> entry : sortedFriends) {
+                    orderedFriends.add(entry.getKey());
+                }
+
+
+                for (String friendKey : friendKeys) {
+                    if (!orderedFriends.contains(friendKey)) {
+                        orderedFriends.add(friendKey);
+                    }
+                }
+
+
+                for (int i = 0; i < 3; i++) {
+                    if (i >= orderedFriends.size()) {
+                        hideFriendSlot(i);
+                    } else {
+                        String friendKey = orderedFriends.get(i);
+                        showFriendSlot(i, friendKey);
+                    }
+                }
             }
-        }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.e("ProfileFragment", "Error loading chat history", error.toException());
+
+                for (int i = 0; i < 3; i++) {
+                    if (i >= friendKeys.size()) {
+                        hideFriendSlot(i);
+                    } else {
+                        String friendKey = friendKeys.get(i);
+                        showFriendSlot(i, friendKey);
+                    }
+                }
+            }
+        });
     }
 
     private void hideFriendSlot(int i) {
