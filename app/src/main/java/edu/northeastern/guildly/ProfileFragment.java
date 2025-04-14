@@ -650,6 +650,14 @@ public class ProfileFragment extends Fragment {
         RecyclerView rvFriends = dialogView.findViewById(R.id.rvAllFriends);
         rvFriends.setLayoutManager(new LinearLayoutManager(getContext()));
 
+
+        ViewGroup.LayoutParams layoutParams = rvFriends.getLayoutParams();
+        int maxHeightInDp = 300;
+        float density = getResources().getDisplayMetrics().density;
+        int maxHeightInPx = (int) (maxHeightInDp * density);
+        layoutParams.height = maxHeightInPx;
+        rvFriends.setLayoutParams(layoutParams);
+
         FriendsAdapter adapter = new FriendsAdapter(friendUsers);
         rvFriends.setAdapter(adapter);
 
