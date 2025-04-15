@@ -3,6 +3,7 @@ package edu.northeastern.guildly;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.ImageButton;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -36,6 +37,8 @@ public class ChatListActivity extends AppCompatActivity {
 
     private DatabaseReference usersRef, chatsRef;
     private String myUserKey;
+    private ImageButton backBtn;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,6 +47,8 @@ public class ChatListActivity extends AppCompatActivity {
 
         recyclerViewChatList = findViewById(R.id.recyclerViewChatList);
         recyclerViewChatList.setLayoutManager(new LinearLayoutManager(this));
+        backBtn = findViewById(R.id.btn_back);
+        backBtn.setOnClickListener(v -> finish());
 
         friendChatList = new ArrayList<>();
 
