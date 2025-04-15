@@ -61,4 +61,12 @@
     <string name="logout">Logout</string>
     <string name="enter_new_email">Enter new email</string>
     <string name="email_settings">Email Settings</string>
+    <string name="_5">5</string>
+    <string name="_12_45_pm">12:45 PM</string>
+    <string name="hey_how_s_it_going">Hey, how’s it going?</string>
+    <string name="friend_name">Friend Name</string>
+    <string name="friend_avatar_2">Friend Avatar</string>
+    <string name="search_chats">Search chats...</string>
+    <string name="direct_messages">Direct Messages</string>
+    <string name="habits_left_for_today">habits left for today</string>
 </resources>
