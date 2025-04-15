@@ -3,6 +3,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/activity_chat_detail"
+    android:background="#F5F5F5"
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
@@ -25,21 +26,25 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:padding="8dp" />
+        android:padding="12dp"
+        android:clipToPadding="false" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:padding="8dp"
-        android:gravity="center_vertical">
+        android:padding="12dp"
+        android:background="@android:color/white"
+        android:gravity="center_vertical"
+        android:elevation="4dp">
 
         <EditText
             android:id="@+id/editTextMessageInput"
             android:layout_width="0dp"
             android:layout_height="40dp"
             android:layout_weight="1"
-            android:hint="Type a message..."
+            android:autofillHints="Message goes here"
+            android:hint="@string/type_a_message"
             android:background="@drawable/bg_edittext_rounded"
             android:paddingHorizontal="12dp"
             android:textColor="#000000"
@@ -51,9 +56,8 @@
             android:layout_width="wrap_content"
             android:layout_height="40dp"
             android:layout_marginStart="8dp"
-            android:text="Send"
+            android:text="@string/send"
             android:textColor="@android:color/white"
-            android:backgroundTint="#7E57C2"
-            android:paddingHorizontal="16dp" />
+            android:backgroundTint="#7E57C2" />
     </LinearLayout>
 </LinearLayout>

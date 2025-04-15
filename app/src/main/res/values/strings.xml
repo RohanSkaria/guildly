@@ -69,4 +69,6 @@
     <string name="search_chats">Search chats...</string>
     <string name="direct_messages">Direct Messages</string>
     <string name="habits_left_for_today">habits left for today</string>
+    <string name="type_a_message">Type a message...</string>
+    <string name="send">Send</string>
 </resources>
