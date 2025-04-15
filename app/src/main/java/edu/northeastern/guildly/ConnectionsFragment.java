@@ -35,8 +35,10 @@ import java.util.List;
 import java.util.Map;
 
 import edu.northeastern.guildly.adapters.ConnectionsAdapter;
+import edu.northeastern.guildly.adapters.LeaderboardAdapter;
 import edu.northeastern.guildly.data.Friend;
 import edu.northeastern.guildly.data.Habit;
+import edu.northeastern.guildly.data.LeaderboardItem;
 import edu.northeastern.guildly.data.User;
 
 public class ConnectionsFragment extends Fragment {
@@ -102,7 +104,7 @@ public class ConnectionsFragment extends Fragment {
         if (myEmail != null) {
             // Existing single-value approach:
             loadMyFriends();
-            // ADDED: Real-time listener so the list updates automatically:
+            // Real-time listener so the list updates automatically:
             attachRealtimeFriendsListener();
         }
 
@@ -110,13 +112,19 @@ public class ConnectionsFragment extends Fragment {
         setupFriendRequestsButton();
         updateFriendRequestsBadge();
 
-        RecyclerView leaderboardRecyclerView = root.findViewById(R.id.leaderboard);
-        leaderboardRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-
+        // -----------------------------------------------------------------------------------
+        // Instead of populating the leaderboard here, we just launch the new LeaderboardActivity
+        // when the "Global Leaderboard" text is clicked (or you can use a button if you wish).
+        // -----------------------------------------------------------------------------------
         TextView globalHeader = root.findViewById(R.id.global_header);
         globalHeader.setText("Global Leaderboard");
 
-        loadLeaderboardData(leaderboardRecyclerView);
+        // Optional: If you had a RecyclerView for the old local leaderboard, you can ignore it
+        // or remove those lines. We'll just set an onClick to open LeaderboardActivity:
+        globalHeader.setOnClickListener(v -> {
+            Intent intent = new Intent(getContext(), LeaderboardActivity.class);
+            startActivity(intent);
+        });
 
         return root;
     }
@@ -150,11 +158,11 @@ public class ConnectionsFragment extends Fragment {
         });
     }
 
+    // ----------------------------------------------------------------------------------------
+    // The old leaderboard methods are still here (unchanged) but no longer called in onCreateView.
+    // ----------------------------------------------------------------------------------------
     private void loadLeaderboardData(RecyclerView leaderboardRecyclerView) {
-        // Example implementation - you'll need to populate with real data based on friend streaks
         List<Friend> friendsList = new ArrayList<>();
-
-        // If you have friends, look up their habit data and add to leaderboard
         if (myFriendsList != null && !myFriendsList.isEmpty()) {
             for (String friendKey : myFriendsList) {
                 usersRef.child(friendKey).addListenerForSingleValueEvent(new ValueEventListener() {
@@ -162,10 +170,7 @@ public class ConnectionsFragment extends Fragment {
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
                         User friendUser = snapshot.getValue(User.class);
                         if (friendUser != null) {
-                            // Get the friend's top habit streak
                             int topStreak = 0;
-
-                            // Look in their habits for the top streak
                             if (snapshot.child("habits").exists()) {
                                 for (DataSnapshot habitSnap : snapshot.child("habits").getChildren()) {
                                     Habit habit = habitSnap.getValue(Habit.class);
@@ -174,8 +179,6 @@ public class ConnectionsFragment extends Fragment {
                                     }
                                 }
                             }
-
-                            // Get profile image resource
                             int profileImageResource;
                             switch (friendUser.profilePicUrl == null ? "" : friendUser.profilePicUrl) {
                                 case "gamer": profileImageResource = R.drawable.gamer; break;
@@ -183,21 +186,16 @@ public class ConnectionsFragment extends Fragment {
                                 case "girl": profileImageResource = R.drawable.girl; break;
                                 default: profileImageResource = R.drawable.unknown_profile; break;
                             }
-
-                            // Add to the leaderboard list
                             friendsList.add(new Friend(
                                     friendUser.username != null ? friendUser.username : "Friend",
                                     topStreak,
                                     profileImageResource
                             ));
-
-                            // Also add the current user to the leaderboard
                             if (friendsList.size() == myFriendsList.size()) {
                                 addCurrentUserToLeaderboard(friendsList, leaderboardRecyclerView);
                             }
                         }
                     }
-
                     @Override
                     public void onCancelled(@NonNull DatabaseError error) {
                         // Handle error
@@ -205,21 +203,17 @@ public class ConnectionsFragment extends Fragment {
                 });
             }
         } else {
-            // No friends, just show the current user
             addCurrentUserToLeaderboard(friendsList, leaderboardRecyclerView);
         }
     }
 
     private void addCurrentUserToLeaderboard(List<Friend> friendsList, RecyclerView leaderboardRecyclerView) {
-        // Add the current user to the leaderboard
         usersRef.child(myUserKey).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 User currentUser = snapshot.getValue(User.class);
                 if (currentUser != null) {
-                    // Get current user's top streak
                     int topStreak = 0;
-
                     if (snapshot.child("habits").exists()) {
                         for (DataSnapshot habitSnap : snapshot.child("habits").getChildren()) {
                             Habit habit = habitSnap.getValue(Habit.class);
@@ -228,8 +222,6 @@ public class ConnectionsFragment extends Fragment {
                             }
                         }
                     }
-
-                    // Get profile image resource
                     int profileImageResource;
                     switch (currentUser.profilePicUrl == null ? "" : currentUser.profilePicUrl) {
                         case "gamer": profileImageResource = R.drawable.gamer; break;
@@ -237,29 +229,37 @@ public class ConnectionsFragment extends Fragment {
                         case "girl": profileImageResource = R.drawable.girl; break;
                         default: profileImageResource = R.drawable.unknown_profile; break;
                     }
-
-                    // Add current user to list
                     friendsList.add(new Friend(
                             currentUser.username != null ? currentUser.username : "Me",
                             topStreak,
                             profileImageResource
                     ));
-
-                    // Sort the list by streak count in descending order
                     Collections.sort(friendsList, (f1, f2) -> Integer.compare(f2.getStreakCount(), f1.getStreakCount()));
 
-                    // Create and set the adapter
-                    LeaderboardAdapter adapter = new LeaderboardAdapter(friendsList);
+// 2) Convert List<Friend> -> List<LeaderboardItem>
+                    List<LeaderboardItem> leaderboardItems = new ArrayList<>();
+                    for (Friend f : friendsList) {
+                        // Create a LeaderboardItem from a Friend
+                        LeaderboardItem item = new LeaderboardItem(
+                                f.getUsername(),          // or f.getUsername()
+                                f.getStreakCount(),       // or however you store the streak
+                                f.getProfileImageResource()
+                        );
+                        leaderboardItems.add(item);
+                    }
+
+// 3) Pass leaderboardItems to LeaderboardAdapter
+                    LeaderboardAdapter adapter = new LeaderboardAdapter(leaderboardItems);
                     leaderboardRecyclerView.setAdapter(adapter);
                 }
             }
-
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
                 // Handle error
             }
         });
     }
+    // ----------------------------------------------------------------------------------------
 
     /**
      * Loads the current user's 'friends' list from DB and updates the RecyclerView.
