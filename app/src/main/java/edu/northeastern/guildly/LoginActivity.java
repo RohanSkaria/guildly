@@ -95,7 +95,9 @@ public class LoginActivity extends AppCompatActivity {
                                 });
                             }
                         } else {
-                            Toast.makeText(LoginActivity.this, "Login failed: " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
+                            Toast.makeText(LoginActivity.this,
+                                    "Login failed: Please check your email and password",
+                                    Toast.LENGTH_LONG).show();
                         }
                     });
         });
