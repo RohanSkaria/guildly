@@ -6,7 +6,9 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -51,6 +53,8 @@ public class HabitSelectionFragment extends Fragment {
         // Required empty public constructor
     }
 
+
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -60,14 +64,30 @@ public class HabitSelectionFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_habit_selection, container, false);
         habitContainer = view.findViewById(R.id.habitContainer);
 
-        // Dynamically create checkboxes for each predefined habit
+
+        habitContainer.removeAllViews();
+
+
         for (Habit predefined : predefinedHabits) {
-            CheckBox checkBox = new CheckBox(getContext());
-            checkBox.setText(predefined.getHabitName());
-            // Store the entire Habit object in the tag
-            checkBox.setTag(predefined);
-            habitContainer.addView(checkBox);
-            habitCheckboxes.add(checkBox);
+
+            View habitItemView = inflater.inflate(R.layout.item_predefined_habit, habitContainer, false);
+
+            ImageView habitIcon = habitItemView.findViewById(R.id.predef_habit_icon);
+            TextView habitName = habitItemView.findViewById(R.id.predef_habit_name);
+            CheckBox habitCheck = habitItemView.findViewById(R.id.predef_habit_check);
+
+
+            habitIcon.setImageResource(predefined.getIconResId());
+            habitName.setText(predefined.getHabitName());
+
+
+            habitCheck.setTag(predefined);
+
+
+            habitCheckboxes.add(habitCheck);
+
+
+            habitContainer.addView(habitItemView);
         }
 
         return view;
