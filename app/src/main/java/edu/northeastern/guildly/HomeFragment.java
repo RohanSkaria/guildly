@@ -10,6 +10,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -222,7 +223,6 @@ public class HomeFragment extends Fragment {
      * The user can re-check which habits they're tracking by a popup with the single adapter in selection mode.
      */
     private void showPredefinedHabitsDialog() {
-
         List<Habit> cloneList = new ArrayList<>();
         for (Habit ph : predefinedHabits) {
             boolean alreadyTracked = false;
@@ -240,10 +240,17 @@ public class HomeFragment extends Fragment {
             newHabit.setTracked(alreadyTracked);
 
             if (alreadyTracked && existingHabit != null) {
+
                 newHabit.setStreakCount(existingHabit.getStreakCount());
                 newHabit.setLastCompletedTime(existingHabit.getLastCompletedTime());
                 newHabit.setCompletedToday(existingHabit.isCompletedToday());
                 newHabit.setNextAvailableTime(existingHabit.getNextAvailableTime());
+            } else {
+
+                newHabit.setStreakCount(0);
+                newHabit.setLastCompletedTime(0);
+                newHabit.setCompletedToday(false);
+                newHabit.setNextAvailableTime(0);
             }
 
             cloneList.add(newHabit);
@@ -254,47 +261,66 @@ public class HomeFragment extends Fragment {
         RecyclerView rv = dialogView.findViewById(R.id.predefinedHabitsRecycler);
         rv.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        HabitAdapter tempAdapter = new HabitAdapter(cloneList, userHabitsRef, /* isSelectionMode= */ true);
+        HabitAdapter tempAdapter = new HabitAdapter(cloneList, userHabitsRef,  true);
         rv.setAdapter(tempAdapter);
 
         new AlertDialog.Builder(requireContext())
                 .setTitle("Select Habits to Track")
                 .setView(dialogView)
                 .setPositiveButton("Done", (dialog, which) -> {
-                    for (Habit h : cloneList) {
-                        DatabaseReference habitRef = userHabitsRef.child(h.getHabitName());
-                        if (h.isTracked()) {
-                            boolean existsInCurrent = false;
-                            Habit existingHabit = null;
+                    try {
+                        for (Habit h : cloneList) {
+                            DatabaseReference habitRef = userHabitsRef.child(h.getHabitName().replace(".", "_"));
+                            if (h.isTracked()) {
+                                boolean existsInCurrent = false;
 
-                            for (Habit current : habitList) {
-                                if (current.getHabitName().equals(h.getHabitName())) {
-                                    existsInCurrent = true;
-                                    existingHabit = current;
-                                    break;
+                                Habit existingHabit = null;
+
+                                for (Habit current : habitList) {
+                                    if (current.getHabitName().equals(h.getHabitName())) {
+                                        existsInCurrent = true;
+                                        existingHabit = current;
+                                        break;
+                                    }
                                 }
-                            }
 
-                            if (existsInCurrent && existingHabit != null) {
-                                habitRef.child("tracked").setValue(true);
+                                if (existsInCurrent && existingHabit != null) {
+
+                                    habitRef.child("tracked").setValue(true);
+                                } else {
+
+                                    habitRef.setValue(h);
+                                }
                             } else {
-                                habitRef.setValue(h);
-                            }
-                        } else {
-                            habitRef.removeValue();
-                        }
-                    }
 
-                    // We still call your old single-value reload:
-                    // (But the real-time manager will also update automatically.)
-                    loadHabitsFromFirebase();
+                                habitRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                                    @Override
+                                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                        if (snapshot.exists()) {
+
+                                            habitRef.child("tracked").setValue(false);
+                                        }
+                                    }
+
+                                    @Override
+                                    public void onCancelled(@NonNull DatabaseError error) {
+                                        Log.e("HomeFragment", "Error checking habit: " + error.getMessage());
+                                    }
+                                });
+                            }
+                        }
+
+
+                        loadHabitsFromFirebase();
+                    } catch (Exception e) {
+                        Log.e("HomeFragment", "Error updating habits: " + e.getMessage());
+                        Toast.makeText(getContext(), "An error occurred while updating habits", Toast.LENGTH_SHORT).show();
+                    }
                 })
-                .setNegativeButton("Cancel", (dialog, which) -> {
-                })
+                .setNegativeButton("Cancel", (dialog, which) -> {})
                 .create()
                 .show();
     }
-
     @SuppressLint("SetTextI18n")
     private void updateStreakText() {
         if (habitList.isEmpty()) {
@@ -310,20 +336,18 @@ public class HomeFragment extends Fragment {
             }
         }
         if (bestStreak > 0 && bestHabitName != null) {
-            // if it's exactly 1 day, show "1 day streak!"
+
             if (bestStreak == 1) {
                 tvStreak.setText(bestStreak + " day streak!");
             }
-            // otherwise just show "X day streak!"
+
             tvStreak.setText(bestStreak + " day streak!");
         } else {
             tvStreak.setText("Start a streak today!");
         }
     }
 
-    // We keep this method so we don't remove anything from your code,
-    // but we are no longer calling it. The actual weekly challenge
-    // is now handled by WeeklyChallengeManager above.
+
     private Habit getWeeklyChallenge() {
         int randomIndex = (int) (Math.random() * weeklyChallengeOptions.size());
         return weeklyChallengeOptions.get(randomIndex);

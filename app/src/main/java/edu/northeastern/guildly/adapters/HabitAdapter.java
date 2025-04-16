@@ -2,6 +2,7 @@ package edu.northeastern.guildly.adapters;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -175,21 +176,28 @@ public class HabitAdapter extends RecyclerView.Adapter<HabitAdapter.ViewHolder> 
             }
         }
 
-        /**
-         * Mark the habit as completed for the day, set streak & 24-hr lock
-         */
         private void handleCompletion(Habit habit) {
             long now = System.currentTimeMillis();
             long oneDay = 24L * 60L * 60L * 1000L;
-            long diff   = now - habit.getLastCompletedTime();
+
+
+            if (habit == null) {
+                Log.e("HabitAdapter", "Attempted to complete a null habit");
+                return;
+            }
+
+            long diff = 0;
+            if (habit.getLastCompletedTime() > 0) {
+                diff = now - habit.getLastCompletedTime();
+            }
 
             if (habit.getLastCompletedTime() == 0) {
                 habit.setStreakCount(1);
             } else if (diff < (oneDay * 2)) {
-                // ~48 hours => increment
+
                 habit.setStreakCount(habit.getStreakCount() + 1);
             } else {
-                // reset
+
                 habit.setStreakCount(1);
             }
 
@@ -197,10 +205,10 @@ public class HabitAdapter extends RecyclerView.Adapter<HabitAdapter.ViewHolder> 
             habit.setCompletedToday(true);
             habit.setNextAvailableTime(now + oneDay);
 
-            // Refresh row
+
             notifyDataSetChanged();
 
-            // Partial update
+
             if (userHabitsRef != null) {
                 Map<String,Object> updates = new HashMap<>();
                 updates.put("tracked", habit.isTracked());
@@ -209,7 +217,11 @@ public class HabitAdapter extends RecyclerView.Adapter<HabitAdapter.ViewHolder> 
                 updates.put("completedToday", habit.isCompletedToday());
                 updates.put("nextAvailableTime", habit.getNextAvailableTime());
 
-                userHabitsRef.child(habit.getHabitName()).updateChildren(updates);
+
+                userHabitsRef.child(habit.getHabitName().replace(".", "_")).updateChildren(updates)
+                        .addOnFailureListener(e -> {
+                            Log.e("HabitAdapter", "Failed to update habit: " + e.getMessage());
+                        });
             }
         }
     }
