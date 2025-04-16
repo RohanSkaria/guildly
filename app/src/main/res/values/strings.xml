@@ -71,4 +71,12 @@
     <string name="habits_left_for_today">habits left for today</string>
     <string name="type_a_message">Type a message...</string>
     <string name="send">Send</string>
+    <string name="connections_allcaps">CONNECTIONS</string>
+    <string name="open_chat_list">Open Chat List</string>
+    <string name="messages">Messages</string>
+    <string name="type_a_friend_s_username">Type a friend\'s username</string>
+    <string name="add_friend">Add Friend</string>
+    <string name="friend_requests">Friend Requests</string>
+    <string name="your_friends">Your Friends</string>
+    <string name="global_leaderboard_conn">Global Leaderboard</string>
 </resources>

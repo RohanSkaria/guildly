@@ -25,7 +25,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:text="GUILDLY"
+                android:text="@string/guildly"
                 android:textColor="@android:color/black"
                 android:textSize="30sp"
                 android:textStyle="bold"
@@ -50,19 +50,36 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="CONNECTIONS"
+            android:text="@string/connections_allcaps"
             android:textSize="24sp"
             android:textStyle="bold"
             android:textColor="#1B1F3B"
             android:fontFamily="@font/montserrat_black" />
 
-        <ImageView
-            android:id="@+id/buttonOpenChatList"
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:src="@drawable/ic_envelope"
-            android:contentDescription="Open Chat List"
-            android:padding="8dp" />
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            tools:ignore="UseCompoundDrawables">
+
+            <ImageView
+                android:id="@+id/buttonOpenChatList"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_envelope"
+                android:contentDescription="@string/open_chat_list"
+                android:padding="5dp" />
+
+            <TextView
+                android:id="@+id/chatListLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/messages"
+                android:textStyle="bold"
+                android:textSize="12sp" />
+        </LinearLayout>
+
 
     </LinearLayout>
 
@@ -82,7 +99,7 @@
             android:id="@+id/editTextFriendUsername"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Type a friend's username"
+            android:hint="@string/type_a_friend_s_username"
             android:padding="12dp"
             android:background="@android:color/transparent"
             android:textColorHint="#888"
@@ -105,7 +122,7 @@
             android:id="@+id/buttonAddFriend"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Add Friend"
+            android:text="@string/add_friend"
             android:textColor="@android:color/white"
             android:textSize="12sp"
             android:fontFamily="@font/montserrat_black"
@@ -119,7 +136,7 @@
                 android:id="@+id/buttonFriendRequests"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Friend Requests"
+                android:text="@string/friend_requests"
                 android:textColor="@android:color/white"
                 android:textSize="12sp"
                 android:fontFamily="@font/montserrat_black"
@@ -146,7 +163,7 @@
         android:id="@+id/friends_section_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Your Friends"
+        android:text="@string/your_friends"
         android:textSize="20sp"
         android:textColor="#1B1F3B"
         android:fontFamily="@font/montserrat_black"
@@ -168,7 +185,7 @@
         android:id="@+id/global_header"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Global Leaderboard"
+        android:text="@string/global_leaderboard_conn"
         android:textSize="20sp"
         android:textColor="#1B1F3B"
         android:fontFamily="@font/montserrat_black"
