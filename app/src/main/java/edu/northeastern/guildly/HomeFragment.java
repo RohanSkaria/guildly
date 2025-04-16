@@ -44,7 +44,7 @@ import edu.northeastern.guildly.WeeklyChallengeManager;
  */
 public class HomeFragment extends Fragment {
 
-    private TextView tvUserName, tvStreak, tvWeeklyChallenge;
+    private TextView tvUserName, tvStreak, tvWeeklyChallenge, tvHabitsCount;
     private ImageView weeeklyChallengeIcon;
     private RecyclerView habitRecyclerView, friendsLeaderboard;
     private Button btnAddHabit;
@@ -99,6 +99,7 @@ public class HomeFragment extends Fragment {
         tvWeeklyChallenge = view.findViewById(R.id.weekly_challenge_text);
         weeeklyChallengeIcon = view.findViewById(R.id.weekly_challenge_icon);
         friendsLeaderboard = view.findViewById(R.id.friendsleaderboard);
+        tvHabitsCount = view.findViewById(R.id.habits_count);
 
         // -----------------------------------------------------------------------------------------
         // REPLACE THE OLD HARDCODED RANDOM CHALLENGE LOGIC WITH WeeklyChallengeManager
@@ -168,6 +169,7 @@ public class HomeFragment extends Fragment {
                     }
                     habitAdapter.notifyDataSetChanged();
                     updateStreakText();
+                    updateHabitsCountText();
                 }
             });
         }
@@ -214,6 +216,7 @@ public class HomeFragment extends Fragment {
                 }
                 habitAdapter.notifyDataSetChanged();
                 updateStreakText();
+                updateHabitsCountText();
             }
             @Override
             public void onCancelled(@NonNull DatabaseError error) { }
@@ -349,6 +352,25 @@ public class HomeFragment extends Fragment {
     }
 
     // TODO: add top three friends laederboard here, using var friendsLeaderboard
+
+
+    // for updating the habit count left to complete text
+    private void updateHabitsCountText() {
+        int incompleteCount = 0;
+        for (Habit h : habitList) {
+            if (!h.isCompletedToday()) {
+                incompleteCount++;
+            }
+        }
+
+
+        if (incompleteCount == 0) {
+            tvHabitsCount.setText("🎉 All habits done! You're crushing it!");
+        } else {
+            tvHabitsCount.setText(incompleteCount + " habit" + (incompleteCount == 1 ? "" : "s") + " left today to complete");
+        }
+    }
+
 
 
     private Habit getWeeklyChallenge() {
