@@ -79,4 +79,5 @@
     <string name="friend_requests">Friend Requests</string>
     <string name="your_friends">Your Friends</string>
     <string name="global_leaderboard_conn">Global Leaderboard</string>
+    <string name="friends">Friends</string>
 </resources>

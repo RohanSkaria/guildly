@@ -46,7 +46,7 @@ public class HomeFragment extends Fragment {
 
     private TextView tvUserName, tvStreak, tvWeeklyChallenge;
     private ImageView weeeklyChallengeIcon;
-    private RecyclerView habitRecyclerView;
+    private RecyclerView habitRecyclerView, friendsLeaderboard;
     private Button btnAddHabit;
 
     private HabitAdapter habitAdapter, weeklyHabitAdapter;
@@ -98,6 +98,7 @@ public class HomeFragment extends Fragment {
         btnAddHabit = view.findViewById(R.id.btn_add_habit);
         tvWeeklyChallenge = view.findViewById(R.id.weekly_challenge_text);
         weeeklyChallengeIcon = view.findViewById(R.id.weekly_challenge_icon);
+        friendsLeaderboard = view.findViewById(R.id.friendsleaderboard);
 
         // -----------------------------------------------------------------------------------------
         // REPLACE THE OLD HARDCODED RANDOM CHALLENGE LOGIC WITH WeeklyChallengeManager
@@ -346,6 +347,8 @@ public class HomeFragment extends Fragment {
             tvStreak.setText("Start a streak today!");
         }
     }
+
+    // TODO: add top three friends laederboard here, using var friendsLeaderboard
 
 
     private Habit getWeeklyChallenge() {
