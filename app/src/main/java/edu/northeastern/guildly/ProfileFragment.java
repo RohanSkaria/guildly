@@ -31,7 +31,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 import edu.northeastern.guildly.R;
@@ -350,86 +352,163 @@ public class ProfileFragment extends Fragment {
         chatsRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                // same logic from your original
-                // ...
-                // sort, etc.
-                // ...
-            }
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                // ...
-            }
-        });
-    }
+                // Create a map of friendKey -> lastMessageTimestamp
+                Map<String, Long> friendLastMessageMap = new HashMap<>();
 
-    private void hideFriendSlot(int i) {
-        if (i == 0) {
-            friendOne.setVisibility(View.GONE);
-            friendOneName.setVisibility(View.GONE);
-        } else if (i == 1) {
-            friendTwo.setVisibility(View.GONE);
-            friendTwoName.setVisibility(View.GONE);
-        } else {
-            friendThree.setVisibility(View.GONE);
-            friendThreeName.setVisibility(View.GONE);
-        }
-    }
+                // For each chat
+                for (DataSnapshot chatSnap : snapshot.getChildren()) {
+                    Chats chatObj = chatSnap.getValue(Chats.class);
+                    if (chatObj == null || chatObj.participants == null) continue;
 
-    private void showFriendSlot(int i, String friendKey) {
-        DatabaseReference friendRef = FirebaseDatabase.getInstance()
-                .getReference("users")
-                .child(friendKey);
+                    // If the current user is a participant
+                    if (chatObj.participants.contains(myUserKey)) {
+                        // Find which participant is the friend
+                        String friendKey = null;
+                        for (String participant : chatObj.participants) {
+                            if (!participant.equals(myUserKey) && friendKeys.contains(participant)) {
+                                friendKey = participant;
+                                break;
+                            }
+                        }
 
-        friendRef.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                User friendUser = snapshot.getValue(User.class);
-                if (friendUser == null) {
+                        // If found a friend and there are messages
+                        if (friendKey != null && chatObj.messages != null && !chatObj.messages.isEmpty()) {
+                            // Find the most recent message timestamp
+                            long maxTime = -1;
+                            for (Map.Entry<String, Message> entry : chatObj.messages.entrySet()) {
+                                Message msg = entry.getValue();
+                                if (msg.timestamp > maxTime) {
+                                    maxTime = msg.timestamp;
+                                }
+                            }
+
+                            // Store the max timestamp for this friend
+                            if (maxTime > -1) {
+                                if (friendLastMessageMap.containsKey(friendKey)) {
+                                    if (maxTime > friendLastMessageMap.get(friendKey)) {
+                                        friendLastMessageMap.put(friendKey, maxTime);
+                                    }
+                                } else {
+                                    friendLastMessageMap.put(friendKey, maxTime);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Sort by timestamp (most recent first)
+                List<Map.Entry<String, Long>> sortedFriends = new ArrayList<>(friendLastMessageMap.entrySet());
+                Collections.sort(sortedFriends, (e1, e2) -> Long.compare(e2.getValue(), e1.getValue()));
+
+                // Get ordered friend keys
+                List<String> orderedFriends = new ArrayList<>();
+                for (Map.Entry<String, Long> entry : sortedFriends) {
+                    orderedFriends.add(entry.getKey());
+                }
+
+                // Add any friends who don't have messages yet
+                for (String friendKey : friendKeys) {
+                    if (!orderedFriends.contains(friendKey)) {
+                        orderedFriends.add(friendKey);
+                    }
+                }
+
+                // Display up to 3 friends
+                for (int i = 0; i < 3 && i < orderedFriends.size(); i++) {
+                    showFriendSlot(i, orderedFriends.get(i));
+                }
+
+                // Hide any unused slots
+                for (int i = orderedFriends.size(); i < 3; i++) {
                     hideFriendSlot(i);
-                    return;
                 }
+            }
 
-                CircleImageView friendImg;
-                TextView friendNameTxt;
+
+            private void hideFriendSlot(int i) {
                 if (i == 0) {
-                    friendImg = friendOne;
-                    friendNameTxt = friendOneName;
+                    friendOne.setVisibility(View.GONE);
+                    friendOneName.setVisibility(View.GONE);
                 } else if (i == 1) {
-                    friendImg = friendTwo;
-                    friendNameTxt = friendTwoName;
+                    friendTwo.setVisibility(View.GONE);
+                    friendTwoName.setVisibility(View.GONE);
                 } else {
-                    friendImg = friendThree;
-                    friendNameTxt = friendThreeName;
+                    friendThree.setVisibility(View.GONE);
+                    friendThreeName.setVisibility(View.GONE);
                 }
+            }
 
-                friendImg.setVisibility(View.VISIBLE);
-                friendNameTxt.setVisibility(View.VISIBLE);
+            private void showFriendSlot(int i, String friendKey) {
+                DatabaseReference friendRef = FirebaseDatabase.getInstance()
+                        .getReference("users")
+                        .child(friendKey);
 
-                String uname = !TextUtils.isEmpty(friendUser.username)
-                        ? friendUser.username : "Friend";
-                friendNameTxt.setText(uname);
+                friendRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        User friendUser = snapshot.getValue(User.class);
+                        if (friendUser == null) {
+                            hideFriendSlot(i);
+                            return;
+                        }
 
-                // Avatar - Make sure this section works properly
-                int resourceId;
-                if ("gamer".equals(friendUser.profilePicUrl)) {
-                    resourceId = R.drawable.gamer;
-                } else if ("man".equals(friendUser.profilePicUrl)) {
-                    resourceId = R.drawable.man;
-                } else if ("girl".equals(friendUser.profilePicUrl)) {
-                    resourceId = R.drawable.girl;
-                } else {
-                    resourceId = R.drawable.unknown_profile;
-                }
-                friendImg.setImageResource(resourceId);
+                        CircleImageView friendImg;
+                        TextView friendNameTxt;
+                        if (i == 0) {
+                            friendImg = friendOne;
+                            friendNameTxt = friendOneName;
+                        } else if (i == 1) {
+                            friendImg = friendTwo;
+                            friendNameTxt = friendTwoName;
+                        } else {
+                            friendImg = friendThree;
+                            friendNameTxt = friendThreeName;
+                        }
+
+                        friendImg.setVisibility(View.VISIBLE);
+                        friendNameTxt.setVisibility(View.VISIBLE);
+
+                        String uname = !TextUtils.isEmpty(friendUser.username)
+                                ? friendUser.username : "Friend";
+                        friendNameTxt.setText(uname);
+
+                        // Avatar
+                        int resourceId;
+                        if ("gamer".equals(friendUser.profilePicUrl)) {
+                            resourceId = R.drawable.gamer;
+                        } else if ("man".equals(friendUser.profilePicUrl)) {
+                            resourceId = R.drawable.man;
+                        } else if ("girl".equals(friendUser.profilePicUrl)) {
+                            resourceId = R.drawable.girl;
+                        } else {
+                            resourceId = R.drawable.unknown_profile;
+                        }
+                        friendImg.setImageResource(resourceId);
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        hideFriendSlot(i);
+                    }
+                });
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                hideFriendSlot(i);
+                Log.e("ProfileFragment", "Error loading chat history", error.toException());
+
+                // Fallback: just show friends without sorting by recency
+                for (int i = 0; i < 3 && i < friendKeys.size(); i++) {
+                    showFriendSlot(i, friendKeys.get(i));
+                }
+
+                // Hide any unused slots
+                for (int i = friendKeys.size(); i < 3; i++) {
+                    hideFriendSlot(i);
+                }
             }
         });
     }
-
     // ---------------------------------------------------------
     //  ADDED: load user’s current habits into habitList once
     // ---------------------------------------------------------
