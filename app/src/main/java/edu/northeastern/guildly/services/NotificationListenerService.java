@@ -2,7 +2,6 @@ package edu.northeastern.guildly.services;
 
 import android.app.Service;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.IBinder;
 import android.util.Log;
 
@@ -21,8 +20,6 @@ import edu.northeastern.guildly.MainActivity;
 public class NotificationListenerService extends Service {
 
     private static final String TAG = "NotifListenerService";
-    private static final String PREFS_NAME = "NotifiedPrefs";
-    private static final String PREFS_KEY_PREFIX = "notified_";
 
     private DatabaseReference notificationsRef;
     private DatabaseReference friendRequestsRef;
@@ -90,29 +87,27 @@ public class NotificationListenerService extends Service {
                 String requesterKey = snapshot.getKey();
                 String status = snapshot.getValue(String.class);
                 if ("pending".equals(status)) {
-                    SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
-                    String prefKey = PREFS_KEY_PREFIX + requesterKey;
-                    boolean alreadyNotified = prefs.getBoolean(prefKey, false);
-                    if (!alreadyNotified) {
-                        FirebaseDatabase.getInstance().getReference("users").child(requesterKey)
-                                .child("username").addListenerForSingleValueEvent(new ValueEventListener() {
-                                    @Override
-                                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                                        String username = dataSnapshot.getValue(String.class);
-                                        if (username != null) {
-                                            NotificationService.showFriendRequestNotification(getApplicationContext(), username);
-                                            prefs.edit().putBoolean(prefKey, true).apply();
-                                        }
+                    FirebaseDatabase.getInstance().getReference("users").child(requesterKey)
+                            .child("username").addListenerForSingleValueEvent(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                                    String username = dataSnapshot.getValue(String.class);
+                                    if (username != null) {
+                                        NotificationService.showFriendRequestNotification(getApplicationContext(), username);
                                     }
-                                    @Override public void onCancelled(@NonNull DatabaseError error) {}
-                                });
-                    }
+                                }
+                                @Override public void onCancelled(@NonNull DatabaseError error) {}
+                            });
                 }
             }
-            @Override public void onChildChanged(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {}
-            @Override public void onChildRemoved(@NonNull DataSnapshot snapshot) {}
-            @Override public void onChildMoved(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {}
-            @Override public void onCancelled(@NonNull DatabaseError error) {
+            @Override
+            public void onChildChanged(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {}
+            @Override
+            public void onChildRemoved(@NonNull DataSnapshot snapshot) {}
+            @Override
+            public void onChildMoved(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {}
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
                 Log.e(TAG, "FriendRequest listener cancelled", error.toException());
             }
         };
