@@ -375,7 +375,58 @@ public class ProfileFragment extends Fragment {
     }
 
     private void showFriendSlot(int i, String friendKey) {
-        // same as your original
+        DatabaseReference friendRef = FirebaseDatabase.getInstance()
+                .getReference("users")
+                .child(friendKey);
+
+        friendRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                User friendUser = snapshot.getValue(User.class);
+                if (friendUser == null) {
+                    hideFriendSlot(i);
+                    return;
+                }
+
+                CircleImageView friendImg;
+                TextView friendNameTxt;
+                if (i == 0) {
+                    friendImg = friendOne;
+                    friendNameTxt = friendOneName;
+                } else if (i == 1) {
+                    friendImg = friendTwo;
+                    friendNameTxt = friendTwoName;
+                } else {
+                    friendImg = friendThree;
+                    friendNameTxt = friendThreeName;
+                }
+
+                friendImg.setVisibility(View.VISIBLE);
+                friendNameTxt.setVisibility(View.VISIBLE);
+
+                String uname = !TextUtils.isEmpty(friendUser.username)
+                        ? friendUser.username : "Friend";
+                friendNameTxt.setText(uname);
+
+                // Avatar - Make sure this section works properly
+                int resourceId;
+                if ("gamer".equals(friendUser.profilePicUrl)) {
+                    resourceId = R.drawable.gamer;
+                } else if ("man".equals(friendUser.profilePicUrl)) {
+                    resourceId = R.drawable.man;
+                } else if ("girl".equals(friendUser.profilePicUrl)) {
+                    resourceId = R.drawable.girl;
+                } else {
+                    resourceId = R.drawable.unknown_profile;
+                }
+                friendImg.setImageResource(resourceId);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                hideFriendSlot(i);
+            }
+        });
     }
 
     // ---------------------------------------------------------
@@ -678,7 +729,6 @@ public class ProfileFragment extends Fragment {
                 startActivity(new Intent(getActivity(), SettingsActivity.class)));
     }
 
-
     private void showFriendsWithActionsDialog() {
         userRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
@@ -690,34 +740,46 @@ public class ProfileFragment extends Fragment {
                     return;
                 }
 
-                // Create and show dialog with friends list
+                // Create dialog view
                 View dialogView = LayoutInflater.from(getContext())
                         .inflate(R.layout.dialog_all_friends_actions, null);
 
                 RecyclerView rvFriends = dialogView.findViewById(R.id.recyclerViewAllFriends);
                 rvFriends.setLayoutManager(new LinearLayoutManager(getContext()));
 
-                // Create adapter with click listeners
-                AllFriendsActionsAdapter adapter = new AllFriendsActionsAdapter(
+                // Set max height (optional)
+                int maxHeightInDp = 400;
+                float density = getResources().getDisplayMetrics().density;
+                int maxHeightInPx = (int) (maxHeightInDp * density);
+                rvFriends.getLayoutParams().height = maxHeightInPx;
+
+
+                FriendsDialogAdapter adapter = new FriendsDialogAdapter(
                         me.friends,
-                        // onProfileClicked
-                        friendKey -> {
-                            // Cast to AppCompatActivity
-                            if (getActivity() instanceof AppCompatActivity) {
-                                FriendProfileActivity.openProfile((AppCompatActivity) getActivity(), friendKey);
+                        new FriendsDialogAdapter.OnFriendActionListener() {
+                            @Override
+                            public void onProfileClick(String friendKey) {
+                                if (getActivity() instanceof AppCompatActivity) {
+                                    FriendProfileActivity.openProfile(
+                                            (AppCompatActivity) getActivity(), friendKey);
+                                }
                             }
-                        },
-                        // onMessageClicked
-                        friendKey -> {
-                            findOrCreateChatThenOpen(friendKey);
-                        },
-                        // onDeleteClicked
-                        friendKey -> {
-                            confirmDeleteFriend(friendKey);
+
+                            @Override
+                            public void onMessageClick(String friendKey) {
+                                findOrCreateChatThenOpen(friendKey);
+                            }
+
+                            @Override
+                            public void onDeleteClick(String friendKey) {
+                                confirmDeleteFriend(friendKey);
+                            }
                         }
                 );
+
                 rvFriends.setAdapter(adapter);
 
+                // Show the dialog
                 AlertDialog dialog = new AlertDialog.Builder(requireContext())
                         .setTitle("My Friends")
                         .setView(dialogView)
@@ -733,6 +795,7 @@ public class ProfileFragment extends Fragment {
             }
         });
     }
+
     private void showEditAboutMeDialog() {
         View dialogView = LayoutInflater.from(getContext())
                 .inflate(R.layout.dialog_edit_about_me, null);
