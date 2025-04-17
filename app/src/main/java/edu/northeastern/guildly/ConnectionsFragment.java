@@ -72,9 +72,18 @@ public class ConnectionsFragment extends Fragment {
         // 1) Envelope Icon
         ImageView envelopeIcon = root.findViewById(R.id.buttonOpenChatList);
         envelopeIcon.setOnClickListener(v -> {
-            // Start ChatListActivity
+            // --------------------------- FIX STARTS HERE ---------------------------
+            if (myUserKey == null || "NO_USER_KEY".equals(myUserKey)) {
+                Toast.makeText(requireContext(),
+                        "No valid user key found. Please log in again.",
+                        Toast.LENGTH_SHORT).show();
+                return;
+            }
+            // Pass the user key to ChatListActivity
             Intent intent = new Intent(getContext(), ChatListActivity.class);
+            intent.putExtra("myUserKey", myUserKey);
             startActivity(intent);
+            // --------------------------- FIX ENDS HERE -----------------------------
         });
 
         // The rest of your existing code:
@@ -113,14 +122,10 @@ public class ConnectionsFragment extends Fragment {
         updateFriendRequestsBadge();
 
         // -----------------------------------------------------------------------------------
-        // Instead of populating the leaderboard here, we just launch the new LeaderboardActivity
-        // when the "Global Leaderboard" text is clicked (or you can use a button if you wish).
+        // Launch the LeaderboardActivity when the "Global Leaderboard" text is clicked.
         // -----------------------------------------------------------------------------------
         TextView globalHeader = root.findViewById(R.id.global_header);
         globalHeader.setText("Global Leaderboard");
-
-        // Optional: If you had a RecyclerView for the old local leaderboard, you can ignore it
-        // or remove those lines. We'll just set an onClick to open LeaderboardActivity:
         globalHeader.setOnClickListener(v -> {
             Intent intent = new Intent(getContext(), LeaderboardActivity.class);
             startActivity(intent);
@@ -159,7 +164,7 @@ public class ConnectionsFragment extends Fragment {
     }
 
     // ----------------------------------------------------------------------------------------
-    // The old leaderboard methods are still here (unchanged) but no longer called in onCreateView.
+    // The old leaderboard methods remain here for reference. They’re not critical for the fix.
     // ----------------------------------------------------------------------------------------
     private void loadLeaderboardData(RecyclerView leaderboardRecyclerView) {
         List<Friend> friendsList = new ArrayList<>();
@@ -236,19 +241,19 @@ public class ConnectionsFragment extends Fragment {
                     ));
                     Collections.sort(friendsList, (f1, f2) -> Integer.compare(f2.getStreakCount(), f1.getStreakCount()));
 
-// 2) Convert List<Friend> -> List<LeaderboardItem>
+                    // 2) Convert List<Friend> -> List<LeaderboardItem>
                     List<LeaderboardItem> leaderboardItems = new ArrayList<>();
                     for (Friend f : friendsList) {
                         // Create a LeaderboardItem from a Friend
                         LeaderboardItem item = new LeaderboardItem(
-                                f.getUsername(),          // or f.getUsername()
-                                f.getStreakCount(),       // or however you store the streak
+                                f.getUsername(),
+                                f.getStreakCount(),
                                 f.getProfileImageResource()
                         );
                         leaderboardItems.add(item);
                     }
 
-// 3) Pass leaderboardItems to LeaderboardAdapter
+                    // 3) Pass leaderboardItems to LeaderboardAdapter
                     LeaderboardAdapter adapter = new LeaderboardAdapter(leaderboardItems);
                     leaderboardRecyclerView.setAdapter(adapter);
                 }
@@ -355,8 +360,6 @@ public class ConnectionsFragment extends Fragment {
      */
     private void sendFriendRequest(String targetUserKey) {
         DatabaseReference targetUserRef = usersRef.child(targetUserKey);
-        final int[] resultCode = {0}; // 0: success, 1: already friends, 2: already requested
-
         targetUserRef.runTransaction(new Transaction.Handler() {
             @NonNull
             @Override
@@ -365,50 +368,42 @@ public class ConnectionsFragment extends Fragment {
                 if (targetUser == null) {
                     return Transaction.success(currentData);
                 }
-
                 if (targetUser.friendRequests == null) {
                     targetUser.friendRequests = new HashMap<>();
                 }
-
-                if (targetUser.friends != null && targetUser.friends.contains(myUserKey)) {
-                    resultCode[0] = 1;
-                    return Transaction.abort();
-                }
-
                 String status = targetUser.friendRequests.get(myUserKey);
                 if ("pending".equals(status)) {
-                    resultCode[0] = 2;
-                    return Transaction.abort();
+                    // already requested
+                    return Transaction.success(currentData);
                 }
-
                 targetUser.friendRequests.put(myUserKey, "pending");
                 currentData.setValue(targetUser);
                 return Transaction.success(currentData);
             }
-
             @Override
             public void onComplete(@Nullable DatabaseError error,
                                    boolean committed,
                                    @Nullable DataSnapshot currentData) {
                 if (error != null) {
-                    Toast.makeText(getContext(), "Error sending request", Toast.LENGTH_LONG).show();
+                    Log.e("ConnectionsFragment",
+                            "sendFriendRequest error", error.toException());
+                    Toast.makeText(getContext(),
+                            "Error sending request: " + error.getMessage(),
+                            Toast.LENGTH_LONG).show();
                 } else if (!committed) {
-                    if (resultCode[0] == 1) {
-                        Toast.makeText(getContext(), "You're already friends", Toast.LENGTH_SHORT).show();
-                    } else if (resultCode[0] == 2) {
-                        Toast.makeText(getContext(), "Friend request already sent", Toast.LENGTH_SHORT).show();
-                    } else {
-                        Toast.makeText(getContext(), "Request not committed", Toast.LENGTH_SHORT).show();
-                    }
+                    Toast.makeText(getContext(),
+                            "Request not committed",
+                            Toast.LENGTH_SHORT).show();
                 } else {
-                    Toast.makeText(getContext(), "Friend request sent!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(),
+                            "Friend request sent!",
+                            Toast.LENGTH_SHORT).show();
+                    // Update badge
                     updateFriendRequestsBadge();
                 }
             }
         });
     }
-
-
 
     /**
      * Set up the "Friend Requests" button to show a popup listing pending requests.

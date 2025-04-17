@@ -1,6 +1,5 @@
 package edu.northeastern.guildly;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.ImageButton;
@@ -27,7 +26,6 @@ import edu.northeastern.guildly.adapters.ChatListAdapter;
 import edu.northeastern.guildly.data.Chats;
 import edu.northeastern.guildly.data.FriendChatItem;
 import edu.northeastern.guildly.data.Message;
-import edu.northeastern.guildly.data.User;
 
 public class ChatListActivity extends AppCompatActivity {
 
@@ -39,7 +37,6 @@ public class ChatListActivity extends AppCompatActivity {
     private String myUserKey;
     private ImageButton backBtn;
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -47,20 +44,27 @@ public class ChatListActivity extends AppCompatActivity {
 
         recyclerViewChatList = findViewById(R.id.recyclerViewChatList);
         recyclerViewChatList.setLayoutManager(new LinearLayoutManager(this));
+
         backBtn = findViewById(R.id.btn_back);
         backBtn.setOnClickListener(v -> finish());
 
         friendChatList = new ArrayList<>();
-
         chatListAdapter = new ChatListAdapter(friendChatList, item -> {
             if (item.chatId != null) {
-                ChatDetailActivity.openChatDetail(ChatListActivity.this, item.chatId, item.friendUsername);
+                // If an existing chatId, go to detail
+                ChatDetailActivity.openChatDetail(
+                        ChatListActivity.this,
+                        item.chatId,
+                        item.friendUsername
+                );
             } else {
+                // Otherwise create a new chat
                 createNewChat(item.friendKey, item.friendUsername);
             }
         });
         recyclerViewChatList.setAdapter(chatListAdapter);
 
+        // Get current user key
         String myEmail = MainActivity.currentUserEmail;
         if (myEmail == null) {
             Toast.makeText(this, "No user logged in", Toast.LENGTH_SHORT).show();
@@ -69,6 +73,7 @@ public class ChatListActivity extends AppCompatActivity {
         }
         myUserKey = myEmail.replace(".", ",");
 
+        // Firebase references
         usersRef = FirebaseDatabase.getInstance().getReference("users");
         chatsRef = FirebaseDatabase.getInstance().getReference("chats");
 
@@ -81,6 +86,9 @@ public class ChatListActivity extends AppCompatActivity {
         chatListAdapter.notifyDataSetChanged();
     }
 
+    /**
+     * Load the friend list of the current user.
+     */
     private void loadAllMyFriends() {
         usersRef.child(myUserKey).child("friends")
                 .addListenerForSingleValueEvent(new ValueEventListener() {
@@ -91,8 +99,11 @@ public class ChatListActivity extends AppCompatActivity {
                             List<String> friendKeys = new ArrayList<>();
                             for (DataSnapshot ds : snapshot.getChildren()) {
                                 String friendKey = ds.getValue(String.class);
-                                if (friendKey != null) {
+                                // --- IMPORTANT NULL CHECK ---
+                                if (friendKey != null && !friendKey.trim().isEmpty()) {
                                     friendKeys.add(friendKey);
+                                } else {
+                                    Log.e("ChatListActivity", "Skipped a null/empty friendKey");
                                 }
                             }
                             fetchFriendData(friendKeys);
@@ -102,11 +113,15 @@ public class ChatListActivity extends AppCompatActivity {
                     }
                     @Override
                     public void onCancelled(@NonNull DatabaseError error) {
-                        Log.e("ChatListActivity", "loadAllMyFriends cancelled", error.toException());
+                        Log.e("ChatListActivity",
+                                "loadAllMyFriends cancelled", error.toException());
                     }
                 });
     }
 
+    /**
+     * For each friendKey, fetch that friend's username.
+     */
     private void fetchFriendData(List<String> friendKeys) {
         if (friendKeys.isEmpty()) {
             chatListAdapter.notifyDataSetChanged();
@@ -114,25 +129,46 @@ public class ChatListActivity extends AppCompatActivity {
         }
 
         for (String friendKey : friendKeys) {
+            // If friendKey is null, skip it (extra protection)
+            if (friendKey == null) {
+                Log.e("ChatListActivity", "friendKey was null. Skipping...");
+                continue;
+            }
+
             usersRef.child(friendKey).child("username")
                     .addListenerForSingleValueEvent(new ValueEventListener() {
                         @Override
                         public void onDataChange(@NonNull DataSnapshot snapshot) {
                             String friendUsername = snapshot.getValue(String.class);
-                            if (friendUsername == null) {
+
+                            // If username was never set, default to friendKey
+                            if (friendUsername == null || friendUsername.trim().isEmpty()) {
                                 friendUsername = friendKey;
                             }
+                            // Now find if there's an existing chat between me & friend
                             findExistingChat(friendKey, friendUsername);
                         }
+
                         @Override
                         public void onCancelled(@NonNull DatabaseError error) {
-                            Log.e("ChatListActivity", "fetchFriendData cancelled", error.toException());
+                            Log.e("ChatListActivity",
+                                    "fetchFriendData cancelled", error.toException());
                         }
                     });
         }
     }
 
+    /**
+     * Look through all chats to find one that has exactly these two participants:
+     * myUserKey and friendKey. If found, use that chatId; else it's null.
+     */
     private void findExistingChat(String friendKey, String friendUsername) {
+        if (friendKey == null) {
+            // Double check at runtime
+            Log.e("ChatListActivity", "findExistingChat called with null friendKey?");
+            return;
+        }
+
         chatsRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -141,22 +177,25 @@ public class ChatListActivity extends AppCompatActivity {
                 int lastMsgIcon = -1;
                 String timestamp = "";
 
+                // Loop all chats
                 for (DataSnapshot chatSnap : snapshot.getChildren()) {
                     Chats chatObj = chatSnap.getValue(Chats.class);
-                    if (chatObj == null || chatObj.participants == null) continue;
-
+                    if (chatObj == null || chatObj.participants == null) {
+                        continue;
+                    }
+                    // If chat has exactly 2 participants: me & friend
                     if (chatObj.participants.size() == 2
                             && chatObj.participants.contains(myUserKey)
                             && chatObj.participants.contains(friendKey)) {
 
                         existingChatId = chatObj.chatId;
-
+                        // Find the last message (if any)
                         if (chatObj.messages != null && !chatObj.messages.isEmpty()) {
                             Message lastMsg = findLastMessage(chatObj);
                             if (lastMsg != null) {
                                 lastMessageText = lastMsg.content;
                                 timestamp = formatTimestamp(lastMsg.timestamp);
-
+                                // Example logic for icons
                                 if (lastMsg.senderId.equals(myUserKey)) {
                                     if ("SENT".equals(lastMsg.status)) {
                                         lastMsgIcon = R.drawable.ic_msg_solid;
@@ -172,10 +211,12 @@ public class ChatListActivity extends AppCompatActivity {
                                 }
                             }
                         }
+                        // Once we find a matching chat, break out
                         break;
                     }
                 }
 
+                // Create the FriendChatItem (only if friendKey != null)
                 FriendChatItem item = new FriendChatItem(
                         friendKey,
                         friendUsername,
@@ -190,11 +231,15 @@ public class ChatListActivity extends AppCompatActivity {
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                Log.e("ChatListActivity", "findExistingChat cancelled", error.toException());
+                Log.e("ChatListActivity",
+                        "findExistingChat cancelled", error.toException());
             }
         });
     }
 
+    /**
+     * Utility: find the message with the largest timestamp in the chat.
+     */
     private Message findLastMessage(Chats chatObj) {
         long maxTime = -1;
         Message latestMsg = null;
@@ -207,12 +252,24 @@ public class ChatListActivity extends AppCompatActivity {
         return latestMsg;
     }
 
+    /**
+     * Convert a millisecond timestamp to "hh:mm a" format (e.g. "01:34 PM")
+     */
     private String formatTimestamp(long millis) {
         SimpleDateFormat sdf = new SimpleDateFormat("hh:mm a", Locale.getDefault());
         return sdf.format(new Date(millis));
     }
 
+    /**
+     * Create a new chat (if none exists) and jump into ChatDetailActivity.
+     */
     private void createNewChat(String friendKey, String friendUsername) {
+        if (friendKey == null) {
+            Toast.makeText(this,
+                    "Cannot start chat: friend key is null.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         String newChatId = chatsRef.push().getKey();
         if (newChatId == null) {
             Toast.makeText(this, "Error creating chat", Toast.LENGTH_SHORT).show();
@@ -227,7 +284,11 @@ public class ChatListActivity extends AppCompatActivity {
         newChat.participants = parts;
 
         chatsRef.child(newChatId).setValue(newChat)
-                .addOnSuccessListener(aVoid -> ChatDetailActivity.openChatDetail(ChatListActivity.this, newChatId, friendUsername))
+                .addOnSuccessListener(aVoid -> ChatDetailActivity.openChatDetail(
+                        ChatListActivity.this,
+                        newChatId,
+                        friendUsername)
+                )
                 .addOnFailureListener(e -> {
                     Log.e("ChatListActivity", "createNewChat failed", e);
                     Toast.makeText(ChatListActivity.this,

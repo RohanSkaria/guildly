@@ -1,5 +1,6 @@
 package edu.northeastern.guildly.adapters;
 
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -24,6 +25,7 @@ import edu.northeastern.guildly.R;
 import edu.northeastern.guildly.data.FriendChatItem;
 import edu.northeastern.guildly.data.Message;
 import edu.northeastern.guildly.data.User;
+import edu.northeastern.guildly.MainActivity;
 
 public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ViewHolder> {
 
@@ -31,15 +33,21 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ViewHo
         void onChatClicked(FriendChatItem item);
     }
 
-    private List<FriendChatItem> friendChatList;
-    private OnFriendChatClick listener;
-    private String currentUserId;
+    private final List<FriendChatItem> friendChatList;
+    private final OnFriendChatClick listener;
+    private final String currentUserId;
 
-    public ChatListAdapter(List<FriendChatItem> friendChatList,
-                           OnFriendChatClick listener) {
+    public ChatListAdapter(List<FriendChatItem> friendChatList, OnFriendChatClick listener) {
         this.friendChatList = friendChatList;
         this.listener = listener;
-        this.currentUserId = edu.northeastern.guildly.MainActivity.currentUserEmail.replace(".", ",");
+        // Guard against null currentUserEmail just in case
+        String email = MainActivity.currentUserEmail;
+        if (email == null) {
+            // fallback to empty (or handle error)
+            this.currentUserId = "";
+        } else {
+            this.currentUserId = email.replace(".", ",");
+        }
     }
 
     @NonNull
@@ -54,11 +62,22 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ViewHo
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         FriendChatItem item = friendChatList.get(position);
 
+        // Basic UI
         holder.textFriendUsername.setText(item.friendUsername);
         holder.textLastMessage.setText(item.lastMessage);
         holder.textTimestamp.setText(item.timestamp);
         holder.imageFriendAvatar.setImageResource(R.drawable.unknown_profile);
+        holder.textUnreadCount.setVisibility(View.GONE); // default hidden
 
+        // ------------------ NULL CHECK FOR friendKey ------------------
+        if (TextUtils.isEmpty(item.friendKey)) {
+            // friendKey is null or empty => skip
+            // You could log it or show a placeholder
+            // holder.textFriendUsername.setText("Unknown Friend");
+            return;
+        }
+
+        // Retrieve the friend's profile pic
         DatabaseReference friendRef = FirebaseDatabase.getInstance()
                 .getReference("users")
                 .child(item.friendKey);
@@ -92,6 +111,14 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ViewHo
             }
         });
 
+        // ------------------ NULL CHECK FOR chatId ------------------
+        if (TextUtils.isEmpty(item.chatId)) {
+            // If chatId is null or empty, we can't query messages
+            // You might want to show "No chat yet" or skip
+            return;
+        }
+
+        // Now we can safely call .child(item.chatId)
         DatabaseReference messagesRef = FirebaseDatabase.getInstance()
                 .getReference("chats")
                 .child(item.chatId)
@@ -111,6 +138,7 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ViewHo
                             maxTime = msg.timestamp;
                             lastMsg = msg;
                         }
+                        // Count unread only if I'm not the sender and msg status is "SENT"
                         if (!msg.senderId.equals(currentUserId) && "SENT".equals(msg.status)) {
                             unreadCount++;
                         }
@@ -132,9 +160,11 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ViewHo
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
+                // optional: handle error
             }
         });
 
+        // Click event to open chat detail
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) {
                 listener.onChatClicked(item);
