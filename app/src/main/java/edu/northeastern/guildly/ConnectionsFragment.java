@@ -6,6 +6,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
@@ -47,7 +48,7 @@ import edu.northeastern.guildly.data.User;
 public class ConnectionsFragment extends Fragment {
     private static final String TAG = "ConnectionsFragment";
 
-    private RecyclerView recyclerViewChatList;
+    private RecyclerView recyclerViewChatList, recyclerViewSearchAddFriend;
     private ChatListAdapter chatListAdapter;
     private List<FriendChatItem> friendChatList;
     private EditText editTextFriendUsername;
@@ -110,23 +111,37 @@ public class ConnectionsFragment extends Fragment {
         buttonAddFriend.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // Inflate the popup layout
+                // Inflate
                 LayoutInflater inflater = LayoutInflater.from(requireContext());
                 View dialogView = inflater.inflate(R.layout.dialog_add_friend, null); // Make sure this layout exists
 
-                // Find EditText in the popup layout
                 EditText searchInput = dialogView.findViewById(R.id.search_friend_input);
 
-                // Build and show the dialog
+                Button searchFriendButton = dialogView.findViewById(R.id.button_search_friend);
+
+
+
+                // show the dialog
                 AlertDialog dialog = new AlertDialog.Builder(requireContext())
                         .setTitle("Add a Friend")
                         .setView(dialogView)
                         .setPositiveButton("Close", null)
                         .create();
 
+
+                searchFriendButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        String query = searchInput.getText().toString().trim();
+
+                    }
+                });
+
                 dialog.show();
             }
         });
+
+
 
 //        // Set up add friend button old logic
 //        buttonAddFriend.setOnClickListener(v -> {

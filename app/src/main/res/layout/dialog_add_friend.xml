@@ -17,7 +17,16 @@
         android:textColor="#000"
         android:textColorHint="#888888"/>
 
-
+    <Button
+        android:id="@+id/button_search_friend"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Search"
+        android:layout_marginTop="12dp"
+        android:layout_marginBottom="12dp"
+        android:backgroundTint="@color/man_bg"
+        android:textColor="@android:color/white"
+        android:padding="12dp" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerViewSearchAddFriend"
