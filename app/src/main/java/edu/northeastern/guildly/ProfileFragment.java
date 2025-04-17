@@ -15,6 +15,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Observer;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -36,6 +37,7 @@ import de.hdodenhof.circleimageview.CircleImageView;
 import edu.northeastern.guildly.R;
 import edu.northeastern.guildly.SettingsActivity;
 import edu.northeastern.guildly.MainActivity;
+import edu.northeastern.guildly.adapters.AllFriendsActionsAdapter;
 import edu.northeastern.guildly.adapters.FriendsAdapter;
 import edu.northeastern.guildly.adapters.HabitAdapter;
 import edu.northeastern.guildly.data.Chats;
@@ -390,7 +392,7 @@ public class ProfileFragment extends Fragment {
                         habitList.add(h);
                     }
                 }
-            }
+                }
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
                 Log.e("ProfileFragment", "Error loading user’s habitList: " + error.getMessage());
@@ -522,15 +524,148 @@ public class ProfileFragment extends Fragment {
                 .show();
     }
 
+    private void confirmDeleteFriend(String friendKey) {
+        // Show confirmation dialog
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Delete Friend")
+                .setMessage("Are you sure you want to remove this friend?")
+                .setPositiveButton("Yes", (dialogInterface, i) -> deleteFriend(friendKey))
+                .setNegativeButton("No", null)
+                .show();
+    }
+
+    private void deleteFriend(String friendKey) {
+        // 1) Remove friendKey from myUserKey's friend list
+        userRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                User me = snapshot.getValue(User.class);
+                if (me == null || me.friends == null) return;
+
+                if (me.friends.contains(friendKey)) {
+                    me.friends.remove(friendKey);
+                    userRef.setValue(me)
+                            .addOnSuccessListener(aVoid ->
+                                    Toast.makeText(getContext(),
+                                            "Friend removed", Toast.LENGTH_SHORT).show());
+                }
+                // 2) Remove myUserKey from the friend's friend list
+                DatabaseReference friendRef = FirebaseDatabase.getInstance()
+                        .getReference("users")
+                        .child(friendKey);
+                friendRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot friendSnap) {
+                        User friend = friendSnap.getValue(User.class);
+                        if (friend == null || friend.friends == null) return;
+
+                        if (friend.friends.contains(myUserKey)) {
+                            friend.friends.remove(myUserKey);
+                            friendRef.setValue(friend)
+                                    .addOnSuccessListener(aVoid -> {
+                                        // Reload profile data to refresh the UI
+                                        loadUserDataFromFirebase();
+                                    });
+                        }
+                    }
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {}
+                });
+            }
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {}
+        });
+    }
+
+    private void findOrCreateChatThenOpen(String friendKey) {
+        DatabaseReference chatsRef = FirebaseDatabase.getInstance().getReference("chats");
+        // Do a single read of all chats to find one that has these two participants
+        chatsRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                String existingChatId = null;
+
+                for (DataSnapshot chatSnap : snapshot.getChildren()) {
+                    // read the chat object
+                    Chats chatObj = chatSnap.getValue(Chats.class);
+                    if (chatObj == null || chatObj.participants == null) continue;
+
+                    if (chatObj.participants.size() == 2
+                            && chatObj.participants.contains(myUserKey)
+                            && chatObj.participants.contains(friendKey)) {
+                        existingChatId = chatObj.chatId;
+                        break;
+                    }
+                }
+
+                if (existingChatId != null) {
+                    // Use existing chat detail
+                    openChatDetail(existingChatId, friendKey);
+                } else {
+                    // Create new chat
+                    String newChatId = chatsRef.push().getKey();
+                    if (newChatId == null) {
+                        Toast.makeText(getContext(),
+                                "Error creating chat", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    Chats newChat = new Chats();
+                    newChat.chatId = newChatId;
+                    List<String> parts = new ArrayList<>();
+                    parts.add(myUserKey);
+                    parts.add(friendKey);
+                    newChat.participants = parts;
+
+                    chatsRef.child(newChatId).setValue(newChat)
+                            .addOnSuccessListener(aVoid -> {
+                                openChatDetail(newChatId, friendKey);
+                            })
+                            .addOnFailureListener(e -> {
+                                Toast.makeText(getContext(),
+                                        "Failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                            });
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Toast.makeText(getContext(), "Error finding chat", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void openChatDetail(String chatId, String friendKey) {
+        // Optionally fetch the friend's username for the title
+        DatabaseReference friendRef = FirebaseDatabase.getInstance().getReference("users")
+                .child(friendKey)
+                .child("username");
+
+        friendRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                String friendUsername = snapshot.getValue(String.class);
+                if (friendUsername == null) friendUsername = "Friend";
+
+                // Cast to AppCompatActivity before calling
+                if (getActivity() instanceof AppCompatActivity) {
+                    ChatDetailActivity.openChatDetail(
+                            (AppCompatActivity) getActivity(),
+                            chatId,
+                            friendUsername
+                    );
+                }
+            }
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {}
+        });
+    }
     private void setupClickListeners() {
         // “View More” for HABITS => calls your new showHabitsDialog()
         habitsViewMore.setOnClickListener(v -> showHabitsDialog());
 
-        // “View More” for FRIENDS => existing approach
+
         friendsViewMore.setOnClickListener(v -> {
-            // Example: Launch the full friends actions screen
-            Intent intent = new Intent(requireContext(), AllFriendsActionsActivity.class);
-            startActivity(intent);
+            showFriendsWithActionsDialog();
         });
 
         profileEditButton.setOnClickListener(v -> toggleUsernameEditing());
@@ -543,7 +678,61 @@ public class ProfileFragment extends Fragment {
                 startActivity(new Intent(getActivity(), SettingsActivity.class)));
     }
 
-    // Let user edit 'aboutMe'
+
+    private void showFriendsWithActionsDialog() {
+        userRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                User me = snapshot.getValue(User.class);
+                if (me == null || me.friends == null || me.friends.isEmpty()) {
+                    Toast.makeText(getContext(),
+                            "You have no friends!", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                // Create and show dialog with friends list
+                View dialogView = LayoutInflater.from(getContext())
+                        .inflate(R.layout.dialog_all_friends_actions, null);
+
+                RecyclerView rvFriends = dialogView.findViewById(R.id.recyclerViewAllFriends);
+                rvFriends.setLayoutManager(new LinearLayoutManager(getContext()));
+
+                // Create adapter with click listeners
+                AllFriendsActionsAdapter adapter = new AllFriendsActionsAdapter(
+                        me.friends,
+                        // onProfileClicked
+                        friendKey -> {
+                            // Cast to AppCompatActivity
+                            if (getActivity() instanceof AppCompatActivity) {
+                                FriendProfileActivity.openProfile((AppCompatActivity) getActivity(), friendKey);
+                            }
+                        },
+                        // onMessageClicked
+                        friendKey -> {
+                            findOrCreateChatThenOpen(friendKey);
+                        },
+                        // onDeleteClicked
+                        friendKey -> {
+                            confirmDeleteFriend(friendKey);
+                        }
+                );
+                rvFriends.setAdapter(adapter);
+
+                AlertDialog dialog = new AlertDialog.Builder(requireContext())
+                        .setTitle("My Friends")
+                        .setView(dialogView)
+                        .setPositiveButton("Close", null)
+                        .create();
+
+                dialog.show();
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Toast.makeText(getContext(), "Error loading friends", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
     private void showEditAboutMeDialog() {
         View dialogView = LayoutInflater.from(getContext())
                 .inflate(R.layout.dialog_edit_about_me, null);
