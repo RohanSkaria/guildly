@@ -5,6 +5,8 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -14,7 +16,13 @@ import androidx.appcompat.widget.Toolbar;
 
 import com.google.firebase.database.*;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+
 import de.hdodenhof.circleimageview.CircleImageView;
+import edu.northeastern.guildly.data.Habit;
 import edu.northeastern.guildly.data.User;
 import edu.northeastern.guildly.R;
 
@@ -24,6 +32,11 @@ public class FriendProfileActivity extends AppCompatActivity {
 
     private CircleImageView friendProfileImage;
     private TextView textFriendUsername, textFriendAboutMe;
+    private TextView friendStreakDescription;
+    private TextView tvNoHabitsMessage;
+
+    private ImageView ivFriendTopHabit1, ivFriendTopHabit2, ivFriendTopHabit3;
+    private TextView tvFriendTopHabit1, tvFriendTopHabit2, tvFriendTopHabit3;
 
     private String friendKey;
     private DatabaseReference friendRef;
@@ -41,9 +54,20 @@ public class FriendProfileActivity extends AppCompatActivity {
             getSupportActionBar().setTitle("Friend Profile");
         }
 
+        // Initialize basic profile views
         friendProfileImage = findViewById(R.id.friendProfileImage);
         textFriendUsername = findViewById(R.id.textFriendUsername);
-        textFriendAboutMe  = findViewById(R.id.textFriendAboutMe);
+        textFriendAboutMe = findViewById(R.id.textFriendAboutMe);
+        friendStreakDescription = findViewById(R.id.friendStreakDescription);
+        tvNoHabitsMessage = findViewById(R.id.tvNoHabitsMessage);
+
+        // Initialize habit views
+        ivFriendTopHabit1 = findViewById(R.id.ivFriendTopHabit1);
+        ivFriendTopHabit2 = findViewById(R.id.ivFriendTopHabit2);
+        ivFriendTopHabit3 = findViewById(R.id.ivFriendTopHabit3);
+        tvFriendTopHabit1 = findViewById(R.id.tvFriendTopHabit1);
+        tvFriendTopHabit2 = findViewById(R.id.tvFriendTopHabit2);
+        tvFriendTopHabit3 = findViewById(R.id.tvFriendTopHabit3);
 
         friendKey = getIntent().getStringExtra(EXTRA_FRIEND_KEY);
         if (TextUtils.isEmpty(friendKey)) {
@@ -55,6 +79,7 @@ public class FriendProfileActivity extends AppCompatActivity {
         friendRef = FirebaseDatabase.getInstance().getReference("users").child(friendKey);
 
         loadFriendProfile();
+        loadFriendHabits();
     }
 
     @Override
@@ -110,6 +135,104 @@ public class FriendProfileActivity extends AppCompatActivity {
                         "Error loading friend data", Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    private void loadFriendHabits() {
+        friendRef.child("habits").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                List<Habit> trackedHabits = new ArrayList<>();
+
+                for (DataSnapshot ds : snapshot.getChildren()) {
+                    try {
+                        Habit habit = ds.getValue(Habit.class);
+                        if (habit != null && habit.isTracked()) {
+                            trackedHabits.add(habit);
+                        }
+                    } catch (Exception e) {
+                        // Skip entries that can't be converted to Habit objects
+                    }
+                }
+
+                // Update UI based on habits
+                if (trackedHabits.isEmpty()) {
+                    // Show "no habits" message
+                    tvNoHabitsMessage.setVisibility(View.VISIBLE);
+                    ivFriendTopHabit1.setVisibility(View.GONE);
+                    ivFriendTopHabit2.setVisibility(View.GONE);
+                    ivFriendTopHabit3.setVisibility(View.GONE);
+                    tvFriendTopHabit1.setVisibility(View.GONE);
+                    tvFriendTopHabit2.setVisibility(View.GONE);
+                    tvFriendTopHabit3.setVisibility(View.GONE);
+
+                    friendStreakDescription.setText("No streak yet!");
+                } else {
+                    // Hide "no habits" message
+                    tvNoHabitsMessage.setVisibility(View.GONE);
+
+                    // Sort habits by streak count (descending)
+                    Collections.sort(trackedHabits, new Comparator<Habit>() {
+                        @Override
+                        public int compare(Habit h1, Habit h2) {
+                            return h2.getStreakCount() - h1.getStreakCount();
+                        }
+                    });
+
+                    // Update streak description with top habit
+                    Habit topHabit = trackedHabits.get(0);
+                    if (topHabit.getStreakCount() > 0) {
+                        friendStreakDescription.setText("Longest streak: " +
+                                topHabit.getStreakCount() + " days of " +
+                                topHabit.getHabitName() + "!");
+                    } else {
+                        friendStreakDescription.setText("No streak yet!");
+                    }
+
+                    // Update top 3 habits
+                    setTopHabitSlot(0, trackedHabits);
+                    setTopHabitSlot(1, trackedHabits);
+                    setTopHabitSlot(2, trackedHabits);
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Toast.makeText(FriendProfileActivity.this,
+                        "Error loading habits", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void setTopHabitSlot(int index, List<Habit> sortedHabits) {
+        ImageView imageView;
+        TextView textView;
+
+        // Determine which views to use based on index
+        if (index == 0) {
+            imageView = ivFriendTopHabit1;
+            textView = tvFriendTopHabit1;
+        } else if (index == 1) {
+            imageView = ivFriendTopHabit2;
+            textView = tvFriendTopHabit2;
+        } else {
+            imageView = ivFriendTopHabit3;
+            textView = tvFriendTopHabit3;
+        }
+
+        // If index is out of bounds, hide the views
+        if (index >= sortedHabits.size()) {
+            imageView.setVisibility(View.GONE);
+            textView.setVisibility(View.GONE);
+            return;
+        }
+
+        // Otherwise, show the habit info
+        imageView.setVisibility(View.VISIBLE);
+        textView.setVisibility(View.VISIBLE);
+
+        Habit habit = sortedHabits.get(index);
+        imageView.setImageResource(habit.getIconResId());
+        textView.setText("🔥 " + habit.getStreakCount() + " days");
     }
 
     public static void openProfile(Context context, String friendKey) {

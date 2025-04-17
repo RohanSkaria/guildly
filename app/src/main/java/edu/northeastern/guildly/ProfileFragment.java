@@ -39,6 +39,7 @@ import edu.northeastern.guildly.SettingsActivity;
 import edu.northeastern.guildly.MainActivity;
 import edu.northeastern.guildly.adapters.AllFriendsActionsAdapter;
 import edu.northeastern.guildly.adapters.FriendsAdapter;
+import edu.northeastern.guildly.adapters.FriendsDialogAdapter;
 import edu.northeastern.guildly.adapters.HabitAdapter;
 import edu.northeastern.guildly.data.Chats;
 import edu.northeastern.guildly.data.Habit;
