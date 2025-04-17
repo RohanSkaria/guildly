@@ -355,6 +355,8 @@ public class ConnectionsFragment extends Fragment {
      */
     private void sendFriendRequest(String targetUserKey) {
         DatabaseReference targetUserRef = usersRef.child(targetUserKey);
+        final int[] resultCode = {0}; // 0: success, 1: already friends, 2: already requested
+
         targetUserRef.runTransaction(new Transaction.Handler() {
             @NonNull
             @Override
@@ -363,42 +365,50 @@ public class ConnectionsFragment extends Fragment {
                 if (targetUser == null) {
                     return Transaction.success(currentData);
                 }
+
                 if (targetUser.friendRequests == null) {
                     targetUser.friendRequests = new HashMap<>();
                 }
+
+                if (targetUser.friends != null && targetUser.friends.contains(myUserKey)) {
+                    resultCode[0] = 1;
+                    return Transaction.abort();
+                }
+
                 String status = targetUser.friendRequests.get(myUserKey);
                 if ("pending".equals(status)) {
-                    // already requested
-                    return Transaction.success(currentData);
+                    resultCode[0] = 2;
+                    return Transaction.abort();
                 }
+
                 targetUser.friendRequests.put(myUserKey, "pending");
                 currentData.setValue(targetUser);
                 return Transaction.success(currentData);
             }
+
             @Override
             public void onComplete(@Nullable DatabaseError error,
                                    boolean committed,
                                    @Nullable DataSnapshot currentData) {
                 if (error != null) {
-                    Log.e("ConnectionsFragment",
-                            "sendFriendRequest error", error.toException());
-                    Toast.makeText(getContext(),
-                            "Error sending request: " + error.getMessage(),
-                            Toast.LENGTH_LONG).show();
+                    Toast.makeText(getContext(), "Error sending request", Toast.LENGTH_LONG).show();
                 } else if (!committed) {
-                    Toast.makeText(getContext(),
-                            "Request not committed",
-                            Toast.LENGTH_SHORT).show();
+                    if (resultCode[0] == 1) {
+                        Toast.makeText(getContext(), "You're already friends", Toast.LENGTH_SHORT).show();
+                    } else if (resultCode[0] == 2) {
+                        Toast.makeText(getContext(), "Friend request already sent", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(getContext(), "Request not committed", Toast.LENGTH_SHORT).show();
+                    }
                 } else {
-                    Toast.makeText(getContext(),
-                            "Friend request sent!",
-                            Toast.LENGTH_SHORT).show();
-                    // Update badge
+                    Toast.makeText(getContext(), "Friend request sent!", Toast.LENGTH_SHORT).show();
                     updateFriendRequestsBadge();
                 }
             }
         });
     }
+
+
 
     /**
      * Set up the "Friend Requests" button to show a popup listing pending requests.

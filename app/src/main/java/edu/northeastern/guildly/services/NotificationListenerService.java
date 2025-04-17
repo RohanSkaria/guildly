@@ -17,21 +17,19 @@ import com.google.firebase.database.ValueEventListener;
 
 import edu.northeastern.guildly.MainActivity;
 
-/**
- * Background service that listens for notifications from Firebase
- */
 public class NotificationListenerService extends Service {
 
     private static final String TAG = "NotifListenerService";
+
     private DatabaseReference notificationsRef;
+    private DatabaseReference friendRequestsRef;
     private ChildEventListener notificationsListener;
+    private ChildEventListener friendRequestsListener;
     private String userKey;
 
     @Override
     public void onCreate() {
         super.onCreate();
-
-        // Initialize notification channel for the app
         NotificationService.createNotificationChannel(this);
     }
 
@@ -41,18 +39,18 @@ public class NotificationListenerService extends Service {
         if (email != null) {
             userKey = email.replace(".", ",");
             setupNotificationListener();
+            setupFriendRequestListener();
         } else {
             Log.e(TAG, "Cannot start notification service: no logged-in user");
             stopSelf();
         }
-
-        // If killed, restart with the intent
         return START_REDELIVER_INTENT;
     }
 
     @Override
     public void onDestroy() {
         detachNotificationListener();
+        detachFriendRequestListener();
         super.onDestroy();
     }
 
@@ -63,40 +61,57 @@ public class NotificationListenerService extends Service {
     }
 
     private void setupNotificationListener() {
-        detachNotificationListener(); // Detach any existing listener
-
-        notificationsRef = FirebaseDatabase.getInstance()
-                .getReference("notifications")
-                .child(userKey);
-
+        detachNotificationListener();
+        notificationsRef = FirebaseDatabase.getInstance().getReference("notifications").child(userKey);
         notificationsListener = new ChildEventListener() {
             @Override
             public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
                 handleNewNotification(snapshot);
             }
-
-            @Override
-            public void onChildChanged(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
-                // Not needed for this implementation
-            }
-
-            @Override
-            public void onChildRemoved(@NonNull DataSnapshot snapshot) {
-                // Not needed for this implementation
-            }
-
-            @Override
-            public void onChildMoved(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
-                // Not needed for this implementation
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
+            @Override public void onChildChanged(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {}
+            @Override public void onChildRemoved(@NonNull DataSnapshot snapshot) {}
+            @Override public void onChildMoved(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {}
+            @Override public void onCancelled(@NonNull DatabaseError error) {
                 Log.e(TAG, "Notification listener cancelled", error.toException());
             }
         };
-
         notificationsRef.addChildEventListener(notificationsListener);
+    }
+
+    private void setupFriendRequestListener() {
+        detachFriendRequestListener();
+        friendRequestsRef = FirebaseDatabase.getInstance().getReference("users").child(userKey).child("friendRequests");
+        friendRequestsListener = new ChildEventListener() {
+            @Override
+            public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+                String requesterKey = snapshot.getKey();
+                String status = snapshot.getValue(String.class);
+                if ("pending".equals(status)) {
+                    FirebaseDatabase.getInstance().getReference("users").child(requesterKey)
+                            .child("username").addListenerForSingleValueEvent(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                                    String username = dataSnapshot.getValue(String.class);
+                                    if (username != null) {
+                                        NotificationService.showFriendRequestNotification(getApplicationContext(), username);
+                                    }
+                                }
+                                @Override public void onCancelled(@NonNull DatabaseError error) {}
+                            });
+                }
+            }
+            @Override
+            public void onChildChanged(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {}
+            @Override
+            public void onChildRemoved(@NonNull DataSnapshot snapshot) {}
+            @Override
+            public void onChildMoved(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {}
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.e(TAG, "FriendRequest listener cancelled", error.toException());
+            }
+        };
+        friendRequestsRef.addChildEventListener(friendRequestsListener);
     }
 
     private void detachNotificationListener() {
@@ -106,11 +121,17 @@ public class NotificationListenerService extends Service {
         }
     }
 
+    private void detachFriendRequestListener() {
+        if (friendRequestsRef != null && friendRequestsListener != null) {
+            friendRequestsRef.removeEventListener(friendRequestsListener);
+            friendRequestsListener = null;
+        }
+    }
+
     private void handleNewNotification(DataSnapshot snapshot) {
         try {
             String type = snapshot.child("type").getValue(String.class);
             if (type == null) return;
-
             switch (type) {
                 case "friend_request":
                     handleFriendRequestNotification(snapshot);
@@ -125,10 +146,7 @@ public class NotificationListenerService extends Service {
                     handleHabitReminderNotification(snapshot);
                     break;
             }
-
-            // Delete the notification from Firebase after processing
             snapshot.getRef().removeValue();
-
         } catch (Exception e) {
             Log.e(TAG, "Error processing notification", e);
         }
@@ -144,7 +162,6 @@ public class NotificationListenerService extends Service {
     private void handleStreakMilestoneNotification(DataSnapshot snapshot) {
         String habitName = snapshot.child("habitName").getValue(String.class);
         Long streakCount = snapshot.child("streakCount").getValue(Long.class);
-
         if (habitName != null && streakCount != null) {
             NotificationService.showStreakMilestoneNotification(this, habitName, streakCount.intValue());
         }
@@ -152,7 +169,6 @@ public class NotificationListenerService extends Service {
 
     private void handleWeeklyChallengeNotification(DataSnapshot snapshot) {
         String challengeName = snapshot.child("challengeName").getValue(String.class);
-
         if (challengeName != null) {
             NotificationService.showWeeklyChallengeNotification(this, challengeName);
         }
@@ -160,7 +176,6 @@ public class NotificationListenerService extends Service {
 
     private void handleHabitReminderNotification(DataSnapshot snapshot) {
         String habitName = snapshot.child("habitName").getValue(String.class);
-
         if (habitName != null) {
             NotificationService.showHabitReminderNotification(this, habitName);
         }
