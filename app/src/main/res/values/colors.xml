@@ -9,5 +9,6 @@
     <color name="habitCompleted">#D6D6D6</color>
     <color name="gamer_bg">#4CAF50</color> <!-- Green -->
     <color name="man_bg">#2196F3</color> <!-- Blue -->
-    <color name="girl_bg">#FFC107</color> <!-- Amber -->
+    <color name="girl_bg">#FFC107</color>
+    <color name ="red">#FF0000</color><!-- Amber -->
 </resources>

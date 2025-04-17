@@ -119,6 +119,7 @@ public class ChatDetailActivity extends AppCompatActivity {
             if (TextUtils.isEmpty(text)) {
                 return;
             }
+
             Message msg = new Message();
             msg.senderId = myUserKey;
             msg.content = text;
@@ -126,11 +127,15 @@ public class ChatDetailActivity extends AppCompatActivity {
             msg.status = "SENT";
 
             DatabaseReference pushRef = chatRef.child("messages").push();
-            pushRef.setValue(msg);
+            pushRef.setValue(msg).addOnSuccessListener(aVoid -> {
+                // 👇 Update lastUpdated field when message is sent
+                chatRef.child("lastUpdated").setValue(System.currentTimeMillis());
+            });
 
             editTextMessageInput.setText("");
         });
     }
+
 
     public static void openChatDetail(AppCompatActivity activity, String chatId, String friendUsername) {
         Intent intent = new Intent(activity, ChatDetailActivity.class);

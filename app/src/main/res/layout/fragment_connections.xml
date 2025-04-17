@@ -54,26 +54,16 @@
         </androidx.cardview.widget.CardView>
 
         <!-- Add Friend Button -->
-<!--        <ImageButton-->
-<!--            android:id="@+id/buttonAddFriend"-->
-<!--            android:layout_width="48dp"-->
-<!--            android:layout_height="48dp"-->
-<!--            android:layout_marginStart="8dp"-->
-<!--            android:background="@drawable/add_friend_icon"-->
-<!--            android:contentDescription="Add Friend"-->
-<!--            android:src="@drawable/unknown_profile"-->
-<!--            app:tint="@android:color/white" />-->
-
         <ImageButton
             android:id="@+id/buttonAddFriend"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_marginStart="8dp"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_marginStart="12dp"
+            android:layout_marginTop="10dp"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/add_friend"
-            android:src="@drawable/add_friend_icon"
-            android:scaleType="centerInside" />
-
+            android:contentDescription="Add Friend"
+            android:scaleType="centerInside"
+            android:src="@drawable/add_friend_icon" />
     </LinearLayout>
 
     <!-- Friend Requests Badge Button -->
@@ -98,8 +88,7 @@
             <ImageView
                 android:layout_width="24dp"
                 android:layout_height="24dp"
-                android:src="@drawable/bell_icon"
-                app:tint="@color/colorPrimary" />
+                android:src="@drawable/bell_icon" />
 
             <TextView
                 android:layout_width="0dp"
@@ -114,12 +103,13 @@
                 android:id="@+id/friendRequestsBadge"
                 android:layout_width="24dp"
                 android:layout_height="24dp"
-                android:background="@drawable/unknown_profile"
+                android:background="@drawable/unread_count"
                 android:gravity="center"
                 android:text="0"
                 android:textColor="@android:color/white"
                 android:textSize="12sp"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                android:backgroundTint="@color/red"/>
         </LinearLayout>
     </androidx.cardview.widget.CardView>
 

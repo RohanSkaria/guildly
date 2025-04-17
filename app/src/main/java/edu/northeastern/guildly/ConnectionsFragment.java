@@ -1,7 +1,11 @@
 package edu.northeastern.guildly;
 
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.text.Editable;
 import android.text.TextUtils;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -35,9 +39,11 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 import edu.northeastern.guildly.adapters.ChatListAdapter;
 import edu.northeastern.guildly.data.Chats;
@@ -50,16 +56,19 @@ public class ConnectionsFragment extends Fragment {
 
     private RecyclerView recyclerViewChatList, recyclerViewSearchAddFriend;
     private ChatListAdapter chatListAdapter;
-    private List<FriendChatItem> friendChatList;
+    private List<FriendChatItem> chatItemsList;
     private EditText editTextFriendUsername;
     private ImageButton buttonAddFriend;
     private TextView friendRequestsBadge;
     private CardView cardFriendRequests;
     private LinearLayout buttonFriendRequests;
+    private Map<String, String> usernameLookup = new HashMap<>();
 
     private DatabaseReference usersRef, chatsRef;
     private String myUserKey;
     private String myEmail;
+
+    private List<FriendChatItem> originalChatItemsList = new ArrayList<>();
 
     @Nullable
     @Override
@@ -88,8 +97,8 @@ public class ConnectionsFragment extends Fragment {
         myUserKey = myEmail.replace(".", ",");
 
         // Initialize chat list
-        friendChatList = new ArrayList<>();
-        chatListAdapter = new ChatListAdapter(friendChatList, item -> {
+        chatItemsList = new ArrayList<>();
+        chatListAdapter = new ChatListAdapter(chatItemsList, item -> {
             if (item.chatId != null) {
                 // If an existing chatId, go to detail
                 ChatDetailActivity.openChatDetail(
@@ -141,17 +150,20 @@ public class ConnectionsFragment extends Fragment {
             }
         });
 
+        editTextFriendUsername.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
 
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                String searchText = s.toString().trim();
+                Log.d("SearchBar", "User typed: " + searchText);
+                filterFriendsList(searchText);
+            }
 
-//        // Set up add friend button old logic
-//        buttonAddFriend.setOnClickListener(v -> {
-//            String username = editTextFriendUsername.getText().toString().trim();
-//            if (TextUtils.isEmpty(username)) {
-//                Toast.makeText(getContext(), "Please enter a username", Toast.LENGTH_SHORT).show();
-//                return;
-//            }
-//            findUserByUsername(username);
-//        });
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
 
         // Set up friend requests button
         buttonFriendRequests.setOnClickListener(v -> {
@@ -205,11 +217,10 @@ public class ConnectionsFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        loadAllMyFriends();
-        updateFriendRequestsBadge();
-        if (chatListAdapter != null) {
-            chatListAdapter.notifyDataSetChanged();
-        }
+        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+            loadAllChats();
+            updateFriendRequestsBadge();
+        }, 200); // 200ms delay to avoid conflict with search
     }
 
     /**
@@ -414,7 +425,7 @@ public class ConnectionsFragment extends Fragment {
                             Toast.LENGTH_LONG).show();
                 } else if (committed) {
                     addMeToRequesterFriends(requesterKey);
-                    loadAllMyFriends();
+                    loadAllChats();
                     updateFriendRequestsBadge();
                 }
             }
@@ -524,150 +535,214 @@ public class ConnectionsFragment extends Fragment {
     }
 
     /**
-     * Load all friends
+     * Load all active chats where current user is a participant
      */
-    private void loadAllMyFriends() {
-        usersRef.child(myUserKey).child("friends")
-                .addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        friendChatList.clear();
-                        if (snapshot.exists()) {
-                            List<String> friendKeys = new ArrayList<>();
-                            for (DataSnapshot ds : snapshot.getChildren()) {
-                                String friendKey = ds.getValue(String.class);
-                                // --- IMPORTANT NULL CHECK ---
-                                if (friendKey != null && !friendKey.trim().isEmpty()) {
-                                    friendKeys.add(friendKey);
-                                } else {
-                                    Log.e(TAG, "Skipped a null/empty friendKey");
-                                }
-                            }
-                            fetchFriendData(friendKeys);
-                        } else {
-                            chatListAdapter.notifyDataSetChanged();
-                        }
-                    }
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError error) {
-                        Log.e(TAG, "loadAllMyFriends cancelled", error.toException());
-                    }
-                });
-    }
-
     /**
-     * Fetch friend data
+     * Load all active chats where current user is a participant
      */
-    private void fetchFriendData(List<String> friendKeys) {
-        if (friendKeys.isEmpty()) {
-            chatListAdapter.notifyDataSetChanged();
-            return;
-        }
+    private void loadAllChats() {
+        if (myEmail == null) return;
 
-        for (String friendKey : friendKeys) {
-            // If friendKey is null, skip it (extra protection)
-            if (friendKey == null) {
-                Log.e(TAG, "friendKey was null. Skipping...");
-                continue;
-            }
+        // Clear the existing list
+        chatItemsList.clear();
 
-            usersRef.child(friendKey).child("username")
-                    .addListenerForSingleValueEvent(new ValueEventListener() {
-                        @Override
-                        public void onDataChange(@NonNull DataSnapshot snapshot) {
-                            String friendUsername = snapshot.getValue(String.class);
-
-                            // If username was never set, default to friendKey
-                            if (friendUsername == null || friendUsername.trim().isEmpty()) {
-                                friendUsername = friendKey;
-                            }
-                            // Now find if there's an existing chat between me & friend
-                            findExistingChat(friendKey, friendUsername);
-                        }
-
-                        @Override
-                        public void onCancelled(@NonNull DatabaseError error) {
-                            Log.e(TAG, "fetchFriendData cancelled", error.toException());
-                        }
-                    });
-        }
-    }
-
-    /**
-     * Find existing chat
-     */
-    private void findExistingChat(String friendKey, String friendUsername) {
-        if (friendKey == null) {
-            // Double check at runtime
-            Log.e(TAG, "findExistingChat called with null friendKey?");
-            return;
-        }
-
+        // Get all chats where current user is a participant
         chatsRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                String existingChatId = null;
-                String lastMessageText = "Say hello to " + friendUsername;
-                int lastMsgIcon = -1;
-                String timestamp = "";
+                List<DataSnapshot> relevantChats = new ArrayList<>();
+                Map<DataSnapshot, Long> chatTimestamps = new HashMap<>();
 
-                // Loop all chats
+
+                // First find all chats this user is part of
                 for (DataSnapshot chatSnap : snapshot.getChildren()) {
-                    Chats chatObj = chatSnap.getValue(Chats.class);
-                    if (chatObj == null || chatObj.participants == null) {
-                        continue;
-                    }
-                    // If chat has exactly 2 participants: me & friend
-                    if (chatObj.participants.size() == 2
-                            && chatObj.participants.contains(myUserKey)
-                            && chatObj.participants.contains(friendKey)) {
+                    Chats chat = chatSnap.getValue(Chats.class);
+                    if (chat != null &&
+                            chat.participants != null &&
+                            chat.participants.contains(myUserKey) &&
+                            chat.messages != null &&
+                            !chat.messages.isEmpty()) {
 
-                        existingChatId = chatObj.chatId;
-                        // Find the last message (if any)
-                        if (chatObj.messages != null && !chatObj.messages.isEmpty()) {
-                            Message lastMsg = findLastMessage(chatObj);
-                            if (lastMsg != null) {
-                                lastMessageText = lastMsg.content;
-                                timestamp = formatTimestamp(lastMsg.timestamp);
-                                // Example logic for icons
-                                if (lastMsg.senderId.equals(myUserKey)) {
-                                    if ("SENT".equals(lastMsg.status)) {
-                                        lastMsgIcon = R.drawable.ic_msg_solid;
-                                    } else if ("READ".equals(lastMsg.status)) {
-                                        lastMsgIcon = R.drawable.ic_msg_hollow;
-                                    }
-                                } else {
-                                    if ("SENT".equals(lastMsg.status)) {
-                                        lastMsgIcon = R.drawable.ic_msg_solid;
-                                    } else if ("READ".equals(lastMsg.status)) {
-                                        lastMsgIcon = R.drawable.ic_msg_hollow;
-                                    }
-                                }
-                            }
-                        }
-                        // Once we find a matching chat, break out
-                        break;
+                        relevantChats.add(chatSnap);
+                        Long updated = chatSnap.child("lastUpdated").getValue(Long.class);
+                        chatTimestamps.put(chatSnap, updated != null ? updated : 0L);
                     }
+
                 }
 
-                // Create the FriendChatItem (only if friendKey != null)
-                FriendChatItem item = new FriendChatItem(
-                        friendKey,
-                        friendUsername,
-                        existingChatId,
-                        lastMessageText,
-                        lastMsgIcon,
-                        timestamp
+                relevantChats.sort((a, b) ->
+                        Long.compare(chatTimestamps.getOrDefault(b, 0L), chatTimestamps.getOrDefault(a, 0L))
                 );
-                friendChatList.add(item);
+
+                // If no chats found, load friends as potential chats instead
+                if (relevantChats.isEmpty()) {
+                    loadFriendsAsPotentialChats();
+                    return;
+                }
+
+                // Process each relevant chat
+                for (DataSnapshot chatSnap : relevantChats) {
+                    Chats chat = chatSnap.getValue(Chats.class);
+                    if (chat == null || chat.participants == null) continue;
+
+                    String chatId = chat.chatId;
+                    String otherUserKey = null;
+
+                    // Find the other participant
+                    for (String participantKey : chat.participants) {
+                        if (!participantKey.equals(myUserKey)) {
+                            otherUserKey = participantKey;
+                            break;
+                        }
+                    }
+
+                    if (otherUserKey == null) continue; // Skip if no other participant
+
+                    // Get username for the other user
+                    getFriendUsername(otherUserKey, chatId, chat);
+                }
+
+                originalChatItemsList.clear();
+                originalChatItemsList.addAll(new ArrayList<>(chatItemsList));
                 chatListAdapter.notifyDataSetChanged();
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                Log.e(TAG, "findExistingChat cancelled", error.toException());
+                Log.e(TAG, "Error loading chats", error.toException());
             }
         });
+    }
+
+    // Helper method to get username and create chat item
+    private void getFriendUsername(String friendKey, String chatId, Chats chat) {
+        usersRef.child(friendKey).child("username").addListenerForSingleValueEvent(
+                new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        String friendUsername = snapshot.getValue(String.class);
+                        if (friendUsername == null) {
+                            friendUsername = friendKey;
+                        }
+
+                        String lastMessageText = "No messages yet";
+                        int lastMsgIcon = -1;
+                        String timestamp = "";
+
+                        // Find last message if any
+                        if (chat.messages != null && !chat.messages.isEmpty()) {
+                            Message lastMsg = findLastMessage(chat);
+                            if (lastMsg != null) {
+                                lastMessageText = lastMsg.content;
+                                timestamp = formatTimestamp(lastMsg.timestamp);
+
+                                // Set message icon
+                                lastMsgIcon = "READ".equals(lastMsg.status)
+                                        ? R.drawable.ic_msg_hollow
+                                        : R.drawable.ic_msg_solid;
+                            }
+                        }
+
+                        FriendChatItem item = new FriendChatItem(
+                                friendKey,
+                                friendUsername,
+                                chatId,
+                                lastMessageText,
+                                lastMsgIcon,
+                                timestamp
+                        );
+                        chatItemsList.add(item);
+                        chatListAdapter.notifyDataSetChanged();
+
+                        // Update original list
+                        if (!originalChatItemsList.contains(item)) {
+                            originalChatItemsList.add(item);
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        Log.e(TAG, "Error getting username", error.toException());
+                    }
+                }
+        );
+    }
+
+
+
+
+    /**
+     * Load all usernames to avoid multiple Firebase calls
+     */
+    private void loadAllUsernames() {
+        usernameLookup.clear();
+        usersRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                for (DataSnapshot userSnap : snapshot.getChildren()) {
+                    String key = userSnap.getKey();
+                    if (key != null) {
+                        String username = userSnap.child("username").getValue(String.class);
+                        if (username != null) {
+                            usernameLookup.put(key, username);
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.e(TAG, "Error loading usernames", error.toException());
+            }
+        });
+    }
+
+    /**
+     * Load friends as potential chat options when no active chats exist
+     */
+    private void loadFriendsAsPotentialChats() {
+        usersRef.child(myUserKey).child("friends")
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        if (!snapshot.exists() || !snapshot.hasChildren()) {
+                            // No friends
+                            return;
+                        }
+
+                        for (DataSnapshot ds : snapshot.getChildren()) {
+                            String friendKey = ds.getValue(String.class);
+                            if (friendKey != null && !friendKey.trim().isEmpty()) {
+                                usersRef.child(friendKey).child("username")
+                                        .addListenerForSingleValueEvent(new ValueEventListener() {
+                                            @Override
+                                            public void onDataChange(@NonNull DataSnapshot userSnap) {
+                                                String username = userSnap.getValue(String.class);
+                                                String friendUsername = username != null ? username : friendKey;
+
+                                                FriendChatItem item = new FriendChatItem(
+                                                        friendKey,
+                                                        friendUsername,
+                                                        null, // no chat yet
+                                                        "Say hello to " + friendUsername,
+                                                        -1,
+                                                        ""
+                                                );
+                                                chatItemsList.add(item);
+                                                originalChatItemsList.add(item);
+                                                chatListAdapter.notifyDataSetChanged();
+                                            }
+
+                                            @Override
+                                            public void onCancelled(@NonNull DatabaseError error) {}
+                                        });
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {}
+                });
     }
 
     /**
@@ -683,6 +758,73 @@ public class ConnectionsFragment extends Fragment {
             }
         }
         return latestMsg;
+    }
+
+
+    private void filterFriendsList(String searchText) {
+        chatItemsList.clear();
+
+        if (TextUtils.isEmpty(searchText)) {
+            // Show only active chats with messages (already handled in loadAllChats)
+            chatItemsList.addAll(originalChatItemsList);
+            chatListAdapter.notifyDataSetChanged();
+            return;
+        }
+
+        // Keep track of already-added user keys
+        Set<String> addedKeys = new HashSet<>();
+
+        // Add filtered items from chats
+        for (FriendChatItem item : originalChatItemsList) {
+            if (item.friendUsername.toLowerCase().contains(searchText.toLowerCase())) {
+                chatItemsList.add(item);
+                addedKeys.add(item.friendKey);
+            }
+        }
+
+        // Search friends list for usernames not already added
+        usersRef.child(myUserKey).child("friends")
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        for (DataSnapshot ds : snapshot.getChildren()) {
+                            String friendKey = ds.getValue(String.class);
+                            if (friendKey == null || addedKeys.contains(friendKey)) continue;
+
+                            usersRef.child(friendKey).child("username")
+                                    .addListenerForSingleValueEvent(new ValueEventListener() {
+                                        @Override
+                                        public void onDataChange(@NonNull DataSnapshot userSnap) {
+                                            String username = userSnap.getValue(String.class);
+                                            if (username != null &&
+                                                    username.toLowerCase().contains(searchText.toLowerCase())) {
+
+                                                FriendChatItem item = new FriendChatItem(
+                                                        friendKey,
+                                                        username,
+                                                        null,
+                                                        "Say hello to " + username,
+                                                        -1,
+                                                        ""
+                                                );
+                                                chatItemsList.add(item);
+                                                chatListAdapter.notifyDataSetChanged();
+                                            }
+                                        }
+
+                                        @Override
+                                        public void onCancelled(@NonNull DatabaseError error) {
+                                            Log.e(TAG, "filter: username fetch fail", error.toException());
+                                        }
+                                    });
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        Log.e(TAG, "filter: friend list fetch fail", error.toException());
+                    }
+                });
     }
 
     /**
