@@ -47,6 +47,7 @@
     </com.google.android.material.appbar.AppBarLayout>
 
     <!-- Search bar -->
+    <!-- Search bar with Add Friend button -->
     <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -55,17 +56,37 @@
         app:cardElevation="2dp"
         android:backgroundTint="@android:color/white">
 
-        <EditText
-            android:id="@+id/search_bar"
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:autofillHints="Search messages"
-            android:hint="@string/search_chats"
-            android:paddingHorizontal="16dp"
-            android:background="@android:color/transparent"
-            android:inputType="text"
-            android:textColor="#000000"
-            android:textColorHint="#888888"/>
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="8dp"
+            android:gravity="center_vertical">
+
+            <EditText
+                android:id="@+id/search_bar"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:autofillHints="Search messages"
+                android:hint="@string/search_chats"
+                android:paddingHorizontal="16dp"
+                android:background="@android:color/transparent"
+                android:inputType="text"
+                android:textColor="#000000"
+                android:textColorHint="#888888" />
+
+            <ImageButton
+                android:id="@+id/add_friend_button"
+                android:layout_width="35dp"
+                android:layout_height="30dp"
+                android:layout_marginStart="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/add_friend"
+                android:scaleType="centerInside"
+                android:src="@drawable/add_friend_icon" />
+
+        </LinearLayout>
     </androidx.cardview.widget.CardView>
 
     <TextView
