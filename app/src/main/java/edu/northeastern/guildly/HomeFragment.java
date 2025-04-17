@@ -229,10 +229,21 @@ public class HomeFragment extends Fragment {
     private void showPredefinedHabitsDialog() {
         List<Habit> cloneList = new ArrayList<>();
         for (Habit ph : predefinedHabits) {
+
+            if (ph == null || ph.getHabitName() == null) {
+                Log.e("HomeFragment", "Found null habit or habit name in predefined habits");
+                continue;
+            }
+
             boolean alreadyTracked = false;
             Habit existingHabit = null;
 
             for (Habit current : habitList) {
+
+                if (current == null || current.getHabitName() == null) {
+                    continue;
+                }
+
                 if (current.getHabitName().equals(ph.getHabitName())) {
                     alreadyTracked = true;
                     existingHabit = current;
@@ -244,13 +255,11 @@ public class HomeFragment extends Fragment {
             newHabit.setTracked(alreadyTracked);
 
             if (alreadyTracked && existingHabit != null) {
-
                 newHabit.setStreakCount(existingHabit.getStreakCount());
                 newHabit.setLastCompletedTime(existingHabit.getLastCompletedTime());
                 newHabit.setCompletedToday(existingHabit.isCompletedToday());
                 newHabit.setNextAvailableTime(existingHabit.getNextAvailableTime());
             } else {
-
                 newHabit.setStreakCount(0);
                 newHabit.setLastCompletedTime(0);
                 newHabit.setCompletedToday(false);
@@ -265,7 +274,7 @@ public class HomeFragment extends Fragment {
         RecyclerView rv = dialogView.findViewById(R.id.predefinedHabitsRecycler);
         rv.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        HabitAdapter tempAdapter = new HabitAdapter(cloneList, userHabitsRef,  true);
+        HabitAdapter tempAdapter = new HabitAdapter(cloneList, userHabitsRef, true);
         rv.setAdapter(tempAdapter);
 
         new AlertDialog.Builder(requireContext())
@@ -274,13 +283,26 @@ public class HomeFragment extends Fragment {
                 .setPositiveButton("Done", (dialog, which) -> {
                     try {
                         for (Habit h : cloneList) {
-                            DatabaseReference habitRef = userHabitsRef.child(h.getHabitName().replace(".", "_"));
+
+                            if (h == null || h.getHabitName() == null) {
+                                Log.e("HomeFragment", "Skipping null habit or habit with null name");
+                                continue;
+                            }
+
+
+                            String sanitizedName = h.getHabitName().replace(".", "_");
+                            DatabaseReference habitRef = userHabitsRef.child(sanitizedName);
+
                             if (h.isTracked()) {
                                 boolean existsInCurrent = false;
-
                                 Habit existingHabit = null;
 
                                 for (Habit current : habitList) {
+
+                                    if (current == null || current.getHabitName() == null) {
+                                        continue;
+                                    }
+
                                     if (current.getHabitName().equals(h.getHabitName())) {
                                         existsInCurrent = true;
                                         existingHabit = current;
@@ -301,7 +323,6 @@ public class HomeFragment extends Fragment {
                                     @Override
                                     public void onDataChange(@NonNull DataSnapshot snapshot) {
                                         if (snapshot.exists()) {
-
                                             habitRef.child("tracked").setValue(false);
                                         }
                                     }
@@ -319,6 +340,8 @@ public class HomeFragment extends Fragment {
                     } catch (Exception e) {
                         Log.e("HomeFragment", "Error updating habits: " + e.getMessage());
                         Toast.makeText(getContext(), "An error occurred while updating habits", Toast.LENGTH_SHORT).show();
+
+                        e.printStackTrace();
                     }
                 })
                 .setNegativeButton("Cancel", (dialog, which) -> {})
