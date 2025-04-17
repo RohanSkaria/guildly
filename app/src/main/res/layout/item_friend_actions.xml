@@ -1,0 +1,45 @@
+<!-- res/layout/item_friend_actions.xml -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center_vertical"
+    android:padding="12dp">
+
+    <!-- Friend name -->
+    <TextView
+        android:id="@+id/textFriendName"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="Friend"
+        android:textSize="16sp" />
+
+    <!-- Profile button -->
+    <ImageView
+        android:id="@+id/iconProfile"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_person"
+        android:contentDescription="@string/profile_button"
+        android:padding="8dp" />
+
+    <!-- Message button -->
+    <ImageView
+        android:id="@+id/iconMessage"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_chat"
+        android:contentDescription="@string/message_button"
+        android:padding="8dp" />
+
+    <!-- Delete button -->
+    <ImageView
+        android:id="@+id/iconTrash"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_delete"
+        android:contentDescription="@string/delete_friend_button"
+        android:padding="8dp" />
+
+</LinearLayout>

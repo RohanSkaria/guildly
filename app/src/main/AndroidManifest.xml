@@ -23,7 +23,6 @@
             android:enabled="true"
             android:exported="false" />
 
-
         <activity
             android:name=".LoginActivity"
             android:exported="true">
@@ -62,6 +61,18 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".LoginActivity" />
         </activity>
+
+        <!-- NEW: Full friends list with actions -->
+        <activity
+            android:name=".AllFriendsActionsActivity"
+            android:exported="true"
+            android:parentActivityName=".MainActivity" />
+
+        <!-- NEW: Shows a friend’s profile -->
+        <activity
+            android:name=".FriendProfileActivity"
+            android:exported="true"
+            android:parentActivityName=".AllFriendsActionsActivity" />
 
     </application>
 

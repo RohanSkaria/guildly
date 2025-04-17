@@ -80,4 +80,9 @@
     <string name="your_friends">Your Friends</string>
     <string name="global_leaderboard_conn">Global Leaderboard</string>
     <string name="friends">Friends</string>
+    <!-- For item_friend_actions.xml -->
+    <string name="profile_button">Profile</string>
+    <string name="message_button">Message</string>
+    <string name="delete_friend_button">Delete Friend</string>
+
 </resources>

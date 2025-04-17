@@ -1,0 +1,40 @@
+<!-- res/layout/activity_friend_profile.xml -->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/topAppBar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@color/purple_500"
+        app:titleTextColor="@android:color/white"
+        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"/>
+
+    <de.hdodenhof.circleimageview.CircleImageView
+        android:id="@+id/friendProfileImage"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_marginTop="24dp"
+        android:layout_gravity="center"/>
+
+    <TextView
+        android:id="@+id/textFriendUsername"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Friend's Username"
+        android:textSize="20sp"
+        android:layout_marginTop="12dp"
+        android:layout_gravity="center"/>
+
+    <TextView
+        android:id="@+id/textFriendAboutMe"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="About me..."
+        android:layout_marginTop="24dp"/>
+</LinearLayout>

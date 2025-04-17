@@ -512,7 +512,12 @@ public class ProfileFragment extends Fragment {
 
     private void setupClickListeners() {
         habitsViewMore.setOnClickListener(v -> showHabitsDialog());
-        friendsViewMore.setOnClickListener(v -> showFriendsDialog());
+        friendsViewMore.setOnClickListener(v -> {
+            // Launch the full friends‐actions screen instead of the dialog
+            Intent intent = new Intent(requireContext(), AllFriendsActionsActivity.class);
+            startActivity(intent);
+        });
+
         profileEditButton.setOnClickListener(v -> toggleUsernameEditing());
         profileImage.setOnClickListener(v -> showSelectAvatarDialog());
 
