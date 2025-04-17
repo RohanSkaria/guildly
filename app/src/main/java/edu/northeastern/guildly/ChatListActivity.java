@@ -19,8 +19,10 @@ import com.google.firebase.database.ValueEventListener;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import edu.northeastern.guildly.adapters.ChatListAdapter;
 import edu.northeastern.guildly.data.Chats;
@@ -28,6 +30,7 @@ import edu.northeastern.guildly.data.FriendChatItem;
 import edu.northeastern.guildly.data.Message;
 
 public class ChatListActivity extends AppCompatActivity {
+    private static final String TAG = "ChatListActivity";
 
     private RecyclerView recyclerViewChatList;
     private ChatListAdapter chatListAdapter;
@@ -103,7 +106,7 @@ public class ChatListActivity extends AppCompatActivity {
                                 if (friendKey != null && !friendKey.trim().isEmpty()) {
                                     friendKeys.add(friendKey);
                                 } else {
-                                    Log.e("ChatListActivity", "Skipped a null/empty friendKey");
+                                    Log.e(TAG, "Skipped a null/empty friendKey");
                                 }
                             }
                             fetchFriendData(friendKeys);
@@ -113,8 +116,7 @@ public class ChatListActivity extends AppCompatActivity {
                     }
                     @Override
                     public void onCancelled(@NonNull DatabaseError error) {
-                        Log.e("ChatListActivity",
-                                "loadAllMyFriends cancelled", error.toException());
+                        Log.e(TAG, "loadAllMyFriends cancelled", error.toException());
                     }
                 });
     }
@@ -131,7 +133,7 @@ public class ChatListActivity extends AppCompatActivity {
         for (String friendKey : friendKeys) {
             // If friendKey is null, skip it (extra protection)
             if (friendKey == null) {
-                Log.e("ChatListActivity", "friendKey was null. Skipping...");
+                Log.e(TAG, "friendKey was null. Skipping...");
                 continue;
             }
 
@@ -151,8 +153,7 @@ public class ChatListActivity extends AppCompatActivity {
 
                         @Override
                         public void onCancelled(@NonNull DatabaseError error) {
-                            Log.e("ChatListActivity",
-                                    "fetchFriendData cancelled", error.toException());
+                            Log.e(TAG, "fetchFriendData cancelled", error.toException());
                         }
                     });
         }
@@ -165,7 +166,7 @@ public class ChatListActivity extends AppCompatActivity {
     private void findExistingChat(String friendKey, String friendUsername) {
         if (friendKey == null) {
             // Double check at runtime
-            Log.e("ChatListActivity", "findExistingChat called with null friendKey?");
+            Log.e(TAG, "findExistingChat called with null friendKey?");
             return;
         }
 
@@ -231,8 +232,7 @@ public class ChatListActivity extends AppCompatActivity {
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                Log.e("ChatListActivity",
-                        "findExistingChat cancelled", error.toException());
+                Log.e(TAG, "findExistingChat cancelled", error.toException());
             }
         });
     }
@@ -262,6 +262,7 @@ public class ChatListActivity extends AppCompatActivity {
 
     /**
      * Create a new chat (if none exists) and jump into ChatDetailActivity.
+     * Fixed to avoid overwriting the habits field.
      */
     private void createNewChat(String friendKey, String friendUsername) {
         if (friendKey == null) {
@@ -270,27 +271,35 @@ public class ChatListActivity extends AppCompatActivity {
             return;
         }
 
+        // Generate a new chat ID
         String newChatId = chatsRef.push().getKey();
         if (newChatId == null) {
             Toast.makeText(this, "Error creating chat", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        Chats newChat = new Chats();
-        newChat.chatId = newChatId;
-        List<String> parts = new ArrayList<>();
-        parts.add(myUserKey);
-        parts.add(friendKey);
-        newChat.participants = parts;
+        // Create participants list
+        List<String> participants = new ArrayList<>();
+        participants.add(myUserKey);
+        participants.add(friendKey);
 
-        chatsRef.child(newChatId).setValue(newChat)
-                .addOnSuccessListener(aVoid -> ChatDetailActivity.openChatDetail(
-                        ChatListActivity.this,
-                        newChatId,
-                        friendUsername)
-                )
+        // Create a chat object with only the necessary fields
+        Map<String, Object> chatData = new HashMap<>();
+        chatData.put("chatId", newChatId);
+        chatData.put("participants", participants);
+
+        // Directly save the chat object with specific fields
+        chatsRef.child(newChatId).setValue(chatData)
+                .addOnSuccessListener(aVoid -> {
+                    // After success, open the chat
+                    ChatDetailActivity.openChatDetail(
+                            ChatListActivity.this,
+                            newChatId,
+                            friendUsername
+                    );
+                })
                 .addOnFailureListener(e -> {
-                    Log.e("ChatListActivity", "createNewChat failed", e);
+                    Log.e(TAG, "createNewChat failed", e);
                     Toast.makeText(ChatListActivity.this,
                             "Failed to create chat: " + e.getMessage(),
                             Toast.LENGTH_LONG).show();
