@@ -69,7 +69,7 @@ public class ConnectionsFragment extends Fragment {
         View root = inflater.inflate(R.layout.fragment_connections, container, false);
 
         // Initialize views
-        recyclerViewChatList = root.findViewById(R.id.connections_list);
+        recyclerViewChatList = root.findViewById(R.id.recyclerViewChatList);
         editTextFriendUsername = root.findViewById(R.id.editTextFriendUsername);
         buttonAddFriend = root.findViewById(R.id.buttonAddFriend);
         friendRequestsBadge = root.findViewById(R.id.friendRequestsBadge);
@@ -107,15 +107,36 @@ public class ConnectionsFragment extends Fragment {
         usersRef = FirebaseDatabase.getInstance().getReference("users");
         chatsRef = FirebaseDatabase.getInstance().getReference("chats");
 
-        // Set up add friend button
-        buttonAddFriend.setOnClickListener(v -> {
-            String username = editTextFriendUsername.getText().toString().trim();
-            if (TextUtils.isEmpty(username)) {
-                Toast.makeText(getContext(), "Please enter a username", Toast.LENGTH_SHORT).show();
-                return;
+        buttonAddFriend.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Inflate the popup layout
+                LayoutInflater inflater = LayoutInflater.from(requireContext());
+                View dialogView = inflater.inflate(R.layout.dialog_add_friend, null); // Make sure this layout exists
+
+                // Find EditText in the popup layout
+                EditText searchInput = dialogView.findViewById(R.id.search_friend_input);
+
+                // Build and show the dialog
+                AlertDialog dialog = new AlertDialog.Builder(requireContext())
+                        .setTitle("Add a Friend")
+                        .setView(dialogView)
+                        .setPositiveButton("Close", null)
+                        .create();
+
+                dialog.show();
             }
-            findUserByUsername(username);
         });
+
+//        // Set up add friend button old logic
+//        buttonAddFriend.setOnClickListener(v -> {
+//            String username = editTextFriendUsername.getText().toString().trim();
+//            if (TextUtils.isEmpty(username)) {
+//                Toast.makeText(getContext(), "Please enter a username", Toast.LENGTH_SHORT).show();
+//                return;
+//            }
+//            findUserByUsername(username);
+//        });
 
         // Set up friend requests button
         buttonFriendRequests.setOnClickListener(v -> {

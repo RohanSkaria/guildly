@@ -54,15 +54,26 @@
         </androidx.cardview.widget.CardView>
 
         <!-- Add Friend Button -->
+<!--        <ImageButton-->
+<!--            android:id="@+id/buttonAddFriend"-->
+<!--            android:layout_width="48dp"-->
+<!--            android:layout_height="48dp"-->
+<!--            android:layout_marginStart="8dp"-->
+<!--            android:background="@drawable/add_friend_icon"-->
+<!--            android:contentDescription="Add Friend"-->
+<!--            android:src="@drawable/unknown_profile"-->
+<!--            app:tint="@android:color/white" />-->
+
         <ImageButton
             android:id="@+id/buttonAddFriend"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
             android:layout_marginStart="8dp"
-            android:background="@drawable/unknown_profile"
-            android:contentDescription="Add Friend"
-            android:src="@drawable/unknown_profile"
-            app:tint="@android:color/white" />
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/add_friend"
+            android:src="@drawable/add_friend_icon"
+            android:scaleType="centerInside" />
+
     </LinearLayout>
 
     <!-- Friend Requests Badge Button -->
@@ -87,7 +98,7 @@
             <ImageView
                 android:layout_width="24dp"
                 android:layout_height="24dp"
-                android:src="@drawable/unknown_profile"
+                android:src="@drawable/bell_icon"
                 app:tint="@color/colorPrimary" />
 
             <TextView
@@ -127,7 +138,7 @@
 
     <!-- Chat List -->
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/connections_list"
+        android:id="@+id/recyclerViewChatList"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
