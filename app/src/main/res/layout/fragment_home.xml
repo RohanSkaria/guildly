@@ -180,6 +180,26 @@
                 android:padding="8dp" />
         </LinearLayout>
 
+        <TextView
+            android:id="@+id/habits_count"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="@string/habits_left_for_today"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="#1B1F3B"
+            android:paddingTop="0dp"
+            android:paddingRight="16dp"
+            android:paddingLeft="16dp"
+            android:paddingBottom="5dp"
+            android:layout_weight="1"
+            app:layout_constraintTop_toBottomOf="@id/habit_header"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toTopOf="@id/habit_list"
+            />
+
+
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/habit_list"
             android:layout_width="match_parent"
@@ -189,12 +209,58 @@
             android:paddingTop="16dp"
             android:paddingBottom="16dp"
             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/habit_header"
+            app:layout_constraintTop_toBottomOf="@id/habits_count"
             app:layout_constraintVertical_bias="0.0" />
         <!-- Removed leaderboard_container section -->
+
+
+        <LinearLayout
+            android:id="@+id/leaderboard_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/rounded_background"
+            android:layout_margin="16dp"
+            android:padding="16dp"
+            app:layout_constraintTop_toBottomOf="@id/habit_list"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <TextView
+                android:id="@+id/connections_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/friends"
+                android:textSize="20sp"
+                android:textColor="#666666"
+                android:fontFamily="@font/montserrat_black"
+                android:paddingTop="16dp"
+                android:paddingLeft="16dp"
+                android:paddingRight="16dp"
+                android:paddingBottom="0dp" />
+
+            <TextView
+                android:id="@+id/leaderboard_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/leaderboard_caps"
+                android:textSize="30sp"
+                android:textStyle="bold"
+                android:textColor="#333333"
+                android:fontFamily="@font/montserrat_black"
+                android:paddingTop="0dp"
+                android:paddingLeft="16dp"
+                android:paddingRight="16dp"
+                android:paddingBottom="8dp" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/friendsleaderboard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="16dp" />
+        </LinearLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.core.widget.NestedScrollView>
