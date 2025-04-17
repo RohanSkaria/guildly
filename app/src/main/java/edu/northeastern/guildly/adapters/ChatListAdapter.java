@@ -49,7 +49,7 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ViewHo
                 .inflate(R.layout.item_chat_list, parent, false);
         return new ViewHolder(v);
     }
-
+    // In ChatListAdapter.java - onBindViewHolder method
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         FriendChatItem item = friendChatList.get(position);
@@ -92,48 +92,54 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ViewHo
             }
         });
 
-        DatabaseReference messagesRef = FirebaseDatabase.getInstance()
-                .getReference("chats")
-                .child(item.chatId)
-                .child("messages");
+        // Add a null check here - this is the problem area (line 97)
+        if (item.chatId != null) {
+            DatabaseReference messagesRef = FirebaseDatabase.getInstance()
+                    .getReference("chats")
+                    .child(item.chatId)
+                    .child("messages");
 
-        messagesRef.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                int unreadCount = 0;
-                Message lastMsg = null;
-                long maxTime = -1;
+            messagesRef.addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    int unreadCount = 0;
+                    Message lastMsg = null;
+                    long maxTime = -1;
 
-                for (DataSnapshot msgSnap : snapshot.getChildren()) {
-                    Message msg = msgSnap.getValue(Message.class);
-                    if (msg != null) {
-                        if (msg.timestamp > maxTime) {
-                            maxTime = msg.timestamp;
-                            lastMsg = msg;
+                    for (DataSnapshot msgSnap : snapshot.getChildren()) {
+                        Message msg = msgSnap.getValue(Message.class);
+                        if (msg != null) {
+                            if (msg.timestamp > maxTime) {
+                                maxTime = msg.timestamp;
+                                lastMsg = msg;
+                            }
+                            if (!msg.senderId.equals(currentUserId) && "SENT".equals(msg.status)) {
+                                unreadCount++;
+                            }
                         }
-                        if (!msg.senderId.equals(currentUserId) && "SENT".equals(msg.status)) {
-                            unreadCount++;
-                        }
+                    }
+
+                    if (lastMsg != null) {
+                        holder.textLastMessage.setText(lastMsg.content);
+                        holder.textTimestamp.setText(formatTimestamp(lastMsg.timestamp));
+                    }
+
+                    if (unreadCount > 0) {
+                        holder.textUnreadCount.setVisibility(View.VISIBLE);
+                        holder.textUnreadCount.setText(String.valueOf(unreadCount));
+                    } else {
+                        holder.textUnreadCount.setVisibility(View.GONE);
                     }
                 }
 
-                if (lastMsg != null) {
-                    holder.textLastMessage.setText(lastMsg.content);
-                    holder.textTimestamp.setText(formatTimestamp(lastMsg.timestamp));
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {
                 }
-
-                if (unreadCount > 0) {
-                    holder.textUnreadCount.setVisibility(View.VISIBLE);
-                    holder.textUnreadCount.setText(String.valueOf(unreadCount));
-                } else {
-                    holder.textUnreadCount.setVisibility(View.GONE);
-                }
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-            }
-        });
+            });
+        } else {
+            // No existing chat yet, keep the default message
+            holder.textUnreadCount.setVisibility(View.GONE);
+        }
 
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) {
