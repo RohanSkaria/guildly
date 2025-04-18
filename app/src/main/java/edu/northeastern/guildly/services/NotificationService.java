@@ -12,6 +12,7 @@ import androidx.core.app.NotificationManagerCompat;
 
 import edu.northeastern.guildly.MainActivity;
 import edu.northeastern.guildly.R;
+import edu.northeastern.guildly.ChatDetailActivity;
 
 public class NotificationService {
 
@@ -107,15 +108,17 @@ public class NotificationService {
         notifyUser(context, NOTIFICATION_TYPE_STREAK, builder);
     }
 
-    public static void showNewMessageNotification(Context context, String messageContent) {
+    public static void showNewMessageNotification(Context context, String senderUsername, String messageContent) {
         Intent intent = new Intent(context, MainActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent,
                 PendingIntent.FLAG_IMMUTABLE);
 
+        String title = senderUsername + " sent you a new message";
+
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_fire)
-                .setContentTitle("New Message")
+                .setContentTitle(title)
                 .setContentText(messageContent)
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .setContentIntent(pendingIntent)
@@ -123,6 +126,7 @@ public class NotificationService {
 
         notifyUser(context, NOTIFICATION_TYPE_MESSAGE, builder);
     }
+
 
     private static void notifyUser(Context context, int notificationType, NotificationCompat.Builder builder) {
         try {

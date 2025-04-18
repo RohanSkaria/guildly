@@ -15,6 +15,8 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.util.Map;
+
 import edu.northeastern.guildly.MainActivity;
 import edu.northeastern.guildly.data.Message;
 
@@ -205,7 +207,25 @@ public class NotificationListenerService extends Service {
                             public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
                                 Message msg = snapshot.getValue(Message.class);
                                 if (msg != null && !msg.senderId.equals(userKey)) {
-                                    NotificationService.showNewMessageNotification(getApplicationContext(), msg.content);
+                                    FirebaseDatabase.getInstance().getReference("users")
+                                            .child(msg.senderId)
+                                            .child("username")
+                                            .addListenerForSingleValueEvent(new ValueEventListener() {
+                                                @Override
+                                                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                                    String senderUsername = "Someone";
+                                                    Object val = snapshot.getValue();
+                                                    if (val instanceof String) {
+                                                        senderUsername = (String) val;
+                                                    } else if (val instanceof Map) {
+                                                        Map<String, Object> map = (Map<String, Object>) val;
+                                                        senderUsername = map.getOrDefault("first", "") + " " + map.getOrDefault("last", "");
+                                                    }
+                                                    NotificationService.showNewMessageNotification(getApplicationContext(), senderUsername, msg.content);
+                                                }
+
+                                                @Override public void onCancelled(@NonNull DatabaseError error) {}
+                                            });
                                 }
                             }
                             @Override public void onChildChanged(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {}
