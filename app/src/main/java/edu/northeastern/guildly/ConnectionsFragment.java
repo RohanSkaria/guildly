@@ -473,24 +473,32 @@ public class ConnectionsFragment extends Fragment {
 
         RecyclerView recyclerView = dialogView.findViewById(R.id.recyclerViewRequests);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        recyclerView.setAdapter(new FriendRequestAdapter(pendingKeys, displayNames, new FriendRequestAdapter.OnRequestActionListener() {
-            @Override
-            public void onAccept(String userKey) {
-                acceptFriendRequest(userKey);
-            }
 
-            @Override
-            public void onReject(String userKey) {
-                rejectFriendRequest(userKey);
-            }
-        }));
-
-        new AlertDialog.Builder(requireContext())
+        AlertDialog dialog = new AlertDialog.Builder(requireContext())
                 .setTitle("Pending Friend Requests")
                 .setView(dialogView)
                 .setPositiveButton("Close", null)
-                .create()
-                .show();
+                .create();
+
+        recyclerView.setAdapter(new FriendRequestAdapter(
+                pendingKeys,
+                displayNames,
+                new FriendRequestAdapter.OnRequestActionListener() {
+                    @Override
+                    public void onAccept(String userKey) {
+                        acceptFriendRequest(userKey);
+                        dialog.dismiss();
+                    }
+
+                    @Override
+                    public void onReject(String userKey) {
+                        rejectFriendRequest(userKey);
+                        dialog.dismiss();
+                    }
+                }
+        ));
+
+        dialog.show();
     }
 
     private void showAcceptRejectDialog(String requesterKey, String displayName) {
