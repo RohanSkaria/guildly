@@ -491,6 +491,7 @@ public class ConnectionsFragment extends Fragment {
         builder.setMessage(displayName + " wants to be friends.");
         builder.setPositiveButton("ACCEPT", (dialog, which) -> acceptFriendRequest(requesterKey));
         builder.setNegativeButton("REJECT", (dialog, which) -> rejectFriendRequest(requesterKey));
+        builder.setNeutralButton("CLOSE", (dialog, which) -> dialog.dismiss());
         builder.show();
     }
 
