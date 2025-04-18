@@ -795,9 +795,9 @@ public class ProfileFragment extends Fragment {
         habitsViewMore.setOnClickListener(v -> showHabitsDialog());
 
 
-//        friendsViewMore.setOnClickListener(v -> {
-//            showFriendsWithActionsDialog();
-//        });
+        friendsViewMore.setOnClickListener(v -> {
+            showFriendsWithActionsDialog();
+        });
 
         profileEditButton.setOnClickListener(v -> toggleUsernameEditing());
         profileImage.setOnClickListener(v -> showSelectAvatarDialog());
@@ -809,72 +809,72 @@ public class ProfileFragment extends Fragment {
                 startActivity(new Intent(getActivity(), SettingsActivity.class)));
     }
 
-//    private void showFriendsWithActionsDialog() {
-//        userRef.addListenerForSingleValueEvent(new ValueEventListener() {
-//            @Override
-//            public void onDataChange(@NonNull DataSnapshot snapshot) {
-//                User me = snapshot.getValue(User.class);
-//                if (me == null || me.friends == null || me.friends.isEmpty()) {
-//                    Toast.makeText(getContext(),
-//                            "You have no friends!", Toast.LENGTH_SHORT).show();
-//                    return;
-//                }
-//
-//                // Create dialog view
-//                View dialogView = LayoutInflater.from(getContext())
-//                        .inflate(R.layout.dialog_all_friends_actions, null);
-//
-//                RecyclerView rvFriends = dialogView.findViewById(R.id.recyclerViewAllFriends);
-//                rvFriends.setLayoutManager(new LinearLayoutManager(getContext()));
-//
-//                // Set max height (optional)
-//                int maxHeightInDp = 400;
-//                float density = getResources().getDisplayMetrics().density;
-//                int maxHeightInPx = (int) (maxHeightInDp * density);
-//                rvFriends.getLayoutParams().height = maxHeightInPx;
-//
-//
-//                FriendsDialogAdapter adapter = new FriendsDialogAdapter(
-//                        me.friends,
-//                        new FriendsDialogAdapter.OnFriendActionListener() {
-//                            @Override
-//                            public void onProfileClick(String friendKey) {
-//                                if (getActivity() instanceof AppCompatActivity) {
-//                                    FriendProfileActivity.openProfile(
-//                                            (AppCompatActivity) getActivity(), friendKey);
-//                                }
-//                            }
-//
-//                            @Override
-//                            public void onMessageClick(String friendKey) {
-//                                findOrCreateChatThenOpen(friendKey);
-//                            }
-//
-//                            @Override
-//                            public void onDeleteClick(String friendKey) {
-//                                confirmDeleteFriend(friendKey);
-//                            }
-//                        }
-//                );
-//
-//                rvFriends.setAdapter(adapter);
-//
-//                // Show the dialog
-//                AlertDialog dialog = new AlertDialog.Builder(requireContext())
-//                        .setTitle("My Friends")
-//                        .setView(dialogView)
-//                        .setPositiveButton("Close", null)
-//                        .create();
-//
-//                dialog.show();
-//            }
-//
-//            @Override
-//            public void onCancelled(@NonNull DatabaseError error) {
-//                Toast.makeText(getContext(), "Error loading friends", Toast.LENGTH_SHORT).show();
-//            }
-//        });
-//    }
+    private void showFriendsWithActionsDialog() {
+        userRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                User me = snapshot.getValue(User.class);
+                if (me == null || me.friends == null || me.friends.isEmpty()) {
+                    Toast.makeText(getContext(),
+                            "You have no friends!", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                // Create dialog view
+                View dialogView = LayoutInflater.from(getContext())
+                        .inflate(R.layout.dialog_all_friends_actions, null);
+
+                RecyclerView rvFriends = dialogView.findViewById(R.id.recyclerViewAllFriends);
+                rvFriends.setLayoutManager(new LinearLayoutManager(getContext()));
+
+                // Set max height (optional)
+                int maxHeightInDp = 400;
+                float density = getResources().getDisplayMetrics().density;
+                int maxHeightInPx = (int) (maxHeightInDp * density);
+                rvFriends.getLayoutParams().height = maxHeightInPx;
+
+
+                FriendsDialogAdapter adapter = new FriendsDialogAdapter(
+                        me.friends,
+                        new FriendsDialogAdapter.OnFriendActionListener() {
+                            @Override
+                            public void onProfileClick(String friendKey) {
+                                if (getActivity() instanceof AppCompatActivity) {
+                                    FriendProfileActivity.openProfile(
+                                            (AppCompatActivity) getActivity(), friendKey);
+                                }
+                            }
+
+                            @Override
+                            public void onMessageClick(String friendKey) {
+                                findOrCreateChatThenOpen(friendKey);
+                            }
+
+                            @Override
+                            public void onDeleteClick(String friendKey) {
+                                confirmDeleteFriend(friendKey);
+                            }
+                        }
+                );
+
+                rvFriends.setAdapter(adapter);
+
+                // Show the dialog
+                AlertDialog dialog = new AlertDialog.Builder(requireContext())
+                        .setTitle("My Friends")
+                        .setView(dialogView)
+                        .setPositiveButton("Close", null)
+                        .create();
+
+                dialog.show();
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Toast.makeText(getContext(), "Error loading friends", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
 
     private void showEditAboutMeDialog() {
         View dialogView = LayoutInflater.from(getContext())
