@@ -367,60 +367,63 @@ public class ConnectionsFragment extends Fragment {
     }
 
     /**
-     * Send a friend request
+     * Send a friend request without overwriting other user data
      */
     private void sendFriendRequest(String targetUserKey) {
-        DatabaseReference targetUserRef = usersRef.child(targetUserKey);
-        final int[] resultCode = {0}; // 0: success, 1: already friends, 2: already requested
+        // Reference to the friend requests field of the target user
+        DatabaseReference friendRequestsRef = usersRef.child(targetUserKey).child("friendRequests");
 
-        targetUserRef.runTransaction(new Transaction.Handler() {
-            @NonNull
+        // Check if users are already friends
+        usersRef.child(targetUserKey).child("friends").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
-            public Transaction.Result doTransaction(@NonNull MutableData currentData) {
-                User targetUser = currentData.getValue(User.class);
-                if (targetUser == null) {
-                    return Transaction.success(currentData);
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                // Check if already friends
+                boolean alreadyFriends = false;
+                if (snapshot.exists()) {
+                    for (DataSnapshot friendSnap : snapshot.getChildren()) {
+                        String friend = friendSnap.getValue(String.class);
+                        if (myUserKey.equals(friend)) {
+                            alreadyFriends = true;
+                            break;
+                        }
+                    }
                 }
 
-                if (targetUser.friendRequests == null) {
-                    targetUser.friendRequests = new HashMap<>();
+                if (alreadyFriends) {
+                    Toast.makeText(getContext(), "You're already friends", Toast.LENGTH_SHORT).show();
+                    return;
                 }
 
-                if (targetUser.friends != null && targetUser.friends.contains(myUserKey)) {
-                    resultCode[0] = 1;
-                    return Transaction.abort();
-                }
+                // Check if request already sent
+                friendRequestsRef.child(myUserKey).addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        if (snapshot.exists() && "pending".equals(snapshot.getValue(String.class))) {
+                            Toast.makeText(getContext(), "Friend request already sent", Toast.LENGTH_SHORT).show();
+                        } else {
+                            // Set only the specific request field
+                            friendRequestsRef.child(myUserKey).setValue("pending")
+                                    .addOnSuccessListener(aVoid -> {
+                                        Toast.makeText(getContext(), "Friend request sent!", Toast.LENGTH_SHORT).show();
+                                        editTextFriendUsername.setText("");
+                                        updateFriendRequestsBadge();
+                                    })
+                                    .addOnFailureListener(e -> {
+                                        Toast.makeText(getContext(), "Error sending request", Toast.LENGTH_LONG).show();
+                                    });
+                        }
+                    }
 
-                String status = targetUser.friendRequests.get(myUserKey);
-                if ("pending".equals(status)) {
-                    resultCode[0] = 2;
-                    return Transaction.abort();
-                }
-
-                targetUser.friendRequests.put(myUserKey, "pending");
-                currentData.setValue(targetUser);
-                return Transaction.success(currentData);
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        Toast.makeText(getContext(), "Error checking request status", Toast.LENGTH_SHORT).show();
+                    }
+                });
             }
 
             @Override
-            public void onComplete(@Nullable DatabaseError error,
-                                   boolean committed,
-                                   @Nullable DataSnapshot currentData) {
-                if (error != null) {
-                    Toast.makeText(getContext(), "Error sending request", Toast.LENGTH_LONG).show();
-                } else if (!committed) {
-                    if (resultCode[0] == 1) {
-                        Toast.makeText(getContext(), "You're already friends", Toast.LENGTH_SHORT).show();
-                    } else if (resultCode[0] == 2) {
-                        Toast.makeText(getContext(), "Friend request already sent", Toast.LENGTH_SHORT).show();
-                    } else {
-                        Toast.makeText(getContext(), "Request not committed", Toast.LENGTH_SHORT).show();
-                    }
-                } else {
-                    Toast.makeText(getContext(), "Friend request sent!", Toast.LENGTH_SHORT).show();
-                    editTextFriendUsername.setText("");
-                    updateFriendRequestsBadge();
-                }
+            public void onCancelled(@NonNull DatabaseError error) {
+                Toast.makeText(getContext(), "Error checking friend status", Toast.LENGTH_SHORT).show();
             }
         });
     }

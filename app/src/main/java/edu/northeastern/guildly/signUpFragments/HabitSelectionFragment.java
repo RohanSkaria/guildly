@@ -97,6 +97,10 @@ public class HabitSelectionFragment extends Fragment {
      * Called when the user finishes the sign-up step for habit selection.
      * We now store all 8 habits with isTracked = true/false as indicated by the CheckBox.
      */
+    /**
+     * Called when the user finishes the sign-up step for habit selection.
+     * We now store all 8 habits with isTracked = true/false as indicated by the CheckBox.
+     */
     public boolean validateAndSaveData(Bundle data) {
         // 1) Identify which user we are storing for
         String userId = data.getString("userId");
@@ -112,13 +116,35 @@ public class HabitSelectionFragment extends Fragment {
                 .child(userId)
                 .child("habits");
 
+        // Create a list to track selected habits for review screen
+        ArrayList<String> selectedHabits = new ArrayList<>();
+
         // 2) For each CheckBox => set isTracked accordingly, store to DB
         for (CheckBox cb : habitCheckboxes) {
             Habit h = (Habit) cb.getTag();
             boolean tracked = cb.isChecked();
             h.setTracked(tracked);
-            userHabitsRef.child(h.getHabitName()).setValue(h);
+
+            // Track selected habits for review screen
+            if (tracked) {
+                selectedHabits.add(h.getHabitName());
+            }
+
+            // Use sanitized habit name as key to avoid Firebase path issues
+            String safeHabitName = h.getHabitName().replace(".", "_");
+
+            // Store each property individually instead of the whole object
+            userHabitsRef.child(safeHabitName).child("habitName").setValue(h.getHabitName());
+            userHabitsRef.child(safeHabitName).child("iconResId").setValue(h.getIconResId());
+            userHabitsRef.child(safeHabitName).child("tracked").setValue(tracked);
+            userHabitsRef.child(safeHabitName).child("streakCount").setValue(h.getStreakCount());
+            userHabitsRef.child(safeHabitName).child("lastCompletedTime").setValue(h.getLastCompletedTime());
+            userHabitsRef.child(safeHabitName).child("completedToday").setValue(h.isCompletedToday());
+            userHabitsRef.child(safeHabitName).child("nextAvailableTime").setValue(h.getNextAvailableTime());
         }
+
+        // Add the selected habits to the bundle for the review screen
+        data.putStringArrayList("selectedHabits", selectedHabits);
 
         Log.d(TAG, "Finished writing all 8 habits to DB with correct isTracked flags.");
         return true;
