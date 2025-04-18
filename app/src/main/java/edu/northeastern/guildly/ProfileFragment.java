@@ -17,7 +17,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.Observer;
+
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -30,17 +30,12 @@ import com.google.firebase.database.ValueEventListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import de.hdodenhof.circleimageview.CircleImageView;
-import edu.northeastern.guildly.R;
-import edu.northeastern.guildly.SettingsActivity;
-import edu.northeastern.guildly.MainActivity;
-import edu.northeastern.guildly.adapters.AllFriendsActionsAdapter;
-import edu.northeastern.guildly.adapters.FriendsAdapter;
+
 import edu.northeastern.guildly.adapters.FriendsDialogAdapter;
 import edu.northeastern.guildly.adapters.HabitAdapter;
 import edu.northeastern.guildly.data.Chats;
