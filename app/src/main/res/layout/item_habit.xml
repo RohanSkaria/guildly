@@ -51,6 +51,7 @@
         android:layout_width="48dp"
         android:layout_height="48dp" />
 
+
     <!-- A message for "Come back in 24 hours" or something -->
     <TextView
         android:id="@+id/lockMessage"
