@@ -231,7 +231,51 @@ public class FriendProfileActivity extends AppCompatActivity {
         textView.setVisibility(View.VISIBLE);
 
         Habit habit = sortedHabits.get(index);
-        imageView.setImageResource(habit.getIconResId());
+
+        // Set the habit icon based on habit name
+        int iconResId;
+        String habitName = habit.getHabitName();
+
+        // Match habit name to the correct icon
+        if (habitName.contains("water")) {
+            iconResId = R.drawable.ic_water;
+        } else if (habitName.contains("Workout") || habitName.contains("workout")) {
+            iconResId = R.drawable.ic_workout;
+        } else if (habitName.contains("homework")) {
+            iconResId = R.drawable.ic_homework;
+        } else if (habitName.contains("book") || habitName.contains("Read")) {
+            iconResId = R.drawable.ic_book;
+        } else if (habitName.contains("Meditate") || habitName.contains("meditate")) {
+            iconResId = R.drawable.ic_meditation;
+        } else if (habitName.contains("money") || habitName.contains("Save")) {
+            iconResId = R.drawable.ic_savemoney;
+        } else if (habitName.contains("vegetable")) {
+            iconResId = R.drawable.ic_vegetable;
+        } else if (habitName.contains("phone")) {
+            iconResId = R.drawable.ic_phonebanned;
+        } else if (habitName.contains("walk") || habitName.contains("Walk")) {
+            iconResId = R.drawable.ic_walk_icon;
+        } else if (habitName.contains("tea") || habitName.contains("Tea")) {
+            iconResId = R.drawable.ic_tea;
+        } else if (habitName.contains("Compliment") || habitName.contains("compliment")) {
+            iconResId = R.drawable.ic_compliment;
+        } else if (habitName.contains("Journal") || habitName.contains("journal")) {
+            iconResId = R.drawable.ic_journal;
+        } else if (habitName.contains("social media") || habitName.contains("Social Media")) {
+            iconResId = R.drawable.ic_nosocial;
+        } else if (habitName.contains("Stretch") || habitName.contains("stretch")) {
+            iconResId = R.drawable.ic_stretch;
+        } else if (habitName.contains("Sleep") || habitName.contains("sleep")) {
+            iconResId = R.drawable.ic_sleep;
+        } else {
+            // Default icon for unrecognized habits
+            iconResId = R.drawable.ic_workout; // Use any available icon as default
+        }
+
+        // Set the icon resource
+        imageView.setImageResource(iconResId);
+
+        // Set the streak text
         textView.setText("🔥 " + habit.getStreakCount() + " days");
     }
 

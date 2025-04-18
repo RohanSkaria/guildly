@@ -46,6 +46,7 @@ import java.util.Map;
 import java.util.Set;
 
 import edu.northeastern.guildly.adapters.ChatListAdapter;
+import edu.northeastern.guildly.adapters.FriendRequestAdapter;
 import edu.northeastern.guildly.adapters.SearchUserAdapter;
 import edu.northeastern.guildly.data.Chats;
 import edu.northeastern.guildly.data.FriendChatItem;
@@ -367,60 +368,63 @@ public class ConnectionsFragment extends Fragment {
     }
 
     /**
-     * Send a friend request
+     * Send a friend request without overwriting other user data
      */
     private void sendFriendRequest(String targetUserKey) {
-        DatabaseReference targetUserRef = usersRef.child(targetUserKey);
-        final int[] resultCode = {0}; // 0: success, 1: already friends, 2: already requested
+        // Reference to the friend requests field of the target user
+        DatabaseReference friendRequestsRef = usersRef.child(targetUserKey).child("friendRequests");
 
-        targetUserRef.runTransaction(new Transaction.Handler() {
-            @NonNull
+        // Check if users are already friends
+        usersRef.child(targetUserKey).child("friends").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
-            public Transaction.Result doTransaction(@NonNull MutableData currentData) {
-                User targetUser = currentData.getValue(User.class);
-                if (targetUser == null) {
-                    return Transaction.success(currentData);
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                // Check if already friends
+                boolean alreadyFriends = false;
+                if (snapshot.exists()) {
+                    for (DataSnapshot friendSnap : snapshot.getChildren()) {
+                        String friend = friendSnap.getValue(String.class);
+                        if (myUserKey.equals(friend)) {
+                            alreadyFriends = true;
+                            break;
+                        }
+                    }
                 }
 
-                if (targetUser.friendRequests == null) {
-                    targetUser.friendRequests = new HashMap<>();
+                if (alreadyFriends) {
+                    Toast.makeText(getContext(), "You're already friends", Toast.LENGTH_SHORT).show();
+                    return;
                 }
 
-                if (targetUser.friends != null && targetUser.friends.contains(myUserKey)) {
-                    resultCode[0] = 1;
-                    return Transaction.abort();
-                }
+                // Check if request already sent
+                friendRequestsRef.child(myUserKey).addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        if (snapshot.exists() && "pending".equals(snapshot.getValue(String.class))) {
+                            Toast.makeText(getContext(), "Friend request already sent", Toast.LENGTH_SHORT).show();
+                        } else {
+                            // Set only the specific request field
+                            friendRequestsRef.child(myUserKey).setValue("pending")
+                                    .addOnSuccessListener(aVoid -> {
+                                        Toast.makeText(getContext(), "Friend request sent!", Toast.LENGTH_SHORT).show();
+                                        editTextFriendUsername.setText("");
+                                        updateFriendRequestsBadge();
+                                    })
+                                    .addOnFailureListener(e -> {
+                                        Toast.makeText(getContext(), "Error sending request", Toast.LENGTH_LONG).show();
+                                    });
+                        }
+                    }
 
-                String status = targetUser.friendRequests.get(myUserKey);
-                if ("pending".equals(status)) {
-                    resultCode[0] = 2;
-                    return Transaction.abort();
-                }
-
-                targetUser.friendRequests.put(myUserKey, "pending");
-                currentData.setValue(targetUser);
-                return Transaction.success(currentData);
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        Toast.makeText(getContext(), "Error checking request status", Toast.LENGTH_SHORT).show();
+                    }
+                });
             }
 
             @Override
-            public void onComplete(@Nullable DatabaseError error,
-                                   boolean committed,
-                                   @Nullable DataSnapshot currentData) {
-                if (error != null) {
-                    Toast.makeText(getContext(), "Error sending request", Toast.LENGTH_LONG).show();
-                } else if (!committed) {
-                    if (resultCode[0] == 1) {
-                        Toast.makeText(getContext(), "You're already friends", Toast.LENGTH_SHORT).show();
-                    } else if (resultCode[0] == 2) {
-                        Toast.makeText(getContext(), "Friend request already sent", Toast.LENGTH_SHORT).show();
-                    } else {
-                        Toast.makeText(getContext(), "Request not committed", Toast.LENGTH_SHORT).show();
-                    }
-                } else {
-                    Toast.makeText(getContext(), "Friend request sent!", Toast.LENGTH_SHORT).show();
-                    editTextFriendUsername.setText("");
-                    updateFriendRequestsBadge();
-                }
+            public void onCancelled(@NonNull DatabaseError error) {
+                Toast.makeText(getContext(), "Error checking friend status", Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -467,20 +471,37 @@ public class ConnectionsFragment extends Fragment {
     private void showRequestsListDialog(List<String> pendingKeys, List<String> displayNames) {
         if (getContext() == null) return;
 
-        // Create dialog with all friend requests in a list
-        String[] items = new String[displayNames.size()];
-        for (int i = 0; i < displayNames.size(); i++) {
-            items[i] = displayNames.get(i);
-        }
+        View dialogView = LayoutInflater.from(getContext())
+                .inflate(R.layout.dialog_friend_requests_list, null);
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
-        builder.setTitle("Friend Requests");
-        builder.setItems(items, (dialog, which) -> {
-            String requesterKey = pendingKeys.get(which);
-            showAcceptRejectDialog(requesterKey, displayNames.get(which));
-        });
-        builder.setPositiveButton("Close", null);
-        builder.show();
+        RecyclerView recyclerView = dialogView.findViewById(R.id.recyclerViewRequests);
+        recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+
+        AlertDialog dialog = new AlertDialog.Builder(requireContext())
+                .setTitle("Pending Friend Requests")
+                .setView(dialogView)
+                .setPositiveButton("Close", null)
+                .create();
+
+        recyclerView.setAdapter(new FriendRequestAdapter(
+                pendingKeys,
+                displayNames,
+                new FriendRequestAdapter.OnRequestActionListener() {
+                    @Override
+                    public void onAccept(String userKey) {
+                        acceptFriendRequest(userKey);
+                        dialog.dismiss();
+                    }
+
+                    @Override
+                    public void onReject(String userKey) {
+                        rejectFriendRequest(userKey);
+                        dialog.dismiss();
+                    }
+                }
+        ));
+
+        dialog.show();
     }
 
     private void showAcceptRejectDialog(String requesterKey, String displayName) {
@@ -491,6 +512,7 @@ public class ConnectionsFragment extends Fragment {
         builder.setMessage(displayName + " wants to be friends.");
         builder.setPositiveButton("ACCEPT", (dialog, which) -> acceptFriendRequest(requesterKey));
         builder.setNegativeButton("REJECT", (dialog, which) -> rejectFriendRequest(requesterKey));
+        builder.setNeutralButton("CLOSE", (dialog, which) -> dialog.dismiss());
         builder.show();
     }
 
@@ -499,71 +521,97 @@ public class ConnectionsFragment extends Fragment {
      */
     private void acceptFriendRequest(String requesterKey) {
         if (myEmail == null) return;
-        DatabaseReference meRef = usersRef.child(myUserKey);
-        meRef.runTransaction(new Transaction.Handler() {
-            @NonNull
-            @Override
-            public Transaction.Result doTransaction(@NonNull MutableData currentData) {
-                User me = currentData.getValue(User.class);
-                if (me == null) {
-                    return Transaction.success(currentData);
-                }
-                if (me.friendRequests != null) {
-                    me.friendRequests.remove(requesterKey);
-                }
-                if (me.friends == null) {
-                    me.friends = new ArrayList<>();
-                }
-                if (!me.friends.contains(requesterKey)) {
-                    me.friends.add(requesterKey);
-                }
-                currentData.setValue(me);
-                return Transaction.success(currentData);
-            }
-            @Override
-            public void onComplete(@Nullable DatabaseError error,
-                                   boolean committed,
-                                   @Nullable DataSnapshot currentData) {
-                if (error != null) {
+
+        // Get reference to the specific fields we need to update
+        DatabaseReference myFriendRequestsRef = usersRef.child(myUserKey).child("friendRequests");
+        DatabaseReference myFriendsRef = usersRef.child(myUserKey).child("friends");
+
+        // First remove the friend request
+        myFriendRequestsRef.child(requesterKey).removeValue()
+                .addOnSuccessListener(aVoid -> {
+                    // Then add to friends list
+                    myFriendsRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                            List<String> friends = new ArrayList<>();
+                            if (snapshot.exists()) {
+                                for (DataSnapshot friendSnap : snapshot.getChildren()) {
+                                    String friend = friendSnap.getValue(String.class);
+                                    if (friend != null) {
+                                        friends.add(friend);
+                                    }
+                                }
+                            }
+
+                            // Add the new friend if not already in list
+                            if (!friends.contains(requesterKey)) {
+                                friends.add(requesterKey);
+                                myFriendsRef.setValue(friends)
+                                        .addOnSuccessListener(unused -> {
+                                            addMeToRequesterFriends(requesterKey);
+                                            loadAllChats();
+                                            updateFriendRequestsBadge();
+                                        })
+                                        .addOnFailureListener(e -> {
+                                            Toast.makeText(getContext(),
+                                                    "Error accepting request: " + e.getMessage(),
+                                                    Toast.LENGTH_LONG).show();
+                                        });
+                            } else {
+                                // They're already friends
+                                addMeToRequesterFriends(requesterKey);
+                                loadAllChats();
+                                updateFriendRequestsBadge();
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
+                            Toast.makeText(getContext(),
+                                    "Error accepting request: " + error.getMessage(),
+                                    Toast.LENGTH_LONG).show();
+                        }
+                    });
+                })
+                .addOnFailureListener(e -> {
                     Toast.makeText(getContext(),
-                            "Error accepting request: " + error.getMessage(),
+                            "Error accepting request: " + e.getMessage(),
                             Toast.LENGTH_LONG).show();
-                } else if (committed) {
-                    addMeToRequesterFriends(requesterKey);
-                    loadAllChats();
-                    updateFriendRequestsBadge();
-                }
-            }
-        });
+                });
     }
 
     private void addMeToRequesterFriends(String requesterKey) {
         if (myEmail == null) return;
-        DatabaseReference requesterRef = usersRef.child(requesterKey);
-        requesterRef.runTransaction(new Transaction.Handler() {
-            @NonNull
+
+        // Get direct reference to the requester's friends list
+        DatabaseReference requesterFriendsRef = usersRef.child(requesterKey).child("friends");
+
+        requesterFriendsRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
-            public Transaction.Result doTransaction(@NonNull MutableData currentData) {
-                User requester = currentData.getValue(User.class);
-                if (requester == null) {
-                    return Transaction.success(currentData);
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                List<String> friends = new ArrayList<>();
+                if (snapshot.exists()) {
+                    for (DataSnapshot friendSnap : snapshot.getChildren()) {
+                        String friend = friendSnap.getValue(String.class);
+                        if (friend != null) {
+                            friends.add(friend);
+                        }
+                    }
                 }
-                if (requester.friends == null) {
-                    requester.friends = new ArrayList<>();
+
+                // Add myself if not already in their list
+                if (!friends.contains(myUserKey)) {
+                    friends.add(myUserKey);
+                    requesterFriendsRef.setValue(friends)
+                            .addOnFailureListener(e -> {
+                                Log.e(TAG, "Error adding requester as friend", e);
+                            });
                 }
-                if (!requester.friends.contains(myUserKey)) {
-                    requester.friends.add(myUserKey);
-                }
-                currentData.setValue(requester);
-                return Transaction.success(currentData);
             }
+
             @Override
-            public void onComplete(@Nullable DatabaseError error,
-                                   boolean committed,
-                                   @Nullable DataSnapshot currentData) {
-                if (error != null) {
-                    Log.e(TAG, "addMeToRequesterFriends error", error.toException());
-                }
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.e(TAG, "Error getting requester's friends", error.toException());
             }
         });
     }
@@ -573,39 +621,21 @@ public class ConnectionsFragment extends Fragment {
      */
     private void rejectFriendRequest(String requesterKey) {
         if (myEmail == null) return;
-        DatabaseReference meRef = usersRef.child(myUserKey);
-        meRef.runTransaction(new Transaction.Handler() {
-            @NonNull
-            @Override
-            public Transaction.Result doTransaction(@NonNull MutableData currentData) {
-                User me = currentData.getValue(User.class);
-                if (me == null) {
-                    return Transaction.success(currentData);
-                }
-                if (me.friendRequests != null) {
-                    me.friendRequests.remove(requesterKey);
-                }
-                currentData.setValue(me);
-                return Transaction.success(currentData);
-            }
-            @Override
-            public void onComplete(@Nullable DatabaseError error,
-                                   boolean committed,
-                                   @Nullable DataSnapshot currentData) {
-                if (error != null) {
-                    Toast.makeText(getContext(),
-                            "Error rejecting request: " + error.getMessage(),
-                            Toast.LENGTH_LONG).show();
-                } else if (committed) {
-                    Toast.makeText(getContext(),
-                            "Request rejected.",
-                            Toast.LENGTH_SHORT).show();
-                    updateFriendRequestsBadge();
-                }
-            }
-        });
-    }
+        DatabaseReference requestRef = usersRef.child(myUserKey)
+                .child("friendRequests").child(requesterKey);
 
+        // Simply remove that specific request node
+        requestRef.removeValue()
+                .addOnSuccessListener(aVoid -> {
+                    Toast.makeText(getContext(), "Request rejected.", Toast.LENGTH_SHORT).show();
+                    updateFriendRequestsBadge();
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(getContext(),
+                            "Error rejecting request: " + e.getMessage(),
+                            Toast.LENGTH_LONG).show();
+                });
+    }
     /**
      * Update friend request badge
      */
