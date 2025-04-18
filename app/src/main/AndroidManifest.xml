@@ -42,9 +42,6 @@
             android:parentActivityName=".MainActivity" />
 
         <activity
-            android:name=".ChatListActivity"
-            android:exported="true" />
-        <activity
             android:name=".ChatDetailActivity"
             android:exported="true" />
 
