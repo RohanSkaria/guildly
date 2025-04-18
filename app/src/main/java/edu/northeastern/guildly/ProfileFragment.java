@@ -661,38 +661,49 @@ public class ProfileFragment extends Fragment {
     }
 
     private void deleteFriend(String friendKey) {
-        // 1) Remove friendKey from myUserKey's friend list
-        userRef.addListenerForSingleValueEvent(new ValueEventListener() {
+        userRef.child("friends").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                User me = snapshot.getValue(User.class);
-                if (me == null || me.friends == null) return;
+                if (!snapshot.exists()) return;
 
-                if (me.friends.contains(friendKey)) {
-                    me.friends.remove(friendKey);
-                    userRef.setValue(me)
-                            .addOnSuccessListener(aVoid ->
-                                    Toast.makeText(getContext(),
-                                            "Friend removed", Toast.LENGTH_SHORT).show());
+                List<String> friendsList = new ArrayList<>();
+                for (DataSnapshot friendSnap : snapshot.getChildren()) {
+                    String existingFriendKey = friendSnap.getValue(String.class);
+                    if (existingFriendKey != null && !existingFriendKey.equals(friendKey)) {
+                        friendsList.add(existingFriendKey);
+                    }
                 }
+
+                // Update only the friends list
+                userRef.child("friends").setValue(friendsList)
+                        .addOnSuccessListener(aVoid ->
+                                Toast.makeText(getContext(),
+                                        "Friend removed", Toast.LENGTH_SHORT).show());
+
                 // 2) Remove myUserKey from the friend's friend list
                 DatabaseReference friendRef = FirebaseDatabase.getInstance()
                         .getReference("users")
                         .child(friendKey);
-                friendRef.addListenerForSingleValueEvent(new ValueEventListener() {
+
+                friendRef.child("friends").addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot friendSnap) {
-                        User friend = friendSnap.getValue(User.class);
-                        if (friend == null || friend.friends == null) return;
+                        if (!friendSnap.exists()) return;
 
-                        if (friend.friends.contains(myUserKey)) {
-                            friend.friends.remove(myUserKey);
-                            friendRef.setValue(friend)
-                                    .addOnSuccessListener(aVoid -> {
-                                        // Reload profile data to refresh the UI
-                                        loadUserDataFromFirebase();
-                                    });
+                        List<String> theirFriendsList = new ArrayList<>();
+                        for (DataSnapshot theirFriendSnap : friendSnap.getChildren()) {
+                            String theirExistingFriendKey = theirFriendSnap.getValue(String.class);
+                            if (theirExistingFriendKey != null && !theirExistingFriendKey.equals(myUserKey)) {
+                                theirFriendsList.add(theirExistingFriendKey);
+                            }
                         }
+
+                        // Update only their friends list
+                        friendRef.child("friends").setValue(theirFriendsList)
+                                .addOnSuccessListener(aVoid -> {
+                                    // Reload profile data to refresh the UI
+                                    loadUserDataFromFirebase();
+                                });
                     }
                     @Override
                     public void onCancelled(@NonNull DatabaseError error) {}
@@ -702,7 +713,6 @@ public class ProfileFragment extends Fragment {
             public void onCancelled(@NonNull DatabaseError error) {}
         });
     }
-
     private void findOrCreateChatThenOpen(String friendKey) {
         DatabaseReference chatsRef = FirebaseDatabase.getInstance().getReference("chats");
         // Do a single read of all chats to find one that has these two participants
