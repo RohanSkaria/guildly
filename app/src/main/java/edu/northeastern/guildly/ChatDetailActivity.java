@@ -7,6 +7,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -123,18 +124,84 @@ public class ChatDetailActivity extends AppCompatActivity {
                 return;
             }
 
-            Message msg = new Message();
-            msg.senderId = myUserKey;
-            msg.content = text;
-            msg.timestamp = System.currentTimeMillis();
-            msg.status = "SENT";
+            // Get the friend's key from the chat participants
+            DatabaseReference chatRef = FirebaseDatabase.getInstance().getReference("chats").child(chatId);
+            chatRef.child("participants").addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    final String[] friendKeyHolder = {null};
 
-            DatabaseReference pushRef = chatRef.child("messages").push();
-            pushRef.setValue(msg).addOnSuccessListener(aVoid -> {
-                chatRef.child("lastUpdated").setValue(System.currentTimeMillis());
+                    // Find which participant is not the current user
+                    for (DataSnapshot participantSnap : snapshot.getChildren()) {
+                        String participantKey = participantSnap.getValue(String.class);
+                        if (participantKey != null && !participantKey.equals(myUserKey)) {
+                            friendKeyHolder[0] = participantKey;
+                            break;
+                        }
+                    }
+
+                    if (friendKeyHolder[0] == null) {
+                        Toast.makeText(ChatDetailActivity.this,
+                                "Error identifying chat participant", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    // Store in final variable for inner class access
+                    final String friendKey = friendKeyHolder[0];
+
+                    // Check if the friend is in the user's friends list
+                    DatabaseReference userRef = FirebaseDatabase.getInstance()
+                            .getReference("users").child(myUserKey).child("friends");
+
+                    userRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                            boolean isFriend = false;
+
+                            for (DataSnapshot friendSnap : snapshot.getChildren()) {
+                                String currentFriend = friendSnap.getValue(String.class);
+                                if (currentFriend != null && currentFriend.equals(friendKey)) {
+                                    isFriend = true;
+                                    break;
+                                }
+                            }
+
+                            if (isFriend) {
+                                // Proceed with sending the message
+                                Message msg = new Message();
+                                msg.senderId = myUserKey;
+                                msg.content = text;
+                                msg.timestamp = System.currentTimeMillis();
+                                msg.status = "SENT";
+
+                                DatabaseReference pushRef = chatRef.child("messages").push();
+                                pushRef.setValue(msg).addOnSuccessListener(aVoid -> {
+                                    chatRef.child("lastUpdated").setValue(System.currentTimeMillis());
+                                });
+
+                                editTextMessageInput.setText("");
+                            } else {
+                                // Not a friend anymore
+                                Toast.makeText(ChatDetailActivity.this,
+                                        "This user is not your friend. Please add them as a friend to chat.",
+                                        Toast.LENGTH_LONG).show();
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
+                            Toast.makeText(ChatDetailActivity.this,
+                                    "Error checking friend status", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {
+                    Toast.makeText(ChatDetailActivity.this,
+                            "Error accessing chat data", Toast.LENGTH_SHORT).show();
+                }
             });
-
-            editTextMessageInput.setText("");
         });
     }
 
