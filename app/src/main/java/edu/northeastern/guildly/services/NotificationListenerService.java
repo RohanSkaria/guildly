@@ -16,6 +16,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import edu.northeastern.guildly.MainActivity;
+import edu.northeastern.guildly.data.Message;
 
 public class NotificationListenerService extends Service {
 
@@ -40,6 +41,7 @@ public class NotificationListenerService extends Service {
             userKey = email.replace(".", ",");
             setupNotificationListener();
             setupFriendRequestListener();
+            setupMessageListener();
         } else {
             Log.e(TAG, "Cannot start notification service: no logged-in user");
             stopSelf();
@@ -100,14 +102,10 @@ public class NotificationListenerService extends Service {
                             });
                 }
             }
-            @Override
-            public void onChildChanged(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {}
-            @Override
-            public void onChildRemoved(@NonNull DataSnapshot snapshot) {}
-            @Override
-            public void onChildMoved(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {}
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
+            @Override public void onChildChanged(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {}
+            @Override public void onChildRemoved(@NonNull DataSnapshot snapshot) {}
+            @Override public void onChildMoved(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {}
+            @Override public void onCancelled(@NonNull DatabaseError error) {
                 Log.e(TAG, "FriendRequest listener cancelled", error.toException());
             }
         };
@@ -180,4 +178,48 @@ public class NotificationListenerService extends Service {
             NotificationService.showHabitReminderNotification(this, habitName);
         }
     }
+
+    private void setupMessageListener() {
+        DatabaseReference chatsRef = FirebaseDatabase.getInstance().getReference("chats");
+
+        chatsRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                for (DataSnapshot chatSnap : snapshot.getChildren()) {
+                    String chatId = chatSnap.getKey();
+                    DataSnapshot participantsSnap = chatSnap.child("participants");
+
+                    boolean isParticipant = false;
+                    for (DataSnapshot p : participantsSnap.getChildren()) {
+                        String email = p.getValue(String.class);
+                        if (email != null && userKey.equals(email.replace(".", ","))) {
+                            isParticipant = true;
+                            break;
+                        }
+                    }
+
+                    if (isParticipant) {
+                        DatabaseReference messagesRef = chatsRef.child(chatId).child("messages");
+                        messagesRef.limitToLast(1).addChildEventListener(new ChildEventListener() {
+                            @Override
+                            public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+                                Message msg = snapshot.getValue(Message.class);
+                                if (msg != null && !msg.senderId.equals(userKey)) {
+                                    NotificationService.showNewMessageNotification(getApplicationContext(), msg.content);
+                                }
+                            }
+                            @Override public void onChildChanged(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {}
+                            @Override public void onChildRemoved(@NonNull DataSnapshot snapshot) {}
+                            @Override public void onChildMoved(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {}
+                            @Override public void onCancelled(@NonNull DatabaseError error) {}
+                        });
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {}
+        });
+    }
+
 }
