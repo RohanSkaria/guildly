@@ -801,8 +801,7 @@ public class ProfileFragment extends Fragment {
 
 
         friendsViewMore.setOnClickListener(v -> {
-            Intent intent = new Intent(getActivity(), AllFriendsActionsActivity.class);
-            startActivity(intent);
+            showFriendsWithActionsDialog();
         });
 
         profileEditButton.setOnClickListener(v -> toggleUsernameEditing());
