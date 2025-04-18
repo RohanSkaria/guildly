@@ -1,4 +1,4 @@
-package edu.northeastern.guildly;
+package edu.northeastern.guildly.adapters;
 
 import android.content.Context;
 import android.view.*;
@@ -9,6 +9,7 @@ import androidx.annotation.Nullable;
 import java.util.List;
 
 import de.hdodenhof.circleimageview.CircleImageView;
+import edu.northeastern.guildly.R;
 import edu.northeastern.guildly.data.Friend;
 
 public class FriendChoiceAdapter extends ArrayAdapter<Friend> {

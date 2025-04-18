@@ -27,8 +27,33 @@
             android:layout_centerVertical="true"
             android:contentDescription="@string/friend_avatar_2" />
 
+        <TextView
+            android:id="@+id/textTimestamp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/_12_45_pm"
+            android:textSize="12sp"
+            android:textColor="#888"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentEnd="true" />
+
+        <TextView
+            android:id="@+id/textUnreadCount"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_below="@id/textTimestamp"
+            android:layout_alignParentEnd="true"
+            android:layout_marginTop="8dp"
+            android:text="@string/_5"
+            android:gravity="center"
+            android:textColor="@android:color/white"
+            android:textSize="12sp"
+            android:background="@drawable/unread_count"
+            android:visibility="visible"
+            android:backgroundTint="@color/man_bg" />
+
         <LinearLayout
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_toEndOf="@id/imageFriendAvatar"
             android:layout_marginStart="12dp"
@@ -56,29 +81,5 @@
                 android:textSize="14sp"
                 android:textColor="#666" />
         </LinearLayout>
-
-        <TextView
-            android:id="@+id/textTimestamp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/_12_45_pm"
-            android:textSize="12sp"
-            android:textColor="#888"
-            android:layout_alignParentTop="true"
-            android:layout_alignParentEnd="true" />
-
-        <TextView
-            android:id="@+id/textUnreadCount"
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:layout_alignBottom="@id/textLastMessage"
-            android:layout_alignParentEnd="true"
-            android:text="@string/_5"
-            android:gravity="center"
-            android:textColor="@android:color/white"
-            android:textSize="12sp"
-            android:background="@drawable/unread_count"
-            android:visibility="gone"
-            tools:ignore="NotSibling" />
     </RelativeLayout>
 </androidx.cardview.widget.CardView>
