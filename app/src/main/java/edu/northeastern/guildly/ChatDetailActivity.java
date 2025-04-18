@@ -11,6 +11,7 @@ import android.widget.EditText;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.NotificationManagerCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -27,6 +28,7 @@ import java.util.List;
 
 import edu.northeastern.guildly.adapters.ChatDetailAdapter;
 import edu.northeastern.guildly.data.Message;
+import edu.northeastern.guildly.services.NotificationService;
 
 public class ChatDetailActivity extends AppCompatActivity {
 
@@ -99,6 +101,7 @@ public class ChatDetailActivity extends AppCompatActivity {
                         if (!msg.senderId.equals(myUserKey) && "SENT".equals(msg.status)) {
                             recyclerViewChatDetail.postDelayed(() -> {
                                 msgSnap.getRef().child("status").setValue("READ");
+                                NotificationManagerCompat.from(getApplicationContext()).cancel(NotificationService.NOTIFICATION_TYPE_MESSAGE);
                             }, 1000);
                         }
                     }
@@ -128,7 +131,6 @@ public class ChatDetailActivity extends AppCompatActivity {
 
             DatabaseReference pushRef = chatRef.child("messages").push();
             pushRef.setValue(msg).addOnSuccessListener(aVoid -> {
-                // 👇 Update lastUpdated field when message is sent
                 chatRef.child("lastUpdated").setValue(System.currentTimeMillis());
             });
 
@@ -136,8 +138,10 @@ public class ChatDetailActivity extends AppCompatActivity {
         });
     }
 
+    public static String lastOpenedFriendUsername = null;
 
     public static void openChatDetail(AppCompatActivity activity, String chatId, String friendUsername) {
+        lastOpenedFriendUsername = friendUsername;
         Intent intent = new Intent(activity, ChatDetailActivity.class);
         intent.putExtra("CHAT_ID", chatId);
         intent.putExtra("FRIEND_USERNAME", friendUsername);
