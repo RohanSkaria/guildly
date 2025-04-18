@@ -8,7 +8,6 @@
     android:background="#F5F5F5"
     android:padding="16dp">
 
-    <!-- Logo -->
     <ImageView
         android:id="@+id/imageViewLogo"
         android:layout_width="100dp"
@@ -20,7 +19,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
 
-    <!-- App Name -->
     <TextView
         android:id="@+id/textViewAppName"
         android:layout_width="wrap_content"
@@ -34,7 +32,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
 
-    <!-- Slogan -->
     <TextView
         android:id="@+id/textViewSlogan"
         android:layout_width="wrap_content"
@@ -48,7 +45,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
 
-    <!-- Login Card -->
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
@@ -63,7 +59,6 @@
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp">
 
-        <!-- Heading -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -73,7 +68,6 @@
             android:textColor="#D1C0E0"
             android:layout_marginBottom="16dp"/>
 
-        <!-- Email -->
         <EditText
             android:id="@+id/editTextEmailLogin"
             android:layout_width="match_parent"
@@ -88,22 +82,38 @@
             android:padding="14dp"
             android:layout_marginBottom="12dp"/>
 
-        <!-- Password -->
-        <EditText
-            android:id="@+id/editTextPasswordLogin"
+        <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="@string/password"
-            android:background="@drawable/rounded_input_bg"
-            android:inputType="textPassword"
-            android:textColor="#1B1F3B"
-            android:textColorHint="#999999"
-            android:fontFamily="@font/montserrat_black"
-            android:textSize="16sp"
-            android:padding="14dp"
-            android:layout_marginBottom="8dp"/>
+            android:layout_marginBottom="8dp">
 
-        <!-- Forgot Password -->
+            <EditText
+                android:id="@+id/editTextPasswordLogin"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
+                android:layout_centerVertical="true"
+                android:hint="@string/password"
+                android:background="@drawable/rounded_input_bg"
+                android:inputType="textPassword"
+                android:textColor="#1B1F3B"
+                android:textColorHint="#999999"
+                android:fontFamily="@font/montserrat_black"
+                android:textSize="16sp"
+                android:padding="14dp"
+                android:layout_toStartOf="@+id/togglePasswordLogin"/>
+
+            <ImageView
+                android:id="@+id/togglePasswordLogin"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:layout_marginEnd="12dp"
+                android:src="@drawable/ic_eye"
+                android:contentDescription="toggle password visibility"/>
+        </RelativeLayout>
+
         <TextView
             android:id="@+id/textViewForgotPassword"
             android:layout_width="wrap_content"
@@ -115,7 +125,6 @@
             android:layout_gravity="end"
             android:layout_marginBottom="16dp"/>
 
-        <!-- Login Button -->
         <Button
             android:id="@+id/buttonLogin"
             android:layout_width="match_parent"
@@ -129,7 +138,6 @@
             android:padding="14dp"/>
     </LinearLayout>
 
-    <!-- Sign Up -->
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -161,4 +169,3 @@
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
-

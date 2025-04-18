@@ -5,6 +5,7 @@ import static android.content.ContentValues.TAG;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.text.InputType;
 import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Button;
@@ -30,10 +31,15 @@ public class SettingsActivity extends AppCompatActivity {
     private EditText editTextNewEmail;
     private EditText editTextCurrentPassword;
     private EditText editTextNewPassword;
+    private ImageView toggleCurrentPassword;
+    private ImageView toggleNewPassword;
     private Button buttonUpdateEmail;
     private Button buttonUpdatePassword;
     private Button buttonLogout;
     private ImageView backButton;
+
+    private boolean isCurrentVisible = false;
+    private boolean isNewVisible = false;
 
     private DatabaseReference usersRef;
     private String userKey;
@@ -43,22 +49,45 @@ public class SettingsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
 
-
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayShowTitleEnabled(false);
         getSupportActionBar().setTitle("Settings");
 
-
         editTextCurrentEmail = findViewById(R.id.editTextCurrentEmail);
         editTextNewEmail = findViewById(R.id.editTextNewEmail);
         editTextCurrentPassword = findViewById(R.id.editTextCurrentPassword);
         editTextNewPassword = findViewById(R.id.editTextNewPassword);
+        toggleCurrentPassword = findViewById(R.id.toggleCurrentPassword);
+        toggleNewPassword = findViewById(R.id.toggleNewPassword);
         buttonUpdateEmail = findViewById(R.id.buttonUpdateEmail);
         buttonUpdatePassword = findViewById(R.id.buttonUpdatePassword);
         buttonLogout = findViewById(R.id.buttonLogout);
         backButton = findViewById(R.id.backButton);
 
+        toggleCurrentPassword.setOnClickListener(v -> {
+            isCurrentVisible = !isCurrentVisible;
+            if (isCurrentVisible) {
+                editTextCurrentPassword.setInputType(InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
+                toggleCurrentPassword.setImageResource(R.drawable.ic_eye_off);
+            } else {
+                editTextCurrentPassword.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+                toggleCurrentPassword.setImageResource(R.drawable.ic_eye);
+            }
+            editTextCurrentPassword.setSelection(editTextCurrentPassword.getText().length());
+        });
+
+        toggleNewPassword.setOnClickListener(v -> {
+            isNewVisible = !isNewVisible;
+            if (isNewVisible) {
+                editTextNewPassword.setInputType(InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
+                toggleNewPassword.setImageResource(R.drawable.ic_eye_off);
+            } else {
+                editTextNewPassword.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+                toggleNewPassword.setImageResource(R.drawable.ic_eye);
+            }
+            editTextNewPassword.setSelection(editTextNewPassword.getText().length());
+        });
 
         String currentEmail = MainActivity.currentUserEmail;
         if (currentEmail == null) {
@@ -69,7 +98,6 @@ public class SettingsActivity extends AppCompatActivity {
 
         userKey = currentEmail.replace(".", ",");
         usersRef = FirebaseDatabase.getInstance().getReference("users");
-
 
         editTextCurrentEmail.setText(currentEmail);
 
@@ -96,7 +124,6 @@ public class SettingsActivity extends AppCompatActivity {
             return;
         }
 
-
         String newUserKey = newEmail.replace(".", ",");
         usersRef.child(newUserKey).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
@@ -104,28 +131,18 @@ public class SettingsActivity extends AppCompatActivity {
                 if (snapshot.exists()) {
                     editTextNewEmail.setError("Email is already in use");
                 } else {
-
                     usersRef.child(userKey).addListenerForSingleValueEvent(new ValueEventListener() {
                         @Override
                         public void onDataChange(DataSnapshot snapshot) {
                             User user = snapshot.getValue(User.class);
                             if (user != null) {
-
                                 user.email = newEmail;
-
-
                                 usersRef.child(newUserKey).setValue(user)
                                         .addOnSuccessListener(aVoid -> {
-
                                             usersRef.child(userKey).removeValue();
-
-
                                             MainActivity.currentUserEmail = newEmail;
-
-
                                             editTextCurrentEmail.setText(newEmail);
                                             editTextNewEmail.setText("");
-
                                             Toast.makeText(SettingsActivity.this,
                                                     "Email updated successfully",
                                                     Toast.LENGTH_SHORT).show();
@@ -173,24 +190,14 @@ public class SettingsActivity extends AppCompatActivity {
             return;
         }
 
-        // Add a logging statement for debugging
-        Log.d(TAG, "Attempting to update password for user: " + userKey);
-
-
         usersRef.child(userKey).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot snapshot) {
                 User user = snapshot.getValue(User.class);
                 if (user != null) {
-
-
                     if (currentPassword.equals(user.password)) {
-                        // Update password with log messages and detailed error handling
-                        Log.d(TAG, "Password verified, updating to new password");
-
                         usersRef.child(userKey).child("password").setValue(newPassword)
                                 .addOnSuccessListener(aVoid -> {
-                                    Log.d(TAG, "Password updated successfully in Firebase");
                                     editTextCurrentPassword.setText("");
                                     editTextNewPassword.setText("");
                                     Toast.makeText(SettingsActivity.this,
@@ -198,17 +205,14 @@ public class SettingsActivity extends AppCompatActivity {
                                             Toast.LENGTH_SHORT).show();
                                 })
                                 .addOnFailureListener(e -> {
-                                    Log.e(TAG, "Error updating password: " + e.getMessage(), e);
                                     Toast.makeText(SettingsActivity.this,
                                             "Failed to update password: " + e.getMessage(),
                                             Toast.LENGTH_LONG).show();
                                 });
                     } else {
-                        Log.d(TAG, "Current password does not match stored password");
                         editTextCurrentPassword.setError("Current password is incorrect");
                     }
                 } else {
-                    Log.e(TAG, "User data is null for key: " + userKey);
                     Toast.makeText(SettingsActivity.this,
                             "Error: User data not found",
                             Toast.LENGTH_SHORT).show();
@@ -217,24 +221,20 @@ public class SettingsActivity extends AppCompatActivity {
 
             @Override
             public void onCancelled(DatabaseError error) {
-                Log.e(TAG, "Failed to read user data: " + error.getMessage(), error.toException());
                 Toast.makeText(SettingsActivity.this,
                         "Database error: " + error.getMessage(),
                         Toast.LENGTH_SHORT).show();
             }
         });
     }
+
     private void logout() {
-
         FirebaseAuth.getInstance().signOut();
-
         SharedPreferences prefs = getSharedPreferences("GuildlyPrefs", MODE_PRIVATE);
         SharedPreferences.Editor editor = prefs.edit();
         editor.remove("loggedInUserEmail");
         editor.apply();
-
         MainActivity.currentUserEmail = null;
-
         Intent intent = new Intent(SettingsActivity.this, LoginActivity.class);
         intent.putExtra("logout", true);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
