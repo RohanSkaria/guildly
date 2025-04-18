@@ -46,7 +46,7 @@ import edu.northeastern.guildly.WeeklyChallengeManager;
  */
 public class HomeFragment extends Fragment {
 
-    private TextView tvUserName, tvStreak, tvWeeklyChallenge, tvHabitsCount;
+    private TextView tvUserName, tvStreak, tvWeeklyChallenge, tvHabitsCount, tvHabitStreak;
     private ImageView weeeklyChallengeIcon;
     private RecyclerView habitRecyclerView, friendsLeaderboard;
     private Button btnAddHabit;
@@ -95,6 +95,7 @@ public class HomeFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_home, container, false);
 
 //        tvUserName = view.findViewById(R.id.user_name);
+//        tvHabitStreakStreak   = view.findViewById(R.id.habit_streak);
         tvStreak   = view.findViewById(R.id.textViewStreak);
         habitRecyclerView = view.findViewById(R.id.habit_list);
         btnAddHabit = view.findViewById(R.id.btn_add_habit);
@@ -316,6 +317,7 @@ public class HomeFragment extends Fragment {
                                     if (current.getHabitName().equals(h.getHabitName())) {
                                         existsInCurrent = true;
                                         existingHabit = current;
+
                                         break;
                                     }
                                 }
@@ -345,7 +347,6 @@ public class HomeFragment extends Fragment {
                             }
                         }
 
-
                         loadHabitsFromFirebase();
                     } catch (Exception e) {
                         Log.e("HomeFragment", "Error updating habits: " + e.getMessage());
@@ -357,6 +358,7 @@ public class HomeFragment extends Fragment {
                 .setNegativeButton("Cancel", (dialog, which) -> {})
                 .create()
                 .show();
+
     }
     @SuppressLint("SetTextI18n")
     private void updateStreakText() {
@@ -494,6 +496,7 @@ public class HomeFragment extends Fragment {
             tvHabitsCount.setText(incompleteCount + " habit" + (incompleteCount == 1 ? "" : "s") + " left today to complete. Come back in 24 hours!");
         }
     }
+
 
 
 

@@ -118,7 +118,8 @@ public class HabitAdapter extends RecyclerView.Adapter<HabitAdapter.ViewHolder> 
                 // If "Home mode," the CheckBox means daily completion for "completedToday"
                 if (isSelectionMode) {
                     // Hide the streak text & lockMessage if you want
-                    habitStreak.setVisibility(View.GONE);
+                    habitStreak.setVisibility(View.VISIBLE);
+                    habitStreak.setText("Streak: " + habit.getStreakCount());
                     lockMessage.setVisibility(View.GONE);
 
                     // Show the checkBox to set "isTracked"
