@@ -46,6 +46,7 @@ import java.util.Map;
 import java.util.Set;
 
 import edu.northeastern.guildly.adapters.ChatListAdapter;
+import edu.northeastern.guildly.adapters.FriendRequestAdapter;
 import edu.northeastern.guildly.adapters.SearchUserAdapter;
 import edu.northeastern.guildly.data.Chats;
 import edu.northeastern.guildly.data.FriendChatItem;
@@ -467,20 +468,37 @@ public class ConnectionsFragment extends Fragment {
     private void showRequestsListDialog(List<String> pendingKeys, List<String> displayNames) {
         if (getContext() == null) return;
 
-        // Create dialog with all friend requests in a list
-        String[] items = new String[displayNames.size()];
-        for (int i = 0; i < displayNames.size(); i++) {
-            items[i] = displayNames.get(i);
-        }
+        View dialogView = LayoutInflater.from(getContext())
+                .inflate(R.layout.dialog_friend_requests_list, null);
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
-        builder.setTitle("Friend Requests");
-        builder.setItems(items, (dialog, which) -> {
-            String requesterKey = pendingKeys.get(which);
-            showAcceptRejectDialog(requesterKey, displayNames.get(which));
-        });
-        builder.setPositiveButton("Close", null);
-        builder.show();
+        RecyclerView recyclerView = dialogView.findViewById(R.id.recyclerViewRequests);
+        recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+
+        AlertDialog dialog = new AlertDialog.Builder(requireContext())
+                .setTitle("Pending Friend Requests")
+                .setView(dialogView)
+                .setPositiveButton("Close", null)
+                .create();
+
+        recyclerView.setAdapter(new FriendRequestAdapter(
+                pendingKeys,
+                displayNames,
+                new FriendRequestAdapter.OnRequestActionListener() {
+                    @Override
+                    public void onAccept(String userKey) {
+                        acceptFriendRequest(userKey);
+                        dialog.dismiss();
+                    }
+
+                    @Override
+                    public void onReject(String userKey) {
+                        rejectFriendRequest(userKey);
+                        dialog.dismiss();
+                    }
+                }
+        ));
+
+        dialog.show();
     }
 
     private void showAcceptRejectDialog(String requesterKey, String displayName) {
