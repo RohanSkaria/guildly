@@ -2,6 +2,8 @@ package edu.northeastern.guildly.adapters;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -36,6 +38,7 @@ public class HabitAdapter extends RecyclerView.Adapter<HabitAdapter.ViewHolder> 
     private final List<Habit> habitList;
     private final DatabaseReference userHabitsRef; // optional for partial updates
     private final boolean isSelectionMode;         // if true => sign-up selection
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     public HabitAdapter(List<Habit> habitList,
                         DatabaseReference userHabitsRef,
@@ -98,7 +101,15 @@ public class HabitAdapter extends RecyclerView.Adapter<HabitAdapter.ViewHolder> 
         void bind(Habit habit) {
             try {
                 habitImage.setImageResource(habit.getIconResId());
-                habitName.setText(habit.getHabitName());
+
+                // Add null check for habit name
+                String habitNameText = habit.getHabitName();
+                if (habitNameText == null) {
+                    habitNameText = "Unnamed Habit";
+                    // Also update the habit object to avoid future null issues
+                    habit.setHabitName(habitNameText);
+                }
+                habitName.setText(habitNameText);
 
                 // set background
                 itemHabit.setBackgroundResource(R.drawable.habit_item_border);
@@ -118,7 +129,14 @@ public class HabitAdapter extends RecyclerView.Adapter<HabitAdapter.ViewHolder> 
                         habit.setTracked(isChecked);
                         // If we have a DB ref, do partial update
                         if (userHabitsRef != null) {
-                            String safeHabitName = habit.getHabitName().replace(".", "_");
+                            // Add null check for habit name
+                            String safeHabitName = habit.getHabitName();
+                            if (safeHabitName == null) {
+                                safeHabitName = "unnamed_habit";
+                            } else {
+                                safeHabitName = safeHabitName.replace(".", "_");
+                            }
+
                             userHabitsRef.child(safeHabitName)
                                     .child("tracked").setValue(isChecked)
                                     .addOnFailureListener(e ->
@@ -163,11 +181,15 @@ public class HabitAdapter extends RecyclerView.Adapter<HabitAdapter.ViewHolder> 
                     }
                 }
             } catch (Exception e) {
-                Log.e(TAG, "Error binding habit: " + habit.getHabitName(), e);
+                Log.e(TAG, "Error binding habit: " + (habit.getHabitName() != null ? habit.getHabitName() : "null"), e);
 
                 // Try to recover by showing minimal UI
                 if (habitName != null) {
-                    habitName.setText(habit.getHabitName() + " (Error)");
+                    String displayName = habit.getHabitName();
+                    if (displayName == null) {
+                        displayName = "Unknown Habit";
+                    }
+                    habitName.setText(displayName + " (Error)");
                 }
                 if (habitImage != null) {
                     habitImage.setImageResource(R.drawable.unknown_profile);
@@ -205,12 +227,30 @@ public class HabitAdapter extends RecyclerView.Adapter<HabitAdapter.ViewHolder> 
                 habit.setCompletedToday(true);
                 habit.setNextAvailableTime(now + oneDay);
 
-                // Update UI
-                notifyDataSetChanged();
+                // Update this item's UI immediately
+                habitStreak.setText("Streak: " + habit.getStreakCount());
+                habitCheckBox.setEnabled(false);
+                itemHabit.setBackground(ContextCompat.getDrawable(context, R.drawable.habit_item_border_tint));
+
+                // Post the notification to main thread instead of calling directly
+                mainHandler.post(() -> {
+                    // Only notify about this specific item to avoid full layout recalculation
+                    int position = getAdapterPosition();
+                    if (position != RecyclerView.NO_POSITION) {
+                        notifyItemChanged(position);
+                    }
+                });
 
                 // Update Firebase
                 if (userHabitsRef != null) {
-                    String safeHabitName = habit.getHabitName().replace(".", "_");
+                    // Add null check for habit name
+                    String safeHabitName = habit.getHabitName();
+                    if (safeHabitName == null) {
+                        safeHabitName = "unnamed_habit";
+                    } else {
+                        safeHabitName = safeHabitName.replace(".", "_");
+                    }
+
                     Map<String,Object> updates = new HashMap<>();
                     updates.put("tracked", habit.isTracked());
                     updates.put("streakCount", habit.getStreakCount());
@@ -224,7 +264,7 @@ public class HabitAdapter extends RecyclerView.Adapter<HabitAdapter.ViewHolder> 
                             });
                 }
             } catch (Exception e) {
-                Log.e(TAG, "Error in handleCompletion: " + e.getMessage());
+                Log.e(TAG, "Error in handleCompletion: " + e.getMessage(), e);
                 if (context != null) {
                     Toast.makeText(context, "Error updating habit progress", Toast.LENGTH_SHORT).show();
                 }

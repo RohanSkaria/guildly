@@ -1,5 +1,6 @@
 package edu.northeastern.guildly;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -10,7 +11,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
@@ -46,6 +46,7 @@ import java.util.Map;
 import java.util.Set;
 
 import edu.northeastern.guildly.adapters.ChatListAdapter;
+import edu.northeastern.guildly.adapters.SearchUserAdapter;
 import edu.northeastern.guildly.data.Chats;
 import edu.northeastern.guildly.data.FriendChatItem;
 import edu.northeastern.guildly.data.Message;
@@ -54,7 +55,7 @@ import edu.northeastern.guildly.data.User;
 public class ConnectionsFragment extends Fragment {
     private static final String TAG = "ConnectionsFragment";
 
-    private RecyclerView recyclerViewChatList, recyclerViewSearchAddFriend;
+    private RecyclerView recyclerViewChatList;
     private ChatListAdapter chatListAdapter;
     private List<FriendChatItem> chatItemsList;
     private EditText editTextFriendUsername;
@@ -67,6 +68,13 @@ public class ConnectionsFragment extends Fragment {
     private DatabaseReference usersRef, chatsRef;
     private String myUserKey;
     private String myEmail;
+
+    // For search dialog
+    private AlertDialog searchDialog;
+    private RecyclerView searchRecyclerView;
+    private SearchUserAdapter searchAdapter;
+    private List<User> searchResults = new ArrayList<>();
+    private List<String> searchResultKeys = new ArrayList<>();
 
     private List<FriendChatItem> originalChatItemsList = new ArrayList<>();
 
@@ -117,39 +125,10 @@ public class ConnectionsFragment extends Fragment {
         usersRef = FirebaseDatabase.getInstance().getReference("users");
         chatsRef = FirebaseDatabase.getInstance().getReference("chats");
 
-        buttonAddFriend.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // Inflate
-                LayoutInflater inflater = LayoutInflater.from(requireContext());
-                View dialogView = inflater.inflate(R.layout.dialog_add_friend, null); // Make sure this layout exists
+        // Set up the dynamic "Add Friend" dialog
+        buttonAddFriend.setOnClickListener(v -> showAddFriendDialog());
 
-                EditText searchInput = dialogView.findViewById(R.id.search_friend_input);
-
-                Button searchFriendButton = dialogView.findViewById(R.id.button_search_friend);
-
-
-
-                // show the dialog
-                AlertDialog dialog = new AlertDialog.Builder(requireContext())
-                        .setTitle("Add a Friend")
-                        .setView(dialogView)
-                        .setPositiveButton("Close", null)
-                        .create();
-
-
-                searchFriendButton.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        String query = searchInput.getText().toString().trim();
-
-                    }
-                });
-
-                dialog.show();
-            }
-        });
-
+        // Set up the chat search functionality
         editTextFriendUsername.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
@@ -221,6 +200,132 @@ public class ConnectionsFragment extends Fragment {
             loadAllChats();
             updateFriendRequestsBadge();
         }, 200); // 200ms delay to avoid conflict with search
+    }
+
+    /**
+     * Show the dynamic search dialog for adding friends
+     */
+    private void showAddFriendDialog() {
+        // Create the dialog layout
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_add_friend, null);
+
+        // Initialize views
+        EditText searchInput = dialogView.findViewById(R.id.search_friend_input);
+        searchRecyclerView = dialogView.findViewById(R.id.recyclerViewSearchAddFriend);
+
+        // Set up RecyclerView
+        searchRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+        searchAdapter = new SearchUserAdapter(searchResults, searchResultKeys, myUserKey,
+                new SearchUserAdapter.OnUserActionListener() {
+                    @Override
+                    public void onAddFriendClicked(String userKey, String username) {
+                        sendFriendRequest(userKey);
+                    }
+                });
+        searchRecyclerView.setAdapter(searchAdapter);
+
+        // Create and show dialog
+        searchDialog = new AlertDialog.Builder(requireContext())
+                .setTitle("Add a Friend")
+                .setView(dialogView)
+                .setPositiveButton("Close", null)
+                .create();
+
+        // Set up text change listener for dynamic filtering
+        searchInput.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                String query = s.toString().trim();
+                if (query.length() >= 1) {
+                    searchUsers(query);
+                } else {
+                    // Clear results if search box is empty
+                    searchResults.clear();
+                    searchResultKeys.clear();
+                    searchAdapter.notifyDataSetChanged();
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
+
+        searchDialog.show();
+    }
+
+    /**
+     * Search for users by username
+     */
+    private void searchUsers(String query) {
+        // Convert query to lowercase for case-insensitive search
+        String lowercaseQuery = query.toLowerCase();
+
+        // First, get current user's friends list to filter out friends from search results
+        usersRef.child(myUserKey).child("friends")
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        List<String> currentFriends = new ArrayList<>();
+                        if (snapshot.exists()) {
+                            for (DataSnapshot friendSnap : snapshot.getChildren()) {
+                                String friendKey = friendSnap.getValue(String.class);
+                                if (friendKey != null) {
+                                    currentFriends.add(friendKey);
+                                }
+                            }
+                        }
+
+                        // Now search for users
+                        usersRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                searchResults.clear();
+                                searchResultKeys.clear();
+
+                                for (DataSnapshot userSnap : snapshot.getChildren()) {
+                                    try {
+                                        User user = userSnap.getValue(User.class);
+                                        String userKey = userSnap.getKey();
+
+                                        if (user != null && user.username != null &&
+                                                user.username.toLowerCase().contains(lowercaseQuery)) {
+                                            // Skip if this is the current user
+                                            if (userKey.equals(myUserKey)) {
+                                                continue;
+                                            }
+
+                                            // Skip if this user is already a friend
+                                            if (currentFriends.contains(userKey)) {
+                                                continue;
+                                            }
+
+                                            // Add to results
+                                            searchResults.add(user);
+                                            searchResultKeys.add(userKey);
+                                        }
+                                    } catch (Exception e) {
+                                        Log.e(TAG, "Error parsing user", e);
+                                    }
+                                }
+
+                                searchAdapter.notifyDataSetChanged();
+                            }
+
+                            @Override
+                            public void onCancelled(@NonNull DatabaseError error) {
+                                Log.e(TAG, "Search cancelled", error.toException());
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        Log.e(TAG, "Error getting friends list", error.toException());
+                    }
+                });
     }
 
     /**
@@ -537,9 +642,6 @@ public class ConnectionsFragment extends Fragment {
     /**
      * Load all active chats where current user is a participant
      */
-    /**
-     * Load all active chats where current user is a participant
-     */
     private void loadAllChats() {
         if (myEmail == null) return;
 
@@ -667,9 +769,6 @@ public class ConnectionsFragment extends Fragment {
                 }
         );
     }
-
-
-
 
     /**
      * Load all usernames to avoid multiple Firebase calls
