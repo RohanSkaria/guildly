@@ -34,7 +34,9 @@ import java.util.List;
 import edu.northeastern.guildly.R;
 import edu.northeastern.guildly.MainActivity;
 import edu.northeastern.guildly.adapters.HabitAdapter;
+import edu.northeastern.guildly.adapters.LeaderboardAdapter;
 import edu.northeastern.guildly.data.Habit;
+import edu.northeastern.guildly.data.LeaderboardItem;
 import edu.northeastern.guildly.data.User;
 import edu.northeastern.guildly.WeeklyChallengeManager;
 
@@ -135,6 +137,7 @@ public class HomeFragment extends Fragment {
             userRef       = FirebaseDatabase.getInstance().getReference("users").child(myUserKey);
             userHabitsRef = userRef.child("habits");
             loadUserInfo();
+            loadFriendsLeaderboard();
         } else {
             tvUserName.setText("Welcome, Guest!");
         }
@@ -143,6 +146,13 @@ public class HomeFragment extends Fragment {
         habitAdapter = new HabitAdapter(habitList, userHabitsRef, /* isSelectionMode= */ false);
         habitRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         habitRecyclerView.setAdapter(habitAdapter);
+
+//        LeaderboardAdapter adapter = new LeaderboardAdapter(leaderboardItems);
+//        recyclerView.setAdapter(adapter);
+//
+//        // Now load the data
+//        loadFriendsLeaderboard(leaderboardItems, adapter);
+//    }
 
         // --------------------------------------------------------------------
         //  1) Keep your existing single-value read (so we "change nothing else")
@@ -374,7 +384,98 @@ public class HomeFragment extends Fragment {
         }
     }
 
-    // TODO: add top three friends laederboard here, using var friendsLeaderboard
+    private void loadFriendsLeaderboard() {
+        if (userRef == null) return;
+
+        userRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                User currentUser = snapshot.getValue(User.class);
+                if (currentUser == null || currentUser.friends == null || currentUser.friends.isEmpty()) return;
+
+                List<String> friendKeys = currentUser.friends;
+                List<LeaderboardItem> leaderboardItems = new ArrayList<>();
+                final int totalFriends = friendKeys.size();
+                final int[] loadedCount = {0};
+
+                // Calculate current user's best streak and add it to the leaderboard
+                int currentUserBestStreak = 0;
+                DataSnapshot habitsSnapshot = snapshot.child("habits");
+                for (DataSnapshot habitSnap : habitsSnapshot.getChildren()) {
+                    Habit h = habitSnap.getValue(Habit.class);
+                    if (h != null && h.getStreakCount() > currentUserBestStreak) {
+                        currentUserBestStreak = h.getStreakCount();
+                    }
+                }
+
+                int currentUserProfileImageRes = R.drawable.gamer; // or use a different one
+                leaderboardItems.add(new LeaderboardItem(currentUser.username, currentUserBestStreak, currentUserProfileImageRes));
+
+                // Now fetch all friends
+                for (String friendKey : friendKeys) {
+                    DatabaseReference friendRef = FirebaseDatabase.getInstance()
+                            .getReference("users")
+                            .child(friendKey);
+
+                    friendRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot ds) {
+                            User friend = ds.getValue(User.class);
+                            if (friend == null || friend.username == null) {
+                                checkIfAllLoaded();
+                                return;
+                            }
+
+                            int bestStreak = 0;
+                            DataSnapshot habitsSnapshot = ds.child("habits");
+                            for (DataSnapshot habitSnap : habitsSnapshot.getChildren()) {
+                                Habit h = habitSnap.getValue(Habit.class);
+                                if (h != null && h.getStreakCount() > bestStreak) {
+                                    bestStreak = h.getStreakCount();
+                                }
+                            }
+
+                            int profileImageRes = R.drawable.gamer;
+
+                            leaderboardItems.add(new LeaderboardItem(friend.username, bestStreak, profileImageRes));
+                            checkIfAllLoaded();
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
+                            Log.e("Leaderboard", "Failed to load friend: " + error.getMessage());
+                            checkIfAllLoaded();
+                        }
+
+                        private void checkIfAllLoaded() {
+                            loadedCount[0]++;
+                            if (loadedCount[0] == totalFriends) {
+                                // streak descending
+                                leaderboardItems.sort((a, b) -> Integer.compare(b.getStreakCount(), a.getStreakCount()));
+
+                                //List<LeaderboardItem> topItems = leaderboardItems; // show all
+                                List<LeaderboardItem> topItems = leaderboardItems.size() > 3
+                                         ? leaderboardItems.subList(0, 3)
+                                         : leaderboardItems;
+
+                                // Update the adapter with new data
+                                LeaderboardAdapter adapter = new LeaderboardAdapter(topItems);
+                                friendsLeaderboard.setLayoutManager(new LinearLayoutManager(getContext()));
+                                friendsLeaderboard.setAdapter(adapter);
+                                adapter.notifyDataSetChanged();
+                            }
+                        }
+                    });
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.e("Leaderboard", "Failed to load current user: " + error.getMessage());
+            }
+        });
+    }
+
 
 
     // for updating the habit count left to complete text
