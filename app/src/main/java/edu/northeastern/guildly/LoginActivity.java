@@ -61,8 +61,10 @@ public class LoginActivity extends AppCompatActivity {
             isPasswordVisible = !isPasswordVisible;
             if (isPasswordVisible) {
                 editTextPassword.setInputType(InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
+                togglePasswordLogin.setImageResource(R.drawable.ic_eye_off);
             } else {
                 editTextPassword.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+                togglePasswordLogin.setImageResource(R.drawable.ic_eye);
             }
             editTextPassword.setSelection(editTextPassword.getText().length());
         });

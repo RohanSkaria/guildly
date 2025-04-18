@@ -69,8 +69,10 @@ public class SettingsActivity extends AppCompatActivity {
             isCurrentVisible = !isCurrentVisible;
             if (isCurrentVisible) {
                 editTextCurrentPassword.setInputType(InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
+                toggleCurrentPassword.setImageResource(R.drawable.ic_eye_off);
             } else {
                 editTextCurrentPassword.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+                toggleCurrentPassword.setImageResource(R.drawable.ic_eye);
             }
             editTextCurrentPassword.setSelection(editTextCurrentPassword.getText().length());
         });
@@ -79,8 +81,10 @@ public class SettingsActivity extends AppCompatActivity {
             isNewVisible = !isNewVisible;
             if (isNewVisible) {
                 editTextNewPassword.setInputType(InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
+                toggleNewPassword.setImageResource(R.drawable.ic_eye_off);
             } else {
                 editTextNewPassword.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+                toggleNewPassword.setImageResource(R.drawable.ic_eye);
             }
             editTextNewPassword.setSelection(editTextNewPassword.getText().length());
         });
