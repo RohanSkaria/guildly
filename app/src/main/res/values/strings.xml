@@ -86,5 +86,9 @@
     <string name="delete_friend_button">Delete Friend</string>
     <string name="view_more">View More</string>
     <string name="streak">Streak</string>
+    <string name="my_stats">My Stats:</string>
+    <string name="you_have_drank_64oz_water_for_31_days_straight">You have drank 64oz Water for 31 days straight!!!</string>
+    <string name="total_weekly_challenges_completed_0">Total Weekly Challenges Completed: 0</string>
+    <string name="trophy">trophy</string>
 
 </resources>
