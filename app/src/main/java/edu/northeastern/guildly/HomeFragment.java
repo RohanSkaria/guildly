@@ -472,7 +472,7 @@ public class HomeFragment extends Fragment {
             tvHabitsCount.setText("🎉 All habits done! Come back in 24 hours!");
         } else {
             tvHabitsCount.setText(incompleteCount + " habit" + (incompleteCount == 1 ? "" : "s")
-                    + " left today to complete. Come back in 24 hours!");
+                    + " left today to complete.");
         }
     }
 }
