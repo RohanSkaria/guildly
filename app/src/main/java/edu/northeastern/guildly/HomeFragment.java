@@ -279,7 +279,7 @@ public class HomeFragment extends Fragment {
 
             // Show progress and countdown
             tvChallengeStreak.setText(String.format("Weekly Progress: %d/%d",
-                    streakCount, completedCount, requiredCompletions));
+                    completedCount, requiredCompletions));
             return;
         }
 
@@ -291,10 +291,10 @@ public class HomeFragment extends Fragment {
         // Show progress toward completion
         if (completedCount > 0) {
             tvChallengeStreak.setText(String.format("Weekly Progress: %d/%d",
-                    streakCount, completedCount, requiredCompletions));
+                     completedCount, requiredCompletions));
         } else {
             tvChallengeStreak.setText(String.format("Complete %d times this week",
-                    streakCount, requiredCompletions));
+                    requiredCompletions));
         }
     }
 
