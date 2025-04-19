@@ -261,10 +261,12 @@ public class HomeFragment extends Fragment {
             weeklyChallengeCheckbox.setChecked(true);
             weeklyChallengeCheckbox.setEnabled(false);
             weeklyChallengeLockedMsg.setVisibility(View.VISIBLE);
-            weeklyChallengeLockedMsg.setText("Completed for this week!");
+            tvChallengeStreak.setVisibility(View.GONE);
+
+            weeklyChallengeLockedMsg.setText("Come Back Next Week!");
 
             // Update progress display
-            tvChallengeStreak.setText(String.format("Streak: %d | Completed for this week!", streakCount));
+//            tvChallengeStreak.setText(String.format("Come Back Next week!", streakCount));
             return;
         }
 
@@ -276,7 +278,7 @@ public class HomeFragment extends Fragment {
             weeklyChallengeLockedMsg.setText("Come back in 24 hours");
 
             // Show progress and countdown
-            tvChallengeStreak.setText(String.format("Streak: %d | Progress: %d/%d",
+            tvChallengeStreak.setText(String.format("Weekly Progress: %d/%d",
                     streakCount, completedCount, requiredCompletions));
             return;
         }
@@ -288,10 +290,10 @@ public class HomeFragment extends Fragment {
 
         // Show progress toward completion
         if (completedCount > 0) {
-            tvChallengeStreak.setText(String.format("Streak: %d | Progress: %d/%d",
+            tvChallengeStreak.setText(String.format("Weekly Progress: %d/%d",
                     streakCount, completedCount, requiredCompletions));
         } else {
-            tvChallengeStreak.setText(String.format("Streak: %d | Complete %d times this week",
+            tvChallengeStreak.setText(String.format("Complete %d times this week",
                     streakCount, requiredCompletions));
         }
     }
