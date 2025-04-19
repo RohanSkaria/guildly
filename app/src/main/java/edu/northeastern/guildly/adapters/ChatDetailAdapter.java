@@ -65,53 +65,16 @@ public class ChatDetailAdapter extends RecyclerView.Adapter<ChatDetailAdapter.Vi
         Message msg = messages.get(position);
 
         holder.textMessage.setText(msg.content);
-
         String timeText = DateFormat.getTimeInstance(DateFormat.SHORT).format(new Date(msg.timestamp));
         holder.textTime.setText(timeText);
 
 
         if (msg.senderId.equals(myUserKey)) {
+
             if ("READ".equals(msg.status)) {
                 holder.imageStatus.setImageResource(R.drawable.ic_eye);
             } else {
                 holder.imageStatus.setImageResource(R.drawable.ic_check);
-            }
-
-
-            if (holder.senderAvatar != null) {
-                DatabaseReference currentUserRef = FirebaseDatabase.getInstance()
-                        .getReference("users")
-                        .child(myUserKey);
-
-                currentUserRef.addValueEventListener(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        User currentUser = snapshot.getValue(User.class);
-                        if (currentUser != null && currentUser.profilePicUrl != null) {
-                            int resourceId;
-                            switch (currentUser.profilePicUrl) {
-                                case "gamer":
-                                    resourceId = R.drawable.gamer;
-                                    break;
-                                case "man":
-                                    resourceId = R.drawable.man;
-                                    break;
-                                case "girl":
-                                    resourceId = R.drawable.girl;
-                                    break;
-                                default:
-                                    resourceId = R.drawable.unknown_profile;
-                                    break;
-                            }
-                            holder.senderAvatar.setImageResource(resourceId);
-                        }
-                    }
-
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError error) {
-
-                    }
-                });
             }
         } else {
 
@@ -122,43 +85,43 @@ public class ChatDetailAdapter extends RecyclerView.Adapter<ChatDetailAdapter.Vi
                 holder.imageStatus.setImageResource(R.drawable.ic_msg_solid);
                 holder.imageStatus.setVisibility(View.VISIBLE);
             }
+        }
 
 
-            if (holder.senderAvatar != null) {
-                DatabaseReference senderRef = FirebaseDatabase.getInstance()
-                        .getReference("users")
-                        .child(msg.senderId);
+        if (holder.senderAvatar != null) {
+            DatabaseReference senderRef = FirebaseDatabase.getInstance()
+                    .getReference("users")
+                    .child(msg.senderId);
 
-                senderRef.addValueEventListener(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        User senderUser = snapshot.getValue(User.class);
-                        if (senderUser != null && senderUser.profilePicUrl != null) {
-                            int resourceId;
-                            switch (senderUser.profilePicUrl) {
-                                case "gamer":
-                                    resourceId = R.drawable.gamer;
-                                    break;
-                                case "man":
-                                    resourceId = R.drawable.man;
-                                    break;
-                                case "girl":
-                                    resourceId = R.drawable.girl;
-                                    break;
-                                default:
-                                    resourceId = R.drawable.unknown_profile;
-                                    break;
-                            }
-                            holder.senderAvatar.setImageResource(resourceId);
+            senderRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    User senderUser = snapshot.getValue(User.class);
+                    if (senderUser != null && senderUser.profilePicUrl != null) {
+                        int resourceId;
+                        switch (senderUser.profilePicUrl) {
+                            case "gamer":
+                                resourceId = R.drawable.gamer;
+                                break;
+                            case "man":
+                                resourceId = R.drawable.man;
+                                break;
+                            case "girl":
+                                resourceId = R.drawable.girl;
+                                break;
+                            default:
+                                resourceId = R.drawable.unknown_profile;
+                                break;
                         }
+                        holder.senderAvatar.setImageResource(resourceId);
                     }
+                }
 
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError error) {
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {
 
-                    }
-                });
-            }
+                }
+            });
         }
     }
     @Override
