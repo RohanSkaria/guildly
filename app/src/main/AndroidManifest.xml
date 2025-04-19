@@ -25,7 +25,9 @@
 
         <activity
             android:name=".LoginActivity"
-            android:exported="true">
+            android:screenOrientation="portrait"
+            android:exported="true"
+            tools:ignore="DiscouragedApi">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -34,7 +36,9 @@
 
         <activity
             android:name=".MainActivity"
-            android:exported="true" />
+            android:screenOrientation="portrait"
+            android:exported="true"
+            tools:ignore="DiscouragedApi" />
 
         <activity
             android:name=".SettingsActivity"
@@ -43,10 +47,14 @@
 
         <activity
             android:name=".ChatDetailActivity"
-            android:exported="true" />
+            android:screenOrientation="portrait"
+            android:exported="true"
+            tools:ignore="DiscouragedApi" />
 
         <activity
             android:name=".ForgotPasswordActivity"
+            android:screenOrientation="portrait"
+            tools:ignore="DiscouragedApi"
             android:exported="true" />
 
         <activity
