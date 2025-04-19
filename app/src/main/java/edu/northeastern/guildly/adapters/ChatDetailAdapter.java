@@ -66,70 +66,101 @@ public class ChatDetailAdapter extends RecyclerView.Adapter<ChatDetailAdapter.Vi
 
         holder.textMessage.setText(msg.content);
 
-
         String timeText = DateFormat.getTimeInstance(DateFormat.SHORT).format(new Date(msg.timestamp));
         holder.textTime.setText(timeText);
 
 
-        // I set 1s to show the difference for other's message(although I think it's unnecessary)
         if (msg.senderId.equals(myUserKey)) {
-            // my message
             if ("READ".equals(msg.status)) {
-                holder.imageStatus.setImageResource(R.drawable.ic_eye);     // sent and opened
+                holder.imageStatus.setImageResource(R.drawable.ic_eye);
             } else {
-                holder.imageStatus.setImageResource(R.drawable.ic_check);   // sent and not opened
+                holder.imageStatus.setImageResource(R.drawable.ic_check);
+            }
+
+
+            if (holder.senderAvatar != null) {
+                DatabaseReference currentUserRef = FirebaseDatabase.getInstance()
+                        .getReference("users")
+                        .child(myUserKey);
+
+                currentUserRef.addValueEventListener(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        User currentUser = snapshot.getValue(User.class);
+                        if (currentUser != null && currentUser.profilePicUrl != null) {
+                            int resourceId;
+                            switch (currentUser.profilePicUrl) {
+                                case "gamer":
+                                    resourceId = R.drawable.gamer;
+                                    break;
+                                case "man":
+                                    resourceId = R.drawable.man;
+                                    break;
+                                case "girl":
+                                    resourceId = R.drawable.girl;
+                                    break;
+                                default:
+                                    resourceId = R.drawable.unknown_profile;
+                                    break;
+                            }
+                            holder.senderAvatar.setImageResource(resourceId);
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+
+                    }
+                });
             }
         } else {
-            // other's message
+
             if ("READ".equals(msg.status)) {
-                holder.imageStatus.setImageResource(R.drawable.ic_msg_hollow); // received and opened
+                holder.imageStatus.setImageResource(R.drawable.ic_msg_hollow);
                 holder.imageStatus.setVisibility(View.VISIBLE);
             } else {
-                holder.imageStatus.setImageResource(R.drawable.ic_msg_solid);  // received and not opened
+                holder.imageStatus.setImageResource(R.drawable.ic_msg_solid);
                 holder.imageStatus.setVisibility(View.VISIBLE);
             }
-        }
 
 
-        if (getItemViewType(position) == VIEW_TYPE_THEIR && holder.senderAvatar != null) {
+            if (holder.senderAvatar != null) {
+                DatabaseReference senderRef = FirebaseDatabase.getInstance()
+                        .getReference("users")
+                        .child(msg.senderId);
 
-            DatabaseReference senderRef = FirebaseDatabase.getInstance()
-                    .getReference("users")
-                    .child(msg.senderId);
-
-            senderRef.addValueEventListener(new ValueEventListener() {
-                @Override
-                public void onDataChange(@NonNull DataSnapshot snapshot) {
-                    User senderUser = snapshot.getValue(User.class);
-                    if (senderUser != null && senderUser.profilePicUrl != null) {
-
-                        int resourceId;
-                        switch (senderUser.profilePicUrl) {
-                            case "gamer":
-                                resourceId = R.drawable.gamer;
-                                break;
-                            case "man":
-                                resourceId = R.drawable.man;
-                                break;
-                            case "girl":
-                                resourceId = R.drawable.girl;
-                                break;
-                            default:
-                                resourceId = R.drawable.unknown_profile;
-                                break;
+                senderRef.addValueEventListener(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        User senderUser = snapshot.getValue(User.class);
+                        if (senderUser != null && senderUser.profilePicUrl != null) {
+                            int resourceId;
+                            switch (senderUser.profilePicUrl) {
+                                case "gamer":
+                                    resourceId = R.drawable.gamer;
+                                    break;
+                                case "man":
+                                    resourceId = R.drawable.man;
+                                    break;
+                                case "girl":
+                                    resourceId = R.drawable.girl;
+                                    break;
+                                default:
+                                    resourceId = R.drawable.unknown_profile;
+                                    break;
+                            }
+                            holder.senderAvatar.setImageResource(resourceId);
                         }
-                        holder.senderAvatar.setImageResource(resourceId);
                     }
-                }
 
-                @Override
-                public void onCancelled(@NonNull DatabaseError error) {
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
 
-                }
-            });
+                    }
+                });
+            }
         }
     }
-
     @Override
     public int getItemCount() {
         return messages.size();
