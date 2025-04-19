@@ -148,6 +148,15 @@
                             android:text="@string/streak_0"
                             android:textSize="14sp"
                             android:layout_marginTop="4dp"/>
+
+                        <TextView
+                            android:id="@+id/lockMessage"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/please_come_back_in_24_hours"
+                            android:visibility="gone"
+
+                            android:textSize="14sp" />
                     </LinearLayout>
 
                     <CheckBox
@@ -155,14 +164,7 @@
                         android:layout_width="48dp"
                         android:layout_height="48dp" />
 
-                    <TextView
-                        android:id="@+id/lockMessage"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/please_come_back_in_24_hours"
-                        android:visibility="gone"
-                        android:layout_marginStart="8dp"
-                        android:textSize="14sp" />
+
                 </LinearLayout>
             </LinearLayout>
         </androidx.cardview.widget.CardView>

@@ -19,7 +19,7 @@
             android:id="@+id/streak_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Longest Streak:"
+            android:text="My Stats:"
             android:textColor="@android:color/black"
             android:textSize="18sp"
             android:textStyle="bold"
@@ -48,6 +48,18 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@id/streak_icon"
             app:layout_constraintTop_toTopOf="@id/streak_icon" />
+
+        <TextView
+            android:id="@+id/total_weekly_points"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="44dp"
+            android:layout_marginTop="4dp"
+            android:text="Total Weekly Challenges Completed: 0"
+            android:textColor="#1B1F3B"
+            android:textSize="16sp"
+            app:layout_constraintStart_toEndOf="@id/streak_icon"
+            app:layout_constraintTop_toBottomOf="@id/streak_description" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.cardview.widget.CardView>

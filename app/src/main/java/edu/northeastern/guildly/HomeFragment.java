@@ -8,6 +8,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -41,13 +42,20 @@ import edu.northeastern.guildly.data.LeaderboardItem;
 import edu.northeastern.guildly.data.User;
 
 /**
- * Your HomeFragment now updates in real time via GuildlyDataManager,
- * while keeping all existing code intact, and using the new WeeklyChallengeManager(userEmail).
+ * HomeFragment with enhanced weekly challenge functionality:
+ * - Multiple completions per week (randomized target count)
+ * - 24-hour cooldown between completions
+ * - Weekly streak tracking
  */
 public class HomeFragment extends Fragment {
 
+    private static final String TAG = "HomeFragment";
+
     private TextView tvUserName, tvStreak, tvWeeklyChallenge, tvHabitsCount;
-    private ImageView weeeklyChallengeIcon;
+    private TextView tvChallengeStreak; // Added for weekly challenge streak display
+    private ImageView weeklyChallengeIcon;
+    private CheckBox weeklyChallengeCheckbox; // For clicking to complete weekly challenge
+    private TextView weeklyChallengeLockedMsg; // For displaying locked message
     private RecyclerView habitRecyclerView, friendsLeaderboard;
     private Button btnAddHabit;
 
@@ -57,6 +65,10 @@ public class HomeFragment extends Fragment {
     private DatabaseReference userRef;       // /users/<myUserKey>
     private DatabaseReference userHabitsRef; // /users/<myUserKey>/habits
     private String myUserKey;
+    private String myEmail;
+
+    // WeeklyChallengeManager instance
+    private WeeklyChallengeManager weeklyChallengeManager;
 
     private final List<Habit> predefinedHabits = Arrays.asList(
             new Habit("Drink 64oz of water", R.drawable.ic_water),
@@ -68,21 +80,6 @@ public class HomeFragment extends Fragment {
             new Habit("Eat vegetables", R.drawable.ic_vegetable),
             new Habit("No phone after 10PM", R.drawable.ic_phonebanned)
     );
-
-    // (Optional leftover) This list is no longer used for the actual weekly logic,
-    // since the new WeeklyChallengeManager does the picking.
-    private final List<Habit> weeklyChallengeOptions = Arrays.asList(
-            new Habit("Take a walk outside", R.drawable.ic_walk_icon),
-            new Habit("Drink tea instead of coffee", R.drawable.ic_tea),
-            new Habit("Compliment someone", R.drawable.ic_compliment),
-            new Habit("Journal for 5 minutes", R.drawable.ic_journal),
-            new Habit("No social media today", R.drawable.ic_nosocial),
-            new Habit("Stretch for 10 minutes", R.drawable.ic_stretch),
-            new Habit("Sleep 8+ hours", R.drawable.ic_sleep)
-    );
-
-    // New WeeklyChallengeManager that requires userEmail in constructor
-    private WeeklyChallengeManager weeklyChallengeManager;
 
     public HomeFragment() {
         // Required empty constructor
@@ -96,92 +93,225 @@ public class HomeFragment extends Fragment {
 
         View view = inflater.inflate(R.layout.fragment_home, container, false);
 
-        // Find views
-        // tvUserName = view.findViewById(R.id.user_name);  // uncomment if you use it
+        // Initialize views
         tvStreak = view.findViewById(R.id.textViewStreak);
         habitRecyclerView = view.findViewById(R.id.habit_list);
         btnAddHabit = view.findViewById(R.id.btn_add_habit);
         tvWeeklyChallenge = view.findViewById(R.id.weekly_challenge_text);
-        weeeklyChallengeIcon = view.findViewById(R.id.weekly_challenge_icon);
+        weeklyChallengeIcon = view.findViewById(R.id.weekly_challenge_icon);
+        tvChallengeStreak = view.findViewById(R.id.weekly_challenge_streak);
+        weeklyChallengeCheckbox = view.findViewById(R.id.habit_item);
+        weeklyChallengeLockedMsg = view.findViewById(R.id.lockMessage);
         friendsLeaderboard = view.findViewById(R.id.friendsleaderboard);
         tvHabitsCount = view.findViewById(R.id.habits_count);
 
-        // Get current user email from MainActivity
-        String myEmail = MainActivity.currentUserEmail;
+        // Get current user info
+        myEmail = MainActivity.currentUserEmail;
         if (!TextUtils.isEmpty(myEmail)) {
-            // Convert email to a safe Firebase key
             myUserKey = myEmail.replace(".", ",");
             userRef = FirebaseDatabase.getInstance().getReference("users").child(myUserKey);
             userHabitsRef = userRef.child("habits");
 
-            // 1) Create the new manager with userEmail
+            // Initialize weekly challenge manager with current user's email
             weeklyChallengeManager = new WeeklyChallengeManager(myEmail);
 
-            // 2) Check/update the global challenge if needed
+            // Check if current challenge is expired/needs updating
             weeklyChallengeManager.checkAndUpdateWeeklyChallenge(() -> {
-                // 3) Load and display the final challenge in the UI
-                weeklyChallengeManager.loadWeeklyChallenge(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        String habitName = snapshot.child("habitName").getValue(String.class);
-                        Long iconResId = snapshot.child("iconResId").getValue(Long.class);
-                        if (habitName != null && iconResId != null) {
-                            tvWeeklyChallenge.setText(habitName);
-                            weeeklyChallengeIcon.setImageResource(iconResId.intValue());
-                        } else {
-                            tvWeeklyChallenge.setText("No weekly challenge set");
-                        }
-                    }
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError error) {
-                        // Handle errors if needed
-                    }
-                });
+                // Then load and display the weekly challenge
+                loadWeeklyChallengeUI();
             });
 
             // Also load user info and leaderboard
             loadUserInfo();
             loadFriendsLeaderboard();
-
         } else {
-            // If no valid email
-            // if (tvUserName != null) tvUserName.setText("Welcome, Guest!");
-            Toast.makeText(getContext(), "No user email found; can't load challenge or habits.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), "No user email found", Toast.LENGTH_SHORT).show();
         }
 
-        // Initialize your main HabitAdapter in "HOME MODE" => isSelectionMode=false
+        // Set up main habit adapter in "HOME MODE" (isSelectionMode=false)
         habitAdapter = new HabitAdapter(habitList, userHabitsRef, false);
         habitRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         habitRecyclerView.setAdapter(habitAdapter);
 
-        // Attach single-value read for habits
+        // Load habits both ways: single-value read plus real-time updates
         if (userHabitsRef != null) {
             loadHabitsFromFirebase();
 
-            // Also attach GuildlyDataManager for real-time updates
+            // Real-time updates via GuildlyDataManager
             GuildlyDataManager dataManager = GuildlyDataManager.getInstance();
             dataManager.init(myUserKey);
 
-            dataManager.getHabitsLiveData().observe(getViewLifecycleOwner(), new Observer<List<Habit>>() {
-                @Override
-                public void onChanged(List<Habit> updatedHabits) {
-                    habitList.clear();
-                    for (Habit h : updatedHabits) {
-                        if (h.isTracked()) {
-                            habitList.add(h);
-                        }
+            dataManager.getHabitsLiveData().observe(getViewLifecycleOwner(), updatedHabits -> {
+                habitList.clear();
+                for (Habit h : updatedHabits) {
+                    if (h.isTracked()) {
+                        habitList.add(h);
                     }
-                    habitAdapter.notifyDataSetChanged();
-                    updateStreakText();
-                    updateHabitsCountText();
                 }
+                habitAdapter.notifyDataSetChanged();
+                updateStreakText();
+                updateHabitsCountText();
             });
         }
 
-        // "Add Habit" button -> show the predefined habits popup
+        // Set up weekly challenge checkbox click listener
+        weeklyChallengeCheckbox.setOnClickListener(v -> {
+            // If the checkbox is checked, try to complete the weekly challenge
+            if (weeklyChallengeCheckbox.isChecked()) {
+                attemptWeeklyChallengeCompletion();
+            }
+        });
+
+        // Add Habit button shows the predefined habits dialog
         btnAddHabit.setOnClickListener(v -> showPredefinedHabitsDialog());
 
         return view;
+    }
+
+    /**
+     * Load and display the weekly challenge in the UI
+     */
+    private void loadWeeklyChallengeUI() {
+        if (weeklyChallengeManager == null) return;
+
+        // First, get the global challenge details (name, icon)
+        weeklyChallengeManager.loadWeeklyChallenge(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                String habitName = snapshot.child("habitName").getValue(String.class);
+                Long iconResId = snapshot.child("iconResId").getValue(Long.class);
+
+                if (habitName != null && iconResId != null) {
+                    tvWeeklyChallenge.setText(habitName);
+                    weeklyChallengeIcon.setImageResource(iconResId.intValue());
+
+                    // Then get the user's progress on this challenge
+                    loadWeeklyChallengeProgress();
+                } else {
+                    tvWeeklyChallenge.setText("No weekly challenge set");
+                    weeklyChallengeCheckbox.setVisibility(View.GONE);
+                    weeklyChallengeLockedMsg.setVisibility(View.GONE);
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.e(TAG, "Error loading weekly challenge", error.toException());
+            }
+        });
+    }
+
+    /**
+     * Load the user's progress on the current weekly challenge
+     */
+    private void loadWeeklyChallengeProgress() {
+        if (userRef == null) return;
+
+        userRef.child("weeklyChallengeProgress").addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                // Get completion count and total required
+                long completedCount = snapshot.child("completedCountThisWeek").getValue(Long.class) != null
+                        ? snapshot.child("completedCountThisWeek").getValue(Long.class)
+                        : 0;
+
+                // IMPORTANT: Don't use a hardcoded value, read from Firebase
+                int requiredCompletions = 3; // Default fallback value
+                Long requiredLong = snapshot.child("requiredCompletions").getValue(Long.class);
+                if (requiredLong != null) {
+                    requiredCompletions = requiredLong.intValue();
+                }
+
+                // Get lockout state
+                long nextAvailableTime = snapshot.child("nextAvailableTime").getValue(Long.class) != null
+                        ? snapshot.child("nextAvailableTime").getValue(Long.class)
+                        : 0;
+
+                boolean fullyCompleted = snapshot.child("fullyCompleted").getValue(Boolean.class) != null
+                        && snapshot.child("fullyCompleted").getValue(Boolean.class);
+
+                // Get weekly streak count
+                long streakCount = snapshot.child("streakCount").getValue(Long.class) != null
+                        ? snapshot.child("streakCount").getValue(Long.class)
+                        : 0;
+
+                // Update the UI based on all this information
+                updateWeeklyChallengeUI(completedCount, requiredCompletions, nextAvailableTime, fullyCompleted, streakCount);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.e(TAG, "Error loading weekly challenge progress", error.toException());
+            }
+        });
+    }
+
+    /**
+     * Update weekly challenge UI based on current progress
+     */
+    private void updateWeeklyChallengeUI(long completedCount, int requiredCompletions,
+                                         long nextAvailableTime, boolean fullyCompleted, long streakCount) {
+
+        // Update streak count display
+        tvChallengeStreak.setText(String.format("Streak: %d", streakCount));
+
+        long now = System.currentTimeMillis();
+
+        // If fully completed for the week
+        if (fullyCompleted) {
+            weeklyChallengeCheckbox.setChecked(true);
+            weeklyChallengeCheckbox.setEnabled(false);
+            weeklyChallengeLockedMsg.setVisibility(View.VISIBLE);
+            tvChallengeStreak.setVisibility(View.GONE);
+
+            weeklyChallengeLockedMsg.setText("Come Back Next Week!");
+
+            // Update progress display
+//            tvChallengeStreak.setText(String.format("Come Back Next week!", streakCount));
+            return;
+        }
+
+        // If on cooldown (next available time is in the future)
+        if (now < nextAvailableTime) {
+            weeklyChallengeCheckbox.setChecked(true);
+            weeklyChallengeCheckbox.setEnabled(false);
+            weeklyChallengeLockedMsg.setVisibility(View.VISIBLE);
+            weeklyChallengeLockedMsg.setText("Come back in 24 hours");
+
+            // Show progress and countdown
+            tvChallengeStreak.setText(String.format("Weekly Progress: %d/%d",
+                    completedCount, requiredCompletions));
+            return;
+        }
+
+        // If available to complete now
+        weeklyChallengeCheckbox.setChecked(false);
+        weeklyChallengeCheckbox.setEnabled(true);
+        weeklyChallengeLockedMsg.setVisibility(View.GONE);
+
+        // Show progress toward completion
+        if (completedCount > 0) {
+            tvChallengeStreak.setText(String.format("Weekly Progress: %d/%d",
+                     completedCount, requiredCompletions));
+        } else {
+            tvChallengeStreak.setText(String.format("Complete %d times this week",
+                    requiredCompletions));
+        }
+    }
+
+    /**
+     * Attempt to complete the weekly challenge
+     */
+    private void attemptWeeklyChallengeCompletion() {
+        if (weeklyChallengeManager == null) return;
+
+        weeklyChallengeManager.attemptWeeklyChallengeCompletion(message -> {
+            // Show result message to the user
+            Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show();
+
+            // The UI will update automatically via the ValueEventListener
+            // in loadWeeklyChallengeProgress()
+        });
     }
 
     private void loadUserInfo() {
@@ -190,21 +320,13 @@ public class HomeFragment extends Fragment {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 User user = snapshot.getValue(User.class);
-                if (user != null) {
-                    // if (tvUserName != null && user.username != null) {
-                    //     tvUserName.setText("Welcome, " + user.username + "!");
-                    // }
-                }
+                // Update any user-specific UI here if needed
             }
-
             @Override
-            public void onCancelled(@NonNull DatabaseError error) { }
+            public void onCancelled(@NonNull DatabaseError error) {}
         });
     }
 
-    /**
-     * Fetch the user's habits once, ignoring real-time changes (we do that separately).
-     */
     private void loadHabitsFromFirebase() {
         if (userHabitsRef == null) return;
         userHabitsRef.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -218,51 +340,50 @@ public class HomeFragment extends Fragment {
                             habitList.add(h);
                         }
                     } catch (DatabaseException e) {
-                        Log.d("HomeFragment", "Skipping non-Habit entry: " + ds.getKey());
+                        Log.d(TAG, "Skipping non-Habit entry: " + ds.getKey());
                     }
                 }
                 habitAdapter.notifyDataSetChanged();
                 updateStreakText();
                 updateHabitsCountText();
             }
-
             @Override
-            public void onCancelled(@NonNull DatabaseError error) { }
+            public void onCancelled(@NonNull DatabaseError error) {}
         });
     }
 
-    /**
-     * Popup to pick from a list of predefined habits and track/untrack them.
-     */
     private void showPredefinedHabitsDialog() {
         List<Habit> cloneList = new ArrayList<>();
         for (Habit ph : predefinedHabits) {
-            if (ph == null || ph.getHabitName() == null) continue;
+            if (ph == null || ph.getHabitName() == null) {
+                Log.e(TAG, "Found null habit or habit name in predefined habits");
+                continue;
+            }
 
             boolean alreadyTracked = false;
             Habit existingHabit = null;
 
             for (Habit current : habitList) {
-                if (current != null && current.getHabitName() != null &&
-                        current.getHabitName().equals(ph.getHabitName())) {
+                if (current == null || current.getHabitName() == null) {
+                    continue;
+                }
+
+                if (current.getHabitName().equals(ph.getHabitName())) {
                     alreadyTracked = true;
                     existingHabit = current;
                     break;
                 }
             }
 
-            // Create a new Habit object for the dialog
             Habit newHabit = new Habit(ph.getHabitName(), ph.getIconResId());
             newHabit.setTracked(alreadyTracked);
 
             if (alreadyTracked && existingHabit != null) {
-                // Copy streak data, etc.
                 newHabit.setStreakCount(existingHabit.getStreakCount());
                 newHabit.setLastCompletedTime(existingHabit.getLastCompletedTime());
                 newHabit.setCompletedToday(existingHabit.isCompletedToday());
                 newHabit.setNextAvailableTime(existingHabit.getNextAvailableTime());
             } else {
-                // Default
                 newHabit.setStreakCount(0);
                 newHabit.setLastCompletedTime(0);
                 newHabit.setCompletedToday(false);
@@ -277,7 +398,6 @@ public class HomeFragment extends Fragment {
         RecyclerView rv = dialogView.findViewById(R.id.predefinedHabitsRecycler);
         rv.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        // "Selection mode" = true
         HabitAdapter tempAdapter = new HabitAdapter(cloneList, userHabitsRef, true);
         rv.setAdapter(tempAdapter);
 
@@ -287,28 +407,36 @@ public class HomeFragment extends Fragment {
                 .setPositiveButton("Done", (dialog, which) -> {
                     try {
                         for (Habit h : cloneList) {
-                            if (h == null || h.getHabitName() == null) continue;
+                            if (h == null || h.getHabitName() == null) {
+                                Log.e(TAG, "Skipping null habit or habit with null name");
+                                continue;
+                            }
+
                             String sanitizedName = h.getHabitName().replace(".", "_");
                             DatabaseReference habitRef = userHabitsRef.child(sanitizedName);
 
                             if (h.isTracked()) {
-                                // If newly tracked (or already existed)
                                 boolean existsInCurrent = false;
+                                Habit existingHabit = null;
+
                                 for (Habit current : habitList) {
-                                    if (current != null && current.getHabitName() != null &&
-                                            current.getHabitName().equals(h.getHabitName())) {
+                                    if (current == null || current.getHabitName() == null) {
+                                        continue;
+                                    }
+
+                                    if (current.getHabitName().equals(h.getHabitName())) {
                                         existsInCurrent = true;
+                                        existingHabit = current;
                                         break;
                                     }
                                 }
 
-                                if (existsInCurrent) {
+                                if (existsInCurrent && existingHabit != null) {
                                     habitRef.child("tracked").setValue(true);
                                 } else {
                                     habitRef.setValue(h);
                                 }
                             } else {
-                                // If untracked
                                 habitRef.addListenerForSingleValueEvent(new ValueEventListener() {
                                     @Override
                                     public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -316,18 +444,19 @@ public class HomeFragment extends Fragment {
                                             habitRef.child("tracked").setValue(false);
                                         }
                                     }
+
                                     @Override
                                     public void onCancelled(@NonNull DatabaseError error) {
-                                        Log.e("HomeFragment", "Error checking habit: " + error.getMessage());
+                                        Log.e(TAG, "Error checking habit: " + error.getMessage());
                                     }
                                 });
                             }
                         }
+
                         loadHabitsFromFirebase();
                     } catch (Exception e) {
-                        Log.e("HomeFragment", "Error updating habits: " + e.getMessage());
-                        Toast.makeText(getContext(), "An error occurred while updating habits",
-                                Toast.LENGTH_SHORT).show();
+                        Log.e(TAG, "Error updating habits: " + e.getMessage());
+                        Toast.makeText(getContext(), "An error occurred while updating habits", Toast.LENGTH_SHORT).show();
                         e.printStackTrace();
                     }
                 })
@@ -351,9 +480,6 @@ public class HomeFragment extends Fragment {
             }
         }
         if (bestStreak > 0 && bestHabitName != null) {
-            if (bestStreak == 1) {
-                tvStreak.setText(bestStreak + " day streak!");
-            }
             tvStreak.setText(bestStreak + " day streak!");
         } else {
             tvStreak.setText("Start a streak today!");
@@ -385,11 +511,11 @@ public class HomeFragment extends Fragment {
                 }
 
                 // Add current user to leaderboard
-                int currentUserProfileImageRes = R.drawable.gamer;
+                int profileImageRes = ProfileUtils.getProfileImageRes(currentUser.profilePicUrl);
                 leaderboardItems.add(new LeaderboardItem(
                         currentUser.username != null ? currentUser.username : "Me",
                         currentUserBestStreak,
-                        currentUserProfileImageRes
+                        profileImageRes
                 ));
 
                 // Load each friend
@@ -416,7 +542,7 @@ public class HomeFragment extends Fragment {
                                 }
                             }
 
-                            int profileImageRes = R.drawable.gamer; // or any default icon
+                            int profileImageRes = ProfileUtils.getProfileImageRes(friend.profilePicUrl);
                             leaderboardItems.add(new LeaderboardItem(friend.username, bestStreak, profileImageRes));
                             checkIfAllLoaded();
                         }
@@ -457,9 +583,6 @@ public class HomeFragment extends Fragment {
         });
     }
 
-    /**
-     * Update the "X habits left" text at the bottom.
-     */
     private void updateHabitsCountText() {
         int incompleteCount = 0;
         for (Habit h : habitList) {
@@ -472,7 +595,7 @@ public class HomeFragment extends Fragment {
             tvHabitsCount.setText("🎉 All habits done! Come back in 24 hours!");
         } else {
             tvHabitsCount.setText(incompleteCount + " habit" + (incompleteCount == 1 ? "" : "s")
-                    + " left today to complete.");
+                    + " left today to complete. Come back in 24 hours!");
         }
     }
 }

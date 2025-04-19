@@ -12,15 +12,21 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import edu.northeastern.guildly.R;
 import edu.northeastern.guildly.data.Habit;
 
 /**
- * Manages the global weekly challenge AND each user's progress toward it
- * (including a 24-hour lockout and multiple completions per week).
+ * Enhanced WeeklyChallengeManager that:
+ * 1. Manages the global weekly challenge
+ * 2. Tracks user progress with multiple completions per week (random required count)
+ * 3. Enforces 24-hour cooldown between completions
+ * 4. Maintains streak count for consecutive weekly completions
  */
 public class WeeklyChallengeManager {
+
+    private static final String TAG = "WeeklyChallengeManager";
 
     // ------------------------------------------------------------------------
     // GLOBAL CHALLENGE FIELDS
@@ -44,14 +50,17 @@ public class WeeklyChallengeManager {
     // USER-SPECIFIC FIELDS
     // ------------------------------------------------------------------------
 
-    /** This userKey is the sanitized version of the user's email, e.g. "john_doe_gmail_com". */
+    /** This userKey is the sanitized version of the user's email, e.g. "user@example,com". */
     private final String userKey;
 
     /** Reference to the per-user "weeklyChallengeProgress" node in Firebase. */
     private final DatabaseReference userChallengeProgressRef;
 
-    /** The number of completions required for the user to finish the weekly challenge. */
-    private static final int REQUIRED_COMPLETIONS_PER_WEEK = 4;
+    /** The minimum number of completions for weekly challenge */
+    private static final int MIN_REQUIRED_COMPLETIONS = 3;
+
+    /** The maximum number of completions for weekly challenge */
+    private static final int MAX_REQUIRED_COMPLETIONS = 5;
 
     // ------------------------------------------------------------------------
     // CONSTRUCTOR
@@ -83,9 +92,8 @@ public class WeeklyChallengeManager {
     /**
      * Checks whether the global weekly challenge is missing or expired.
      * - If missing/expired, picks a new random challenge, resets the global node,
-     *   and resets the user's progress.
-     * - Otherwise, if it still exists, ensures the user is in sync (e.g., if the
-     *   challenge changed, we reset the user's progress).
+     *   and resets the user's progress with a random completion target.
+     * - Otherwise, if it still exists, ensures the user is in sync.
      *
      * @param onComplete A callback that fires once the check is done.
      */
@@ -115,7 +123,8 @@ public class WeeklyChallengeManager {
                             .addOnCompleteListener(task -> {
                                 if (task.isSuccessful()) {
                                     // 4) Reset the user's progress for the new challenge
-                                    resetUserProgress(now, () -> onComplete.run());
+                                    // with a random required completion count
+                                    resetUserProgress(now, generateRandomRequiredCompletions(), () -> onComplete.run());
                                 } else {
                                     onComplete.run();
                                 }
@@ -133,6 +142,36 @@ public class WeeklyChallengeManager {
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
                 onComplete.run();
+            }
+        });
+    }
+
+    /**
+     * Updates the weeklyChallengePts counter when a user fully completes a weekly challenge.
+     * This is a lifetime counter of completed weekly challenges (not tied to streaks).
+     *
+     * @param isCompleted Whether the user has completed all required completions
+     */
+    private void updateWeeklyChallengePoints(boolean isCompleted) {
+        if (!isCompleted) return; // Only increment if completed
+
+        // Reference to the user's weeklyChallengePts
+        DatabaseReference userRef = FirebaseDatabase.getInstance()
+                .getReference("users")
+                .child(userKey);
+
+        userRef.child("weeklyChallengePts").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                Long currentPoints = snapshot.getValue(Long.class);
+                long newPoints = (currentPoints != null ? currentPoints : 0) + 1;
+
+                userRef.child("weeklyChallengePts").setValue(newPoints);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                // Handle error silently
             }
         });
     }
@@ -190,8 +229,13 @@ public class WeeklyChallengeManager {
                         long completedCount = userSnap.child("completedCountThisWeek").getValue(Long.class) != null
                                 ? userSnap.child("completedCountThisWeek").getValue(Long.class) : 0L;
 
+                        // Get the required completions for this week
+                        long requiredCompletions = userSnap.child("requiredCompletions").getValue(Long.class) != null
+                                ? userSnap.child("requiredCompletions").getValue(Long.class)
+                                : MIN_REQUIRED_COMPLETIONS;
+
                         // 2a) If the user already did enough completions (or fullyCompleted is true)
-                        if (fullyCompleted || completedCount >= REQUIRED_COMPLETIONS_PER_WEEK) {
+                        if (fullyCompleted || completedCount >= requiredCompletions) {
                             callback.onResult("You've already completed this week's challenge! Come back for next week's challenge.");
                             return;
                         }
@@ -221,8 +265,9 @@ public class WeeklyChallengeManager {
                         updates.put("nextAvailableTime", newNextAvailableTime);
 
                         // If the user just hit or exceeded the required completions, mark them fully completed
-                        if (newCount >= REQUIRED_COMPLETIONS_PER_WEEK) {
+                        if (newCount >= requiredCompletions) {
                             updates.put("fullyCompleted", true);
+                            updateWeeklyChallengePoints(true);
                         }
 
                         // 4) Write the updates back to the user's progress node
@@ -235,15 +280,15 @@ public class WeeklyChallengeManager {
                                     }
 
                                     // 5) Successfully updated. Compose a success message:
-                                    if (newCount >= REQUIRED_COMPLETIONS_PER_WEEK) {
+                                    if (newCount >= requiredCompletions) {
                                         // The user has now fully completed the challenge for this week
-                                        callback.onResult("Congratulations! You’ve completed the weekly challenge. See you next week!");
+                                        callback.onResult("Congratulations! You've completed the weekly challenge. See you next week!");
                                     } else {
                                         // Show how many completions they have done so far
                                         callback.onResult(
                                                 "Weekly challenge completed for today! You have done "
                                                         + newCount + " of "
-                                                        + REQUIRED_COMPLETIONS_PER_WEEK
+                                                        + requiredCompletions
                                                         + " completions this week."
                                         );
                                     }
@@ -279,17 +324,75 @@ public class WeeklyChallengeManager {
     }
 
     /**
-     * Resets the user's progress node for a new challenge that starts at 'newChallengeStart'.
+     * Generates a random number of required completions between MIN_REQUIRED_COMPLETIONS
+     * and MAX_REQUIRED_COMPLETIONS.
      */
-    private void resetUserProgress(long newChallengeStart, Runnable onDone) {
+    private int generateRandomRequiredCompletions() {
+        Random random = new Random();
+        return random.nextInt(MAX_REQUIRED_COMPLETIONS - MIN_REQUIRED_COMPLETIONS + 1) + MIN_REQUIRED_COMPLETIONS;
+    }
+
+    /**
+     * Resets the user's progress node for a new challenge that starts at 'newChallengeStart'.
+     * Also sets a random number of required completions.
+     */
+    private void resetUserProgress(long newChallengeStart, int requiredCompletions, Runnable onDone) {
         Map<String, Object> resetMap = new HashMap<>();
         resetMap.put("completedCountThisWeek", 0);
         resetMap.put("nextAvailableTime", 0);
         resetMap.put("fullyCompleted", false);
         resetMap.put("challengeStartTime", newChallengeStart);
+        resetMap.put("requiredCompletions", requiredCompletions);
 
-        userChallengeProgressRef.updateChildren(resetMap)
-                .addOnCompleteListener(task -> onDone.run());
+        // Check if we need to increment or reset streak
+        checkAndUpdateStreak(lastWeekCompleted -> {
+            if (lastWeekCompleted) {
+                // Increment the streak if the user completed last week's challenge
+                userChallengeProgressRef.child("streakCount").addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        Long currentStreak = snapshot.getValue(Long.class);
+                        if (currentStreak == null) currentStreak = 0L;
+                        resetMap.put("streakCount", currentStreak + 1);
+
+                        // Finalize the update
+                        userChallengeProgressRef.updateChildren(resetMap)
+                                .addOnCompleteListener(task -> onDone.run());
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        resetMap.put("streakCount", 1); // Default if error
+                        userChallengeProgressRef.updateChildren(resetMap)
+                                .addOnCompleteListener(task -> onDone.run());
+                    }
+                });
+            } else {
+                // Reset the streak to 0 if the user didn't complete last week's challenge
+                resetMap.put("streakCount", 0);
+                userChallengeProgressRef.updateChildren(resetMap)
+                        .addOnCompleteListener(task -> onDone.run());
+            }
+        });
+    }
+
+    /**
+     * Check if the user completed last week's challenge to determine streak
+     * continuation.
+     */
+    private void checkAndUpdateStreak(StreakCheckCallback callback) {
+        userChallengeProgressRef.child("fullyCompleted").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                Boolean completed = snapshot.getValue(Boolean.class);
+                callback.onResult(completed != null && completed);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                callback.onResult(false); // Default to false if error
+            }
+        });
     }
 
     /**
@@ -303,9 +406,15 @@ public class WeeklyChallengeManager {
                 Long userStartTime = snapshot.child("challengeStartTime").getValue(Long.class);
                 if (userStartTime == null) userStartTime = 0L;
 
-                // If the user’s challengeStartTime doesn’t match the global one, reset
+                // If the user's challengeStartTime doesn't match the global one, reset
                 if (!userStartTime.equals(globalStartTime)) {
-                    resetUserProgress(globalStartTime, onDone);
+                    // Get or generate required completions
+                    Long requiredCompletions = snapshot.child("requiredCompletions").getValue(Long.class);
+                    int newRequiredCompletions = (requiredCompletions != null)
+                            ? requiredCompletions.intValue()
+                            : generateRandomRequiredCompletions();
+
+                    resetUserProgress(globalStartTime, newRequiredCompletions, onDone);
                 } else {
                     onDone.run();
                 }
@@ -319,7 +428,7 @@ public class WeeklyChallengeManager {
     }
 
     // ------------------------------------------------------------------------
-    // CALLBACK INTERFACE
+    // CALLBACK INTERFACES
     // ------------------------------------------------------------------------
 
     /**
@@ -328,5 +437,12 @@ public class WeeklyChallengeManager {
      */
     public interface ChallengeCompletionCallback {
         void onResult(String message);
+    }
+
+    /**
+     * Callback for checking if the previous week's challenge was completed.
+     */
+    private interface StreakCheckCallback {
+        void onResult(boolean lastWeekCompleted);
     }
 }
