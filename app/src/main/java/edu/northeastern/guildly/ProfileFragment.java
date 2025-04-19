@@ -23,6 +23,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseException;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
@@ -33,6 +34,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
@@ -533,147 +536,147 @@ public class ProfileFragment extends Fragment {
     //  ADDED: load user’s current habits into habitList once
     // ---------------------------------------------------------
     private void loadCurrentHabits() {
+        if (userHabitsRef == null) return;
+
         userHabitsRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 habitList.clear();
                 for (DataSnapshot ds : snapshot.getChildren()) {
-                    Habit h = ds.getValue(Habit.class);
-                    if (h != null) {
-                        habitList.add(h);
+                    try {
+                        Habit h = ds.getValue(Habit.class);
+                        if (h != null && h.isTracked()) {
+                            habitList.add(h);
+                        }
+                    } catch (DatabaseException e) {
+                        Log.d("ProfileFragment", "Skipping non-Habit entry: " + ds.getKey());
                     }
                 }
-                }
+
+                // Optional: If you use an adapter to show habits in a RecyclerView
+//                if (habitAdapter != null) {
+//                    habitAdapter.notifyDataSetChanged();
+//                }
+//
+//                // Optional: update streak and count text
+//                updateStreakText();
+//                updateHabitsCountText();
+            }
+
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                Log.e("ProfileFragment", "Error loading user’s habitList: " + error.getMessage());
+                Log.e("ProfileFragment", "Failed to load habits: " + error.getMessage());
             }
         });
     }
+
 
     // ---------------------------------------------------------
     //  REPLACE showHabitsDialog() with the “predefined” approach
     // ---------------------------------------------------------
     private void showHabitsDialog() {
-        // Step 1) Build a cloneList from predefinedHabits
         List<Habit> cloneList = new ArrayList<>();
+        CountDownLatch latch = new CountDownLatch(predefinedHabits.size());
+
         for (Habit ph : predefinedHabits) {
             if (ph == null || ph.getHabitName() == null) {
-                Log.e("ProfileFragment", "Skipping null habit or habit name in predefinedHabits");
+                latch.countDown();
                 continue;
             }
 
-            boolean alreadyTracked = false;
-            Habit existingHabit = null;
+            String name = ph.getHabitName();
+            String sanitizedName = name.replace(".", "_");
 
-            // check user’s current habitList
-            for (Habit current : habitList) {
-                if (current != null && current.getHabitName() != null &&
-                        current.getHabitName().equals(ph.getHabitName())) {
-                    alreadyTracked = true;
-                    existingHabit = current;
-                    break;
+            userHabitsRef.child(sanitizedName).addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    Habit h = new Habit(name, ph.getIconResId());
+                    if (snapshot.exists()) {
+                        Habit saved = snapshot.getValue(Habit.class);
+                        if (saved != null) {
+                            h.setTracked(saved.isTracked());
+                            h.setStreakCount(saved.getStreakCount());
+                            h.setLastCompletedTime(saved.getLastCompletedTime());
+                            h.setCompletedToday(saved.isCompletedToday());
+                            h.setNextAvailableTime(saved.getNextAvailableTime());
+                        }
+                    } else {
+                        h.setTracked(false);
+                        h.setStreakCount(0);
+                    }
+
+                    cloneList.add(h);
+                    latch.countDown();
                 }
-            }
 
-            // create a new Habit with the same name/icon
-            Habit newHabit = new Habit(ph.getHabitName(), ph.getIconResId());
-            newHabit.setTracked(alreadyTracked);
-
-            // if user already tracked it, copy streak data
-            if (alreadyTracked && existingHabit != null) {
-                newHabit.setStreakCount(existingHabit.getStreakCount());
-                newHabit.setLastCompletedTime(existingHabit.getLastCompletedTime());
-                newHabit.setCompletedToday(existingHabit.isCompletedToday());
-                newHabit.setNextAvailableTime(existingHabit.getNextAvailableTime());
-            } else {
-                // brand new
-                newHabit.setStreakCount(0);
-                newHabit.setLastCompletedTime(0);
-                newHabit.setCompletedToday(false);
-                newHabit.setNextAvailableTime(0);
-            }
-
-            cloneList.add(newHabit);
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {
+                    Log.e("ProfileFragment", "Error reading habit: " + error.getMessage());
+                    latch.countDown();
+                }
+            });
         }
 
-        // Step 2) Inflate dialog_predefined_habits
-        View dialogView = LayoutInflater.from(getContext())
-                .inflate(R.layout.dialog_predefined_habits, null);
-        RecyclerView rv = dialogView.findViewById(R.id.predefinedHabitsRecycler);
-        rv.setLayoutManager(new LinearLayoutManager(getContext()));
+        // Wait for all habits to load, then display dialog
+        new Thread(() -> {
+            try {
+                latch.await(); // Wait for Firebase calls to complete
+                requireActivity().runOnUiThread(() -> {
+                    View dialogView = LayoutInflater.from(getContext())
+                            .inflate(R.layout.dialog_predefined_habits, null);
+                    RecyclerView rv = dialogView.findViewById(R.id.predefinedHabitsRecycler);
+                    rv.setLayoutManager(new LinearLayoutManager(getContext()));
+                    HabitAdapter tempAdapter = new HabitAdapter(cloneList, userHabitsRef, true);
+                    rv.setAdapter(tempAdapter);
 
-        // Step 3) Use HabitAdapter in selection mode
-        HabitAdapter tempAdapter = new HabitAdapter(cloneList, userHabitsRef, true);
-        rv.setAdapter(tempAdapter);
+                    new AlertDialog.Builder(requireContext())
+                            .setTitle("Select Habits to Track")
+                            .setView(dialogView)
+                            .setPositiveButton("Done", (dialog, which) -> {
+                                try {
+                                    for (Habit h : cloneList) {
+                                        if (h == null || h.getHabitName() == null) continue;
 
-        // Step 4) Show AlertDialog
-        new AlertDialog.Builder(requireContext())
-                .setTitle("Select Habits to Track")
-                .setView(dialogView)
-                .setPositiveButton("Done", (dialog, which) -> {
-                    try {
-                        // Step 5) For each habit in cloneList => update DB
-                        for (Habit h : cloneList) {
-                            if (h == null || h.getHabitName() == null) {
-                                Log.e("ProfileFragment", "Skipping null habit or habit with null name");
-                                continue;
-                            }
+                                        String sanitizedName = h.getHabitName().replace(".", "_");
+                                        DatabaseReference habitRef = userHabitsRef.child(sanitizedName);
 
-                            String sanitizedName = h.getHabitName().replace(".", "_");
-                            DatabaseReference habitRef = userHabitsRef.child(sanitizedName);
+                                        if (h.isTracked()) {
+                                            habitRef.setValue(h);
+                                        } else {
+                                            habitRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                                                @Override
+                                                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                                    if (snapshot.exists()) {
+                                                        habitRef.child("tracked").setValue(false);
+                                                    }
+                                                }
 
-                            if (h.isTracked()) {
-                                boolean existsInCurrent = false;
-                                Habit existingHabit = null;
-
-                                for (Habit current : habitList) {
-                                    if (current != null && current.getHabitName() != null &&
-                                            current.getHabitName().equals(h.getHabitName())) {
-                                        existsInCurrent = true;
-                                        existingHabit = current;
-                                        break;
-                                    }
-                                }
-
-                                if (existsInCurrent && existingHabit != null) {
-                                    // just set tracked=true
-                                    habitRef.child("tracked").setValue(true);
-                                } else {
-                                    // brand new => write entire Habit
-                                    habitRef.setValue(h);
-                                }
-                            } else {
-                                // user unticked => set tracked=false if it exists
-                                habitRef.addListenerForSingleValueEvent(new ValueEventListener() {
-                                    @Override
-                                    public void onDataChange(@NonNull DataSnapshot snapshot) {
-                                        if (snapshot.exists()) {
-                                            habitRef.child("tracked").setValue(false);
+                                                @Override
+                                                public void onCancelled(@NonNull DatabaseError error) {
+                                                    Log.e("ProfileFragment", "Error updating habit: " + error.getMessage());
+                                                }
+                                            });
                                         }
                                     }
-                                    @Override
-                                    public void onCancelled(@NonNull DatabaseError error) {
-                                        Log.e("ProfileFragment", "Error updating habit: " + error.getMessage());
-                                    }
-                                });
-                            }
-                        }
 
-                        // Refresh local habitList
-                        loadCurrentHabits();
+                                    loadCurrentHabits();
 
-                    } catch (Exception e) {
-                        Log.e("ProfileFragment", "Error in finalizing habit selection: " + e.getMessage());
-                        Toast.makeText(getContext(),
-                                "An error occurred while updating habits",
-                                Toast.LENGTH_SHORT).show();
-                    }
-                })
-                .setNegativeButton("Cancel", null)
-                .create()
-                .show();
+                                } catch (Exception e) {
+                                    Log.e("ProfileFragment", "Error updating habits: " + e.getMessage());
+                                    Toast.makeText(getContext(), "An error occurred while updating habits", Toast.LENGTH_SHORT).show();
+                                }
+                            })
+                            .setNegativeButton("Cancel", null)
+                            .create()
+                            .show();
+                });
+            } catch (InterruptedException e) {
+                Log.e("ProfileFragment", "Interrupted while waiting for habits to load: " + e.getMessage());
+            }
+        }).start();
     }
+
+
 
     private void confirmDeleteFriend(String friendKey) {
         // Show confirmation dialog
