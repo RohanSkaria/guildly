@@ -60,7 +60,7 @@ public class WeeklyChallengeManager {
     private static final int MIN_REQUIRED_COMPLETIONS = 3;
 
     /** The maximum number of completions for weekly challenge */
-    private static final int MAX_REQUIRED_COMPLETIONS = 7;
+    private static final int MAX_REQUIRED_COMPLETIONS = 5;
 
     // ------------------------------------------------------------------------
     // CONSTRUCTOR

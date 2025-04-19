@@ -215,7 +215,8 @@ public class HomeFragment extends Fragment {
                         ? snapshot.child("completedCountThisWeek").getValue(Long.class)
                         : 0;
 
-                int requiredCompletions = 4; // Default value
+                // IMPORTANT: Don't use a hardcoded value, read from Firebase
+                int requiredCompletions = 3; // Default fallback value
                 Long requiredLong = snapshot.child("requiredCompletions").getValue(Long.class);
                 if (requiredLong != null) {
                     requiredCompletions = requiredLong.intValue();
