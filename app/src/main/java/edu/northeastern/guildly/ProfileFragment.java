@@ -74,6 +74,8 @@ public class ProfileFragment extends Fragment {
     private CircleImageView friendOne, friendTwo, friendThree;
     private TextView friendOneName, friendTwoName, friendThreeName;
     private TextView tvNoFriendsMessage;
+    private TextView tvTotalWeeklyPoints;
+
 
     // ---------------------------------------------------------------
     // ADDED: replicate the “HomeFragment” approach
@@ -119,6 +121,7 @@ public class ProfileFragment extends Fragment {
         initViews(view);
         // Single-value approach to load user data
         loadUserDataFromFirebase();
+        loadWeeklyChallengePoints();
         // Then set click listeners
         setupClickListeners();
 
@@ -191,6 +194,7 @@ public class ProfileFragment extends Fragment {
         tvTopHabit2 = view.findViewById(R.id.tvTopHabit2);
         tvTopHabit3 = view.findViewById(R.id.tvTopHabit3);
         tvNoHabitsMessage = view.findViewById(R.id.tvNoHabitsMessage);
+        tvTotalWeeklyPoints = view.findViewById(R.id.total_weekly_points);
 
         // Friends top-3
         friendOne   = view.findViewById(R.id.friend_one);
@@ -246,6 +250,27 @@ public class ProfileFragment extends Fragment {
         });
     }
 
+
+    private void loadWeeklyChallengePoints() {
+        if (userRef == null) return;
+
+        userRef.child("weeklyChallengePts").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                Long weeklyPoints = snapshot.getValue(Long.class);
+                if (weeklyPoints != null) {
+                    tvTotalWeeklyPoints.setText(String.format("Total Weekly Challenges Completed: %d", weeklyPoints));
+                } else {
+                    tvTotalWeeklyPoints.setText("Total Weekly Challenges Completed: 0");
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                tvTotalWeeklyPoints.setText("Total Weekly Challenges Completed: 0");
+            }
+        });
+    }
     /**
      * 2) Single-value read to fill top-3 habits
      */

@@ -84,5 +84,7 @@
     <string name="profile_button">Profile</string>
     <string name="message_button">Message</string>
     <string name="delete_friend_button">Delete Friend</string>
+    <string name="view_more">View More</string>
+    <string name="streak">Streak</string>
 
 </resources>

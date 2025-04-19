@@ -147,6 +147,36 @@ public class WeeklyChallengeManager {
     }
 
     /**
+     * Updates the weeklyChallengePts counter when a user fully completes a weekly challenge.
+     * This is a lifetime counter of completed weekly challenges (not tied to streaks).
+     *
+     * @param isCompleted Whether the user has completed all required completions
+     */
+    private void updateWeeklyChallengePoints(boolean isCompleted) {
+        if (!isCompleted) return; // Only increment if completed
+
+        // Reference to the user's weeklyChallengePts
+        DatabaseReference userRef = FirebaseDatabase.getInstance()
+                .getReference("users")
+                .child(userKey);
+
+        userRef.child("weeklyChallengePts").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                Long currentPoints = snapshot.getValue(Long.class);
+                long newPoints = (currentPoints != null ? currentPoints : 0) + 1;
+
+                userRef.child("weeklyChallengePts").setValue(newPoints);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                // Handle error silently
+            }
+        });
+    }
+
+    /**
      * Reads the current global weekly challenge from Firebase (e.g., habitName, iconResId, etc.).
      * You can then display these values in your UI (like in HomeFragment).
      *
@@ -237,6 +267,7 @@ public class WeeklyChallengeManager {
                         // If the user just hit or exceeded the required completions, mark them fully completed
                         if (newCount >= requiredCompletions) {
                             updates.put("fullyCompleted", true);
+                            updateWeeklyChallengePoints(true);
                         }
 
                         // 4) Write the updates back to the user's progress node
