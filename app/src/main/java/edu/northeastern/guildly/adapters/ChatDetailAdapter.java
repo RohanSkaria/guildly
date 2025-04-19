@@ -139,11 +139,7 @@ public class ChatDetailAdapter extends RecyclerView.Adapter<ChatDetailAdapter.Vi
             textMessage = itemView.findViewById(R.id.textMessage);
             textTime = itemView.findViewById(R.id.textTime);
             imageStatus = itemView.findViewById(R.id.imageStatus);
-
-
-            if (itemView.findViewById(R.id.senderAvatar) != null) {
-                senderAvatar = itemView.findViewById(R.id.senderAvatar);
-            }
+            senderAvatar = itemView.findViewById(R.id.senderAvatar);
         }
     }
 
