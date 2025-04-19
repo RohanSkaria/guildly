@@ -27,13 +27,10 @@ import edu.northeastern.guildly.data.User;
 
 public class SettingsActivity extends AppCompatActivity {
 
-    private EditText editTextCurrentEmail;
-    private EditText editTextNewEmail;
     private EditText editTextCurrentPassword;
     private EditText editTextNewPassword;
     private ImageView toggleCurrentPassword;
     private ImageView toggleNewPassword;
-    private Button buttonUpdateEmail;
     private Button buttonUpdatePassword;
     private Button buttonLogout;
     private ImageView backButton;
@@ -54,13 +51,10 @@ public class SettingsActivity extends AppCompatActivity {
         getSupportActionBar().setDisplayShowTitleEnabled(false);
         getSupportActionBar().setTitle("Settings");
 
-        editTextCurrentEmail = findViewById(R.id.editTextCurrentEmail);
-        editTextNewEmail = findViewById(R.id.editTextNewEmail);
         editTextCurrentPassword = findViewById(R.id.editTextCurrentPassword);
         editTextNewPassword = findViewById(R.id.editTextNewPassword);
         toggleCurrentPassword = findViewById(R.id.toggleCurrentPassword);
         toggleNewPassword = findViewById(R.id.toggleNewPassword);
-        buttonUpdateEmail = findViewById(R.id.buttonUpdateEmail);
         buttonUpdatePassword = findViewById(R.id.buttonUpdatePassword);
         buttonLogout = findViewById(R.id.buttonLogout);
         backButton = findViewById(R.id.backButton);
@@ -99,81 +93,11 @@ public class SettingsActivity extends AppCompatActivity {
         userKey = currentEmail.replace(".", ",");
         usersRef = FirebaseDatabase.getInstance().getReference("users");
 
-        editTextCurrentEmail.setText(currentEmail);
-
         backButton.setOnClickListener(v -> finish());
-
-        buttonUpdateEmail.setOnClickListener(v -> updateEmail());
 
         buttonUpdatePassword.setOnClickListener(v -> updatePassword());
 
         buttonLogout.setOnClickListener(v -> logout());
-    }
-
-    private void updateEmail() {
-        String currentEmail = editTextCurrentEmail.getText().toString().trim();
-        String newEmail = editTextNewEmail.getText().toString().trim();
-
-        if (TextUtils.isEmpty(newEmail)) {
-            editTextNewEmail.setError("Please enter a new email");
-            return;
-        }
-
-        if (currentEmail.equals(newEmail)) {
-            editTextNewEmail.setError("New email must be different from current email");
-            return;
-        }
-
-        String newUserKey = newEmail.replace(".", ",");
-        usersRef.child(newUserKey).addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot snapshot) {
-                if (snapshot.exists()) {
-                    editTextNewEmail.setError("Email is already in use");
-                } else {
-                    usersRef.child(userKey).addListenerForSingleValueEvent(new ValueEventListener() {
-                        @Override
-                        public void onDataChange(DataSnapshot snapshot) {
-                            User user = snapshot.getValue(User.class);
-                            if (user != null) {
-                                user.email = newEmail;
-                                usersRef.child(newUserKey).setValue(user)
-                                        .addOnSuccessListener(aVoid -> {
-                                            usersRef.child(userKey).removeValue();
-                                            MainActivity.currentUserEmail = newEmail;
-                                            editTextCurrentEmail.setText(newEmail);
-                                            editTextNewEmail.setText("");
-                                            Toast.makeText(SettingsActivity.this,
-                                                    "Email updated successfully",
-                                                    Toast.LENGTH_SHORT).show();
-                                        })
-                                        .addOnFailureListener(e -> {
-                                            Toast.makeText(SettingsActivity.this,
-                                                    "Failed to update email: " + e.getMessage(),
-                                                    Toast.LENGTH_LONG).show();
-                                        });
-                            }
-                        }
-
-                        @Override
-                        public void onCancelled(DatabaseError error) {
-                            Log.e("SettingsActivity", "Failed to read user data", error.toException());
-                            Toast.makeText(SettingsActivity.this,
-                                    "Error: " + error.getMessage(),
-                                    Toast.LENGTH_SHORT).show();
-                        }
-                    });
-                }
-            }
-
-            @Override
-            public void onCancelled(DatabaseError error) {
-                Log.e("SettingsActivity", "Failed to check if email exists", error.toException());
-                Toast.makeText(SettingsActivity.this,
-                        "Error: " + error.getMessage(),
-                        Toast.LENGTH_SHORT).show();
-            }
-        });
     }
 
     private void updatePassword() {

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -16,8 +17,9 @@
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="@color/white"
-            app:title="Settings"
             android:fontFamily="@font/montserrat_black"
+            android:title="Settings"
+            android:titleTextColor="@android:color/black"
             app:titleTextColor="@android:color/black">
 
             <ImageView
@@ -25,8 +27,8 @@
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:src="@android:drawable/ic_menu_revert"
-                app:tint="@android:color/black"
-                android:contentDescription="@string/back" />
+                android:contentDescription="@string/back"
+                app:tint="@android:color/black" />
 
         </androidx.appcompat.widget.Toolbar>
 
@@ -44,6 +46,7 @@
             android:orientation="vertical"
             android:padding="16dp">
 
+            <!-- Password Settings Card -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -58,95 +61,21 @@
                     android:padding="16dp">
 
                     <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/email_settings"
-                        android:textSize="20sp"
-                        android:textStyle="bold"
-                        android:textColor="#1B1F3B"
-                        android:fontFamily="@font/montserrat_black"
-                        android:layout_marginBottom="12dp" />
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/current_email"
-                        android:textSize="14sp"
-                        android:textColor="#333333"
-                        android:textStyle="bold" />
-
-                    <EditText
-                        android:id="@+id/editTextCurrentEmail"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="12dp"
-                        android:autofillHints=""
-                        android:background="@drawable/about_me_background"
-                        android:enabled="false"
-                        android:hint="Enter current email"
-                        android:inputType="textEmailAddress"
-                        android:padding="12dp"
-                        android:textSize="16sp"
-                        tools:ignore="LabelFor" />
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/new_email"
-                        android:textSize="14sp"
-                        android:textColor="#333333"
-                        android:textStyle="bold" />
-
-                    <EditText
-                        android:id="@+id/editTextNewEmail"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="16dp"
-                        android:autofillHints=""
-                        android:background="@drawable/about_me_background"
-                        android:hint="@string/enter_new_email"
-                        android:inputType="textEmailAddress"
-                        android:padding="12dp"
-                        android:textSize="16sp" />
-
-                    <Button
-                        android:id="@+id/buttonUpdateEmail"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/update_email"
-                        android:textColor="@android:color/white" />
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
-
-            <androidx.cardview.widget.CardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="4dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="16dp">
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/password_settings"
-                        android:textSize="20sp"
-                        android:textStyle="bold"
-                        android:textColor="#1B1F3B"
                         android:fontFamily="@font/montserrat_black"
-                        android:layout_marginBottom="12dp" />
+                        android:text="@string/password_settings"
+                        android:textColor="#1B1F3B"
+                        android:textSize="20sp"
+                        android:textStyle="bold" />
 
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="@string/current_password"
-                        android:textSize="14sp"
                         android:textColor="#333333"
+                        android:textSize="14sp"
                         android:textStyle="bold" />
 
                     <FrameLayout
@@ -171,15 +100,15 @@
                             android:layout_gravity="end|center_vertical"
                             android:layout_marginEnd="8dp"
                             android:src="@drawable/ic_eye"
-                            android:contentDescription="toggle current password" />
+                            android:contentDescription="Toggle current password visibility" />
                     </FrameLayout>
 
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="@string/new_password"
-                        android:textSize="14sp"
                         android:textColor="#333333"
+                        android:textSize="14sp"
                         android:textStyle="bold" />
 
                     <FrameLayout
@@ -204,15 +133,15 @@
                             android:layout_gravity="end|center_vertical"
                             android:layout_marginEnd="8dp"
                             android:src="@drawable/ic_eye"
-                            android:contentDescription="toggle new password" />
+                            android:contentDescription="Toggle new password visibility" />
                     </FrameLayout>
 
                     <Button
                         android:id="@+id/buttonUpdatePassword"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="@string/update_password"
                         android:backgroundTint="#1B1F3B"
+                        android:text="@string/update_password"
                         android:textColor="@android:color/white" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
