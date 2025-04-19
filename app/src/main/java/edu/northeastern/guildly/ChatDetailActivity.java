@@ -102,7 +102,8 @@ public class ChatDetailActivity extends AppCompatActivity {
                         if (!msg.senderId.equals(myUserKey) && "SENT".equals(msg.status)) {
                             recyclerViewChatDetail.postDelayed(() -> {
                                 msgSnap.getRef().child("status").setValue("READ");
-                                NotificationManagerCompat.from(getApplicationContext()).cancel(NotificationService.NOTIFICATION_TYPE_MESSAGE);
+                                NotificationManagerCompat.from(getApplicationContext())
+                                        .cancel(NotificationService.NOTIFICATION_TYPE_MESSAGE);
                             }, 1000);
                         }
                     }
@@ -125,8 +126,10 @@ public class ChatDetailActivity extends AppCompatActivity {
             }
 
             // Get the friend's key from the chat participants
-            DatabaseReference chatRef = FirebaseDatabase.getInstance().getReference("chats").child(chatId);
-            chatRef.child("participants").addListenerForSingleValueEvent(new ValueEventListener() {
+            DatabaseReference chatRef = FirebaseDatabase.getInstance()
+                    .getReference("chats").child(chatId);
+            chatRef.child("participants")
+                    .addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot snapshot) {
                     final String[] friendKeyHolder = {null};
@@ -176,14 +179,16 @@ public class ChatDetailActivity extends AppCompatActivity {
 
                                 DatabaseReference pushRef = chatRef.child("messages").push();
                                 pushRef.setValue(msg).addOnSuccessListener(aVoid -> {
-                                    chatRef.child("lastUpdated").setValue(System.currentTimeMillis());
+                                    chatRef.child("lastUpdated")
+                                            .setValue(System.currentTimeMillis());
                                 });
 
                                 editTextMessageInput.setText("");
                             } else {
                                 // Not a friend anymore
                                 Toast.makeText(ChatDetailActivity.this,
-                                        "This user is not your friend. Please add them as a friend to chat.",
+                                        "This user is not your friend." +
+                                                " Please add them as a friend to chat.",
                                         Toast.LENGTH_LONG).show();
                             }
                         }
@@ -207,7 +212,8 @@ public class ChatDetailActivity extends AppCompatActivity {
 
     public static String lastOpenedFriendUsername = null;
 
-    public static void openChatDetail(AppCompatActivity activity, String chatId, String friendUsername) {
+    public static void openChatDetail(AppCompatActivity activity,
+                                      String chatId, String friendUsername) {
         lastOpenedFriendUsername = friendUsername;
         Intent intent = new Intent(activity, ChatDetailActivity.class);
         intent.putExtra("CHAT_ID", chatId);
