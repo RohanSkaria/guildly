@@ -17,14 +17,19 @@ import edu.northeastern.guildly.R;
 import edu.northeastern.guildly.data.Habit;
 
 /**
- * Manages the weekly challenge in Firebase.
+ * Manages the global weekly challenge AND each user's progress toward it
+ * (including a 24-hour lockout and multiple completions per week).
  */
 public class WeeklyChallengeManager {
 
-    // Reference to the "challenges/currentWeeklyChallenge" node in Firebase
+    // ------------------------------------------------------------------------
+    // GLOBAL CHALLENGE FIELDS
+    // ------------------------------------------------------------------------
+
+    /** Reference to the global "currentWeeklyChallenge" node in Firebase. */
     private final DatabaseReference weeklyChallengeRef;
 
-    // A list of possible weekly challenges to pick from
+    /** The list of possible weekly challenges to choose from. */
     private final List<Habit> weeklyChallengeOptions = Arrays.asList(
             new Habit("Take a walk outside", R.drawable.ic_walk_icon),
             new Habit("Drink tea instead of coffee", R.drawable.ic_tea),
@@ -35,45 +40,93 @@ public class WeeklyChallengeManager {
             new Habit("Sleep 8+ hours", R.drawable.ic_sleep)
     );
 
-    public WeeklyChallengeManager() {
-        // Point to "/challenges/currentWeeklyChallenge" in your Firebase DB
+    // ------------------------------------------------------------------------
+    // USER-SPECIFIC FIELDS
+    // ------------------------------------------------------------------------
+
+    /** This userKey is the sanitized version of the user's email, e.g. "john_doe_gmail_com". */
+    private final String userKey;
+
+    /** Reference to the per-user "weeklyChallengeProgress" node in Firebase. */
+    private final DatabaseReference userChallengeProgressRef;
+
+    /** The number of completions required for the user to finish the weekly challenge. */
+    private static final int REQUIRED_COMPLETIONS_PER_WEEK = 4;
+
+    // ------------------------------------------------------------------------
+    // CONSTRUCTOR
+    // ------------------------------------------------------------------------
+
+    /**
+     * Constructs the WeeklyChallengeManager for a given user.
+     *
+     * @param userEmail The logged-in user's email address.
+     */
+    public WeeklyChallengeManager(@NonNull String userEmail) {
+        // 1) A reference to the global weekly challenge node: "/challenges/currentWeeklyChallenge"
         weeklyChallengeRef = FirebaseDatabase.getInstance()
                 .getReference("challenges")
                 .child("currentWeeklyChallenge");
+
+        // 2) A reference to the user's progress node: "/users/<userKey>/weeklyChallengeProgress"
+        this.userKey = userEmail.replace(".", ",");
+        userChallengeProgressRef = FirebaseDatabase.getInstance()
+                .getReference("users")
+                .child(userKey)
+                .child("weeklyChallengeProgress");
     }
 
+    // ------------------------------------------------------------------------
+    // MAIN METHODS
+    // ------------------------------------------------------------------------
+
     /**
-     * Checks if the current weekly challenge is missing or has expired.
-     * If so, picks a new random one from weeklyChallengeOptions and updates Firebase.
-     * If it's valid (not expired), does nothing.
+     * Checks whether the global weekly challenge is missing or expired.
+     * - If missing/expired, picks a new random challenge, resets the global node,
+     *   and resets the user's progress.
+     * - Otherwise, if it still exists, ensures the user is in sync (e.g., if the
+     *   challenge changed, we reset the user's progress).
      *
-     * @param onComplete Callback to run after we've checked and (possibly) updated the challenge.
+     * @param onComplete A callback that fires once the check is done.
      */
     public void checkAndUpdateWeeklyChallenge(@NonNull Runnable onComplete) {
         weeklyChallengeRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
+                // Read the global challenge's end time
                 Long endTimeMillis = snapshot.child("endTimeMillis").getValue(Long.class);
                 long now = System.currentTimeMillis();
 
-                // If endTimeMillis is null or the current time is beyond the end time, pick a new challenge
+                // If no challenge is posted or it's expired (i.e. current time > end time)
                 if (endTimeMillis == null || now > endTimeMillis) {
-                    // current weekly challenge is missing or expired
+                    // 1) Pick a new challenge from weeklyChallengeOptions
                     Habit newChallenge = pickRandomChallenge();
                     long oneWeekFromNow = now + (7L * 24 * 60 * 60 * 1000); // 7 days in milliseconds
 
-                    Map<String, Object> challengeMap = new HashMap<>();
-                    challengeMap.put("habitName", newChallenge.getHabitName());
-                    challengeMap.put("iconResId", newChallenge.getIconResId());
-                    challengeMap.put("startTimeMillis", now);
-                    challengeMap.put("endTimeMillis", oneWeekFromNow);
+                    // 2) Build a map to set the new challenge fields
+                    Map<String, Object> newChallengeMap = new HashMap<>();
+                    newChallengeMap.put("habitName", newChallenge.getHabitName());
+                    newChallengeMap.put("iconResId", newChallenge.getIconResId());
+                    newChallengeMap.put("startTimeMillis", now);
+                    newChallengeMap.put("endTimeMillis", oneWeekFromNow);
 
-                    // Write the new challenge to Firebase
-                    weeklyChallengeRef.updateChildren(challengeMap)
-                            .addOnCompleteListener(task -> onComplete.run());
+                    // 3) Update the global weekly challenge node in Firebase
+                    weeklyChallengeRef.updateChildren(newChallengeMap)
+                            .addOnCompleteListener(task -> {
+                                if (task.isSuccessful()) {
+                                    // 4) Reset the user's progress for the new challenge
+                                    resetUserProgress(now, () -> onComplete.run());
+                                } else {
+                                    onComplete.run();
+                                }
+                            });
                 } else {
-                    // It's still valid, do nothing special
-                    onComplete.run();
+                    // There's an active challenge. We check its startTime to see if the user is aligned.
+                    Long startTimeMillis = snapshot.child("startTimeMillis").getValue(Long.class);
+                    if (startTimeMillis == null) startTimeMillis = 0L;
+
+                    // Sync the user with the current challenge's start time
+                    syncUserWithCurrentChallengeIfNeeded(startTimeMillis, () -> onComplete.run());
                 }
             }
 
@@ -85,20 +138,195 @@ public class WeeklyChallengeManager {
     }
 
     /**
-     * Reads the current weekly challenge from Firebase (even if it's not expired),
-     * so you can display/update it in your UI.
+     * Reads the current global weekly challenge from Firebase (e.g., habitName, iconResId, etc.).
+     * You can then display these values in your UI (like in HomeFragment).
      *
-     * @param listener A ValueEventListener to receive the snapshot with "habitName", "iconResId", etc.
+     * @param listener The ValueEventListener that handles the data snapshot.
      */
     public void loadWeeklyChallenge(@NonNull ValueEventListener listener) {
         weeklyChallengeRef.addListenerForSingleValueEvent(listener);
     }
 
     /**
-     * Picks a random challenge from the weeklyChallengeOptions list.
+     * Attempts to "complete" the weekly challenge for the current user, enforcing:
+     *  1) The global challenge must not be expired.
+     *  2) The user must wait for the 24-hour cooldown (nextAvailableTime).
+     *  3) The user can only complete up to the required number of times per week.
+     *
+     * The result is given to 'callback.onResult(...)' as a String message that
+     * can be displayed in a Toast or anywhere in your UI.
+     *
+     * @param callback A callback interface to handle the result message.
+     */
+    public void attemptWeeklyChallengeCompletion(@NonNull ChallengeCompletionCallback callback) {
+        // 1) Check the global challenge to see if it's still active
+        weeklyChallengeRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot globalSnap) {
+                Long endTimeMillis = globalSnap.child("endTimeMillis").getValue(Long.class);
+                Long startTimeMillis = globalSnap.child("startTimeMillis").getValue(Long.class);
+                long now = System.currentTimeMillis();
+
+                // If there's no valid challenge or start/end time, we can't proceed
+                if (endTimeMillis == null || startTimeMillis == null) {
+                    callback.onResult("No current weekly challenge found. Please try again later.");
+                    return;
+                }
+                // If the challenge is expired (current time > end time), user can't do it
+                if (now > endTimeMillis) {
+                    callback.onResult("This week's challenge has already ended! Please wait for next week's challenge.");
+                    return;
+                }
+
+                // 2) If the global challenge is valid, check the user's progress
+                userChallengeProgressRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot userSnap) {
+                        // Pull the user's nextAvailableTime, fullyCompleted, and completedCount
+                        long nextAvailableTime = userSnap.child("nextAvailableTime").getValue(Long.class) != null
+                                ? userSnap.child("nextAvailableTime").getValue(Long.class) : 0L;
+                        boolean fullyCompleted = userSnap.child("fullyCompleted").getValue(Boolean.class) != null
+                                && userSnap.child("fullyCompleted").getValue(Boolean.class);
+                        long completedCount = userSnap.child("completedCountThisWeek").getValue(Long.class) != null
+                                ? userSnap.child("completedCountThisWeek").getValue(Long.class) : 0L;
+
+                        // 2a) If the user already did enough completions (or fullyCompleted is true)
+                        if (fullyCompleted || completedCount >= REQUIRED_COMPLETIONS_PER_WEEK) {
+                            callback.onResult("You've already completed this week's challenge! Come back for next week's challenge.");
+                            return;
+                        }
+
+                        // 2b) If the user is still on a 24-hour cooldown
+                        if (now < nextAvailableTime) {
+                            long remaining = nextAvailableTime - now;
+                            long hours = remaining / (1000 * 60 * 60);
+                            long mins = (remaining / (1000 * 60)) % 60;
+
+                            String msg = String.format(
+                                    "You must wait %d hours and %d minutes before doing the weekly challenge again.",
+                                    hours, mins
+                            );
+                            callback.onResult(msg);
+                            return;
+                        }
+
+                        // 3) If none of the above conditions block them, they can complete the challenge now
+                        long newCount = completedCount + 1;           // increment the user's completion count
+                        long oneDay = 24L * 60L * 60L * 1000L;        // 24 hours in milliseconds
+                        long newNextAvailableTime = now + oneDay;     // user can do it again after 24 hours
+
+                        // Build a map of updates to write to Firebase
+                        Map<String, Object> updates = new HashMap<>();
+                        updates.put("completedCountThisWeek", newCount);
+                        updates.put("nextAvailableTime", newNextAvailableTime);
+
+                        // If the user just hit or exceeded the required completions, mark them fully completed
+                        if (newCount >= REQUIRED_COMPLETIONS_PER_WEEK) {
+                            updates.put("fullyCompleted", true);
+                        }
+
+                        // 4) Write the updates back to the user's progress node
+                        userChallengeProgressRef.updateChildren(updates)
+                                .addOnCompleteListener(task -> {
+                                    if (!task.isSuccessful()) {
+                                        // If any error occurred writing to the DB
+                                        callback.onResult("Error updating your progress. Please try again.");
+                                        return;
+                                    }
+
+                                    // 5) Successfully updated. Compose a success message:
+                                    if (newCount >= REQUIRED_COMPLETIONS_PER_WEEK) {
+                                        // The user has now fully completed the challenge for this week
+                                        callback.onResult("Congratulations! You’ve completed the weekly challenge. See you next week!");
+                                    } else {
+                                        // Show how many completions they have done so far
+                                        callback.onResult(
+                                                "Weekly challenge completed for today! You have done "
+                                                        + newCount + " of "
+                                                        + REQUIRED_COMPLETIONS_PER_WEEK
+                                                        + " completions this week."
+                                        );
+                                    }
+                                });
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        // If something went wrong reading the user's node
+                        callback.onResult("Error loading user progress: " + error.getMessage());
+                    }
+                });
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                // If something went wrong reading the global node
+                callback.onResult("Error loading global challenge: " + error.getMessage());
+            }
+        });
+    }
+
+    // ------------------------------------------------------------------------
+    // HELPER METHODS
+    // ------------------------------------------------------------------------
+
+    /**
+     * Picks a random weekly challenge from the predefined list.
      */
     private Habit pickRandomChallenge() {
         int randomIndex = (int) (Math.random() * weeklyChallengeOptions.size());
         return weeklyChallengeOptions.get(randomIndex);
+    }
+
+    /**
+     * Resets the user's progress node for a new challenge that starts at 'newChallengeStart'.
+     */
+    private void resetUserProgress(long newChallengeStart, Runnable onDone) {
+        Map<String, Object> resetMap = new HashMap<>();
+        resetMap.put("completedCountThisWeek", 0);
+        resetMap.put("nextAvailableTime", 0);
+        resetMap.put("fullyCompleted", false);
+        resetMap.put("challengeStartTime", newChallengeStart);
+
+        userChallengeProgressRef.updateChildren(resetMap)
+                .addOnCompleteListener(task -> onDone.run());
+    }
+
+    /**
+     * Checks if the user is aligned with the current challenge start time.
+     * If not, resets their progress to match the new challenge.
+     */
+    private void syncUserWithCurrentChallengeIfNeeded(long globalStartTime, Runnable onDone) {
+        userChallengeProgressRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                Long userStartTime = snapshot.child("challengeStartTime").getValue(Long.class);
+                if (userStartTime == null) userStartTime = 0L;
+
+                // If the user’s challengeStartTime doesn’t match the global one, reset
+                if (!userStartTime.equals(globalStartTime)) {
+                    resetUserProgress(globalStartTime, onDone);
+                } else {
+                    onDone.run();
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                onDone.run();
+            }
+        });
+    }
+
+    // ------------------------------------------------------------------------
+    // CALLBACK INTERFACE
+    // ------------------------------------------------------------------------
+
+    /**
+     * Callback interface so the UI (e.g., your HomeFragment) can receive a
+     * result message and show it (like via a Toast or dialog).
+     */
+    public interface ChallengeCompletionCallback {
+        void onResult(String message);
     }
 }
