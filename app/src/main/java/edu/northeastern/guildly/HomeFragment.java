@@ -363,6 +363,7 @@ public class HomeFragment extends Fragment {
             boolean alreadyTracked = false;
             Habit existingHabit = null;
 
+            // Check if this habit already exists in our current list
             for (Habit current : habitList) {
                 if (current == null || current.getHabitName() == null) {
                     continue;
@@ -375,15 +376,18 @@ public class HomeFragment extends Fragment {
                 }
             }
 
+            // Create a new habit with the same name/icon
             Habit newHabit = new Habit(ph.getHabitName(), ph.getIconResId());
-            newHabit.setTracked(alreadyTracked);
 
+            // Either copy existing data or set defaults
             if (alreadyTracked && existingHabit != null) {
+                newHabit.setTracked(existingHabit.isTracked());
                 newHabit.setStreakCount(existingHabit.getStreakCount());
                 newHabit.setLastCompletedTime(existingHabit.getLastCompletedTime());
                 newHabit.setCompletedToday(existingHabit.isCompletedToday());
                 newHabit.setNextAvailableTime(existingHabit.getNextAvailableTime());
             } else {
+                newHabit.setTracked(false);
                 newHabit.setStreakCount(0);
                 newHabit.setLastCompletedTime(0);
                 newHabit.setCompletedToday(false);
@@ -393,19 +397,23 @@ public class HomeFragment extends Fragment {
             cloneList.add(newHabit);
         }
 
+        // Create the dialog
         View dialogView = LayoutInflater.from(getContext())
                 .inflate(R.layout.dialog_predefined_habits, null);
         RecyclerView rv = dialogView.findViewById(R.id.predefinedHabitsRecycler);
         rv.setLayoutManager(new LinearLayoutManager(getContext()));
 
+        // Set up adapter in selection mode
         HabitAdapter tempAdapter = new HabitAdapter(cloneList, userHabitsRef, true);
         rv.setAdapter(tempAdapter);
 
+        // Show dialog
         new AlertDialog.Builder(requireContext())
                 .setTitle("Select Habits to Track")
                 .setView(dialogView)
                 .setPositiveButton("Done", (dialog, which) -> {
                     try {
+                        // Process each habit
                         for (Habit h : cloneList) {
                             if (h == null || h.getHabitName() == null) {
                                 Log.e(TAG, "Skipping null habit or habit with null name");
@@ -416,43 +424,15 @@ public class HomeFragment extends Fragment {
                             DatabaseReference habitRef = userHabitsRef.child(sanitizedName);
 
                             if (h.isTracked()) {
-                                boolean existsInCurrent = false;
-                                Habit existingHabit = null;
-
-                                for (Habit current : habitList) {
-                                    if (current == null || current.getHabitName() == null) {
-                                        continue;
-                                    }
-
-                                    if (current.getHabitName().equals(h.getHabitName())) {
-                                        existsInCurrent = true;
-                                        existingHabit = current;
-                                        break;
-                                    }
-                                }
-
-                                if (existsInCurrent && existingHabit != null) {
-                                    habitRef.child("tracked").setValue(true);
-                                } else {
-                                    habitRef.setValue(h);
-                                }
+                                // If tracked, update or create
+                                habitRef.setValue(h);
                             } else {
-                                habitRef.addListenerForSingleValueEvent(new ValueEventListener() {
-                                    @Override
-                                    public void onDataChange(@NonNull DataSnapshot snapshot) {
-                                        if (snapshot.exists()) {
-                                            habitRef.child("tracked").setValue(false);
-                                        }
-                                    }
-
-                                    @Override
-                                    public void onCancelled(@NonNull DatabaseError error) {
-                                        Log.e(TAG, "Error checking habit: " + error.getMessage());
-                                    }
-                                });
+                                // If not tracked, set tracked=false if exists
+                                habitRef.child("tracked").setValue(false);
                             }
                         }
 
+                        // Reload to update UI
                         loadHabitsFromFirebase();
                     } catch (Exception e) {
                         Log.e(TAG, "Error updating habits: " + e.getMessage());
