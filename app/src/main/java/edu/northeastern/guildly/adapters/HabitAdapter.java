@@ -36,8 +36,8 @@ public class HabitAdapter extends RecyclerView.Adapter<HabitAdapter.ViewHolder> 
     private static final String TAG = "HabitAdapter";
 
     private final List<Habit> habitList;
-    private final DatabaseReference userHabitsRef; // optional for partial updates
-    private final boolean isSelectionMode;         // if true => sign-up selection
+    private final DatabaseReference userHabitsRef;
+    private final boolean isSelectionMode;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     public HabitAdapter(List<Habit> habitList,
@@ -93,134 +93,87 @@ public class HabitAdapter extends RecyclerView.Adapter<HabitAdapter.ViewHolder> 
             habitStreak  = itemView.findViewById(R.id.habit_streak);
             habitCheckBox= itemView.findViewById(R.id.habit_item);
             lockMessage  = itemView.findViewById(R.id.lockMessage);
-            itemHabit = itemView.findViewById(R.id.item_habit);
-            context = itemView.getContext();
+            itemHabit    = itemView.findViewById(R.id.item_habit);
+            context      = itemView.getContext();
         }
 
         @SuppressLint("SetTextI18n")
         void bind(Habit habit) {
             try {
+                // Icon and name
                 habitImage.setImageResource(habit.getIconResId());
+                String name = habit.getHabitName() != null ? habit.getHabitName() : "Unnamed Habit";
+                habit.setHabitName(name);
+                habitName.setText(name);
 
-                // Add null check for habit name
-                String habitNameText = habit.getHabitName();
-                if (habitNameText == null) {
-                    habitNameText = "Unnamed Habit";
-                    // Also update the habit object to avoid future null issues
-                    habit.setHabitName(habitNameText);
-                }
-                habitName.setText(habitNameText);
-
-                // set background
+                // Default border
                 itemHabit.setBackgroundResource(R.drawable.habit_item_border);
+                habitStreak.setVisibility(View.VISIBLE);
+                lockMessage.setVisibility(View.GONE);
 
-                // If "Selection mode," the CheckBox means "isTracked"
-                // If "Home mode," the CheckBox means daily completion for "completedToday"
                 if (isSelectionMode) {
-                    // Hide the streak text & lockMessage if you want
-                    habitStreak.setVisibility(View.VISIBLE);
+                    // Selection: track or untrack
                     habitStreak.setText("Streak: " + habit.getStreakCount());
-                    lockMessage.setVisibility(View.GONE);
-
-                    // Show the checkBox to set "isTracked"
                     habitCheckBox.setVisibility(View.VISIBLE);
+
+                    // Clear old listener
                     habitCheckBox.setOnCheckedChangeListener(null);
                     habitCheckBox.setChecked(habit.isTracked());
                     habitCheckBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
                         habit.setTracked(isChecked);
-                        // If we have a DB ref, do partial update
                         if (userHabitsRef != null) {
-                            // Add null check for habit name
-                            String safeHabitName = habit.getHabitName();
-                            if (safeHabitName == null) {
-                                safeHabitName = "unnamed_habit";
-                            } else {
-                                safeHabitName = safeHabitName.replace(".", "_");
-                            }
-
-                            userHabitsRef.child(safeHabitName)
+                            String safeName = habit.getHabitName().replace(".", "_");
+                            userHabitsRef.child(safeName)
                                     .child("tracked").setValue(isChecked)
-                                    .addOnFailureListener(e ->
-                                            Log.e(TAG, "Error updating tracked state for: " +
-                                                    habit.getHabitName(), e));
+                                    .addOnFailureListener(e -> Log.e(TAG, "Error updating tracked: " + habit.getHabitName(), e));
                         }
                     });
                 } else {
-                    // HOME MODE: daily completion logic
-                    // If user is still locked out
+                    // Home: daily completion
                     long now = System.currentTimeMillis();
-                    if (now >= habit.getNextAvailableTime()) {
-                        // user can complete again
-                        habit.setCompletedToday(false);
-                    }
-
-                    // Show streak
-                    habitStreak.setVisibility(View.VISIBLE);
                     habitStreak.setText("Streak: " + habit.getStreakCount());
+                    habitCheckBox.setVisibility(View.VISIBLE);
 
-                    if (now < habit.getNextAvailableTime()) {
-                        habitCheckBox.setVisibility(View.VISIBLE);
+                    // Clear any previous listener
+                    habitCheckBox.setOnCheckedChangeListener(null);
+
+                    boolean locked = now < habit.getNextAvailableTime();
+                    if (locked) {
                         habitCheckBox.setChecked(true);
                         habitCheckBox.setEnabled(false);
-                        lockMessage.setVisibility(View.GONE);
                         itemHabit.setBackground(ContextCompat.getDrawable(context, R.drawable.habit_item_border_tint));
                     } else {
-                        habitCheckBox.setVisibility(View.VISIBLE);
-                        habitCheckBox.setEnabled(true);
                         habitCheckBox.setChecked(false);
-                        lockMessage.setVisibility(View.GONE);
-
+                        habitCheckBox.setEnabled(true);
                         habitCheckBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
-                            if (isChecked) {
-                                if (!habit.isCompletedToday()) {
-                                    handleCompletion(habit);
-                                }
-                            } else {
-                                habitCheckBox.setChecked(true); // disallow uncheck
+                            if (isChecked && !habit.isCompletedToday()) {
+                                handleCompletion(habit);
+                            } else if (!isChecked) {
+                                // Prevent unchecking
+                                habitCheckBox.setChecked(true);
                             }
                         });
                     }
                 }
             } catch (Exception e) {
-                Log.e(TAG, "Error binding habit: " + (habit.getHabitName() != null ? habit.getHabitName() : "null"), e);
-
-                // Try to recover by showing minimal UI
-                if (habitName != null) {
-                    String displayName = habit.getHabitName();
-                    if (displayName == null) {
-                        displayName = "Unknown Habit";
-                    }
-                    habitName.setText(displayName + " (Error)");
-                }
-                if (habitImage != null) {
-                    habitImage.setImageResource(R.drawable.unknown_profile);
-                }
+                Log.e(TAG, "Error binding habit: " + habit.getHabitName(), e);
+                habitName.setText((habit.getHabitName() != null ? habit.getHabitName() : "Unknown") + " (Error)");
+                habitImage.setImageResource(R.drawable.unknown_profile);
             }
         }
 
         private void handleCompletion(Habit habit) {
-            if (habit == null) {
-                Log.e(TAG, "Attempted to complete a null habit");
-                return;
-            }
-
+            if (habit == null) return;
             try {
                 long now = System.currentTimeMillis();
                 long oneDay = 24L * 60L * 60L * 1000L;
-
-                long diff = 0;
-                if (habit.getLastCompletedTime() > 0) {
-                    diff = now - habit.getLastCompletedTime();
-                }
+                long diff = habit.getLastCompletedTime() > 0 ? now - habit.getLastCompletedTime() : 0;
 
                 if (habit.getLastCompletedTime() == 0) {
-                    // First completion
                     habit.setStreakCount(1);
                 } else if (diff < (oneDay * 2)) {
-                    // Continuing streak
                     habit.setStreakCount(habit.getStreakCount() + 1);
                 } else {
-                    // Streak broken
                     habit.setStreakCount(1);
                 }
 
@@ -228,30 +181,19 @@ public class HabitAdapter extends RecyclerView.Adapter<HabitAdapter.ViewHolder> 
                 habit.setCompletedToday(true);
                 habit.setNextAvailableTime(now + oneDay);
 
-                // Update this item's UI immediately
+                // Update UI
                 habitStreak.setText("Streak: " + habit.getStreakCount());
                 habitCheckBox.setEnabled(false);
                 itemHabit.setBackground(ContextCompat.getDrawable(context, R.drawable.habit_item_border_tint));
 
-                // Post the notification to main thread instead of calling directly
                 mainHandler.post(() -> {
-                    // Only notify about this specific item to avoid full layout recalculation
-                    int position = getAdapterPosition();
-                    if (position != RecyclerView.NO_POSITION) {
-                        notifyItemChanged(position);
-                    }
+                    int pos = getAdapterPosition();
+                    if (pos != RecyclerView.NO_POSITION) notifyItemChanged(pos);
                 });
 
-                // Update Firebase
+                // Persist to Firebase
                 if (userHabitsRef != null) {
-                    // Add null check for habit name
-                    String safeHabitName = habit.getHabitName();
-                    if (safeHabitName == null) {
-                        safeHabitName = "unnamed_habit";
-                    } else {
-                        safeHabitName = safeHabitName.replace(".", "_");
-                    }
-
+                    String safeName = habit.getHabitName().replace(".", "_");
                     Map<String,Object> updates = new HashMap<>();
                     updates.put("tracked", habit.isTracked());
                     updates.put("streakCount", habit.getStreakCount());
@@ -259,16 +201,13 @@ public class HabitAdapter extends RecyclerView.Adapter<HabitAdapter.ViewHolder> 
                     updates.put("completedToday", habit.isCompletedToday());
                     updates.put("nextAvailableTime", habit.getNextAvailableTime());
 
-                    userHabitsRef.child(safeHabitName).updateChildren(updates)
-                            .addOnFailureListener(e -> {
-                                Log.e(TAG, "Failed to update habit: " + e.getMessage());
-                            });
+                    userHabitsRef.child(safeName)
+                            .updateChildren(updates)
+                            .addOnFailureListener(e -> Log.e(TAG, "Failed update habit: " + e.getMessage()));
                 }
             } catch (Exception e) {
                 Log.e(TAG, "Error in handleCompletion: " + e.getMessage(), e);
-                if (context != null) {
-                    Toast.makeText(context, "Error updating habit progress", Toast.LENGTH_SHORT).show();
-                }
+                Toast.makeText(context, "Error updating habit progress", Toast.LENGTH_SHORT).show();
             }
         }
     }
