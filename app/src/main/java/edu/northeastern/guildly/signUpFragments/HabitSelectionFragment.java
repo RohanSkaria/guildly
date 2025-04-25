@@ -102,7 +102,7 @@ public class HabitSelectionFragment extends Fragment {
      * We now store all 8 habits with isTracked = true/false as indicated by the CheckBox.
      */
     public boolean validateAndSaveData(Bundle data) {
-        // 1) Identify which user we are storing for
+        //  Identify which user we are storing for
         String userId = data.getString("userId");
         if (userId == null || userId.isEmpty()) {
             Log.w(TAG, "No userId in data. Cannot save habits to DB.");
@@ -119,7 +119,7 @@ public class HabitSelectionFragment extends Fragment {
         // Create a list to track selected habits for review screen
         ArrayList<String> selectedHabits = new ArrayList<>();
 
-        // 2) For each CheckBox => set isTracked accordingly, store to DB
+        // For each CheckBox => set isTracked accordingly, store to DB
         for (CheckBox cb : habitCheckboxes) {
             Habit h = (Habit) cb.getTag();
             boolean tracked = cb.isChecked();

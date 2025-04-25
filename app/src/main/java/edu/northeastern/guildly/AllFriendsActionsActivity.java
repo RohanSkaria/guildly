@@ -121,7 +121,7 @@ public class AllFriendsActionsActivity extends AppCompatActivity {
     }
 
     private void deleteFriend(String friendKey) {
-        // 1) Remove friendKey from myUserKey's friend list
+        // Remove friendKey from myUserKey's friend list
         userRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -130,12 +130,12 @@ public class AllFriendsActionsActivity extends AppCompatActivity {
 
                 if (me.friends.contains(friendKey)) {
                     me.friends.remove(friendKey);
-                    userRef.setValue(me)  // overwrites, so ensure "habits" field is in your User class
+                    userRef.setValue(me)  // overwrites, so ensure "habits" field is in User class
                             .addOnSuccessListener(aVoid ->
                                     Toast.makeText(AllFriendsActionsActivity.this,
                                             "Friend removed", Toast.LENGTH_SHORT).show());
                 }
-                // 2) Remove myUserKey from the friend's friend list
+                // Remove myUserKey from the friend's friend list
                 DatabaseReference friendRef = FirebaseDatabase.getInstance()
                         .getReference("users")
                         .child(friendKey);

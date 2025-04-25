@@ -62,8 +62,8 @@ public class HomeFragment extends Fragment {
     private HabitAdapter habitAdapter;
     private final List<Habit> habitList = new ArrayList<>();
 
-    private DatabaseReference userRef;       // /users/<myUserKey>
-    private DatabaseReference userHabitsRef; // /users/<myUserKey>/habits
+    private DatabaseReference userRef;
+    private DatabaseReference userHabitsRef;
     private String myUserKey;
     private String myEmail;
 
@@ -309,8 +309,6 @@ public class HomeFragment extends Fragment {
             // Show result message to the user
             Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show();
 
-            // The UI will update automatically via the ValueEventListener
-            // in loadWeeklyChallengeProgress()
         });
     }
 

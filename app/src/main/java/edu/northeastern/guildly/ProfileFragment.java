@@ -80,9 +80,7 @@ public class ProfileFragment extends Fragment {
     private TextView tvTotalWeeklyPoints;
 
 
-    // ---------------------------------------------------------------
-    // ADDED: replicate the “HomeFragment” approach
-    // ---------------------------------------------------------------
+
     private final List<Habit> predefinedHabits = Arrays.asList(
             new Habit("Drink 64oz of water", R.drawable.ic_water),
             new Habit("Workout for 30 mins", R.drawable.ic_workout),
@@ -128,7 +126,7 @@ public class ProfileFragment extends Fragment {
         // Then set click listeners
         setupClickListeners();
 
-        // OPTIONAL: If you also want real-time updates with GuildlyDataManager:
+
         if (!"NO_USER".equals(myUserKey)) {
             GuildlyDataManager manager = GuildlyDataManager.getInstance();
             manager.init(myUserKey);
@@ -419,7 +417,7 @@ public class ProfileFragment extends Fragment {
                     }
                 }
 
-                // Sort by timestamp (most recent first)
+                // Sort by timestamp desc
                 List<Map.Entry<String, Long>> sortedFriends = new ArrayList<>(friendLastMessageMap.entrySet());
                 Collections.sort(sortedFriends, (e1, e2) -> Long.compare(e2.getValue(), e1.getValue()));
 
@@ -532,9 +530,7 @@ public class ProfileFragment extends Fragment {
             }
         });
     }
-    // ---------------------------------------------------------
-    //  ADDED: load user’s current habits into habitList once
-    // ---------------------------------------------------------
+
     private void loadCurrentHabits() {
         if (userHabitsRef == null) return;
 
@@ -553,14 +549,7 @@ public class ProfileFragment extends Fragment {
                     }
                 }
 
-                // Optional: If you use an adapter to show habits in a RecyclerView
-//                if (habitAdapter != null) {
-//                    habitAdapter.notifyDataSetChanged();
-//                }
-//
-//                // Optional: update streak and count text
-//                updateStreakText();
-//                updateHabitsCountText();
+
             }
 
             @Override
@@ -571,9 +560,6 @@ public class ProfileFragment extends Fragment {
     }
 
 
-    // ---------------------------------------------------------
-    //  REPLACE showHabitsDialog() with the “predefined” approach
-    // ---------------------------------------------------------
     private void showHabitsDialog() {
         List<Habit> cloneList = new ArrayList<>();
         CountDownLatch latch = new CountDownLatch(predefinedHabits.size());
@@ -708,7 +694,7 @@ public class ProfileFragment extends Fragment {
                                 Toast.makeText(getContext(),
                                         "Friend removed", Toast.LENGTH_SHORT).show());
 
-                // 2) Remove myUserKey from the friend's friend list
+                // Remove myUserKey from the friend's friend list
                 DatabaseReference friendRef = FirebaseDatabase.getInstance()
                         .getReference("users")
                         .child(friendKey);
@@ -824,7 +810,6 @@ public class ProfileFragment extends Fragment {
         });
     }
     private void setupClickListeners() {
-        // “View More” for HABITS => calls your new showHabitsDialog()
         habitsViewMore.setOnClickListener(v -> showHabitsDialog());
 
 
@@ -860,7 +845,7 @@ public class ProfileFragment extends Fragment {
                 RecyclerView rvFriends = dialogView.findViewById(R.id.recyclerViewAllFriends);
                 rvFriends.setLayoutManager(new LinearLayoutManager(getContext()));
 
-                // Set max height (optional)
+                // Set max height
                 int maxHeightInDp = 400;
                 float density = getResources().getDisplayMetrics().density;
                 int maxHeightInPx = (int) (maxHeightInDp * density);

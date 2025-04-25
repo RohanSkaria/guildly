@@ -9,7 +9,7 @@ public class Habit implements Serializable {
     private String habitName;
     private int iconResId;
 
-    private boolean isTracked;       // NEW: indicates if user is actually tracking this habit
+    private boolean isTracked;       // indicates if user is actually tracking this habit
     private int streakCount;
     private long lastCompletedTime;
     private boolean completedToday;

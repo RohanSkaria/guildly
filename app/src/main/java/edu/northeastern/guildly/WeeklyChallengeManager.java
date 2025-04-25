@@ -28,10 +28,6 @@ public class WeeklyChallengeManager {
 
     private static final String TAG = "WeeklyChallengeManager";
 
-    // ------------------------------------------------------------------------
-    // GLOBAL CHALLENGE FIELDS
-    // ------------------------------------------------------------------------
-
     /** Reference to the global "currentWeeklyChallenge" node in Firebase. */
     private final DatabaseReference weeklyChallengeRef;
 
@@ -46,9 +42,6 @@ public class WeeklyChallengeManager {
             new Habit("Sleep 8+ hours", R.drawable.ic_sleep)
     );
 
-    // ------------------------------------------------------------------------
-    // USER-SPECIFIC FIELDS
-    // ------------------------------------------------------------------------
 
     /** This userKey is the sanitized version of the user's email, e.g. "user@example,com". */
     private final String userKey;
@@ -62,32 +55,24 @@ public class WeeklyChallengeManager {
     /** The maximum number of completions for weekly challenge */
     private static final int MAX_REQUIRED_COMPLETIONS = 5;
 
-    // ------------------------------------------------------------------------
-    // CONSTRUCTOR
-    // ------------------------------------------------------------------------
-
     /**
      * Constructs the WeeklyChallengeManager for a given user.
      *
      * @param userEmail The logged-in user's email address.
      */
     public WeeklyChallengeManager(@NonNull String userEmail) {
-        // 1) A reference to the global weekly challenge node: "/challenges/currentWeeklyChallenge"
+        // 1) A reference to the global weekly challenge node
         weeklyChallengeRef = FirebaseDatabase.getInstance()
                 .getReference("challenges")
                 .child("currentWeeklyChallenge");
 
-        // 2) A reference to the user's progress node: "/users/<userKey>/weeklyChallengeProgress"
+        // 2) A reference to the user's progress node
         this.userKey = userEmail.replace(".", ",");
         userChallengeProgressRef = FirebaseDatabase.getInstance()
                 .getReference("users")
                 .child(userKey)
                 .child("weeklyChallengeProgress");
     }
-
-    // ------------------------------------------------------------------------
-    // MAIN METHODS
-    // ------------------------------------------------------------------------
 
     /**
      * Checks whether the global weekly challenge is missing or expired.
@@ -107,22 +92,22 @@ public class WeeklyChallengeManager {
 
                 // If no challenge is posted or it's expired (i.e. current time > end time)
                 if (endTimeMillis == null || now > endTimeMillis) {
-                    // 1) Pick a new challenge from weeklyChallengeOptions
+                    // Pick a new challenge from weeklyChallengeOptions
                     Habit newChallenge = pickRandomChallenge();
                     long oneWeekFromNow = now + (7L * 24 * 60 * 60 * 1000); // 7 days in milliseconds
 
-                    // 2) Build a map to set the new challenge fields
+                    //Build a map to set the new challenge fields
                     Map<String, Object> newChallengeMap = new HashMap<>();
                     newChallengeMap.put("habitName", newChallenge.getHabitName());
                     newChallengeMap.put("iconResId", newChallenge.getIconResId());
                     newChallengeMap.put("startTimeMillis", now);
                     newChallengeMap.put("endTimeMillis", oneWeekFromNow);
 
-                    // 3) Update the global weekly challenge node in Firebase
+                    //Update the global weekly challenge node in Firebase
                     weeklyChallengeRef.updateChildren(newChallengeMap)
                             .addOnCompleteListener(task -> {
                                 if (task.isSuccessful()) {
-                                    // 4) Reset the user's progress for the new challenge
+                                    // Reset the user's progress for the new challenge
                                     // with a random required completion count
                                     resetUserProgress(now, generateRandomRequiredCompletions(), () -> onComplete.run());
                                 } else {
@@ -198,7 +183,7 @@ public class WeeklyChallengeManager {
      * @param callback A callback interface to handle the result message.
      */
     public void attemptWeeklyChallengeCompletion(@NonNull ChallengeCompletionCallback callback) {
-        // 1) Check the global challenge to see if it's still active
+        //Check the global challenge to see if it's still active
         weeklyChallengeRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot globalSnap) {
@@ -217,7 +202,7 @@ public class WeeklyChallengeManager {
                     return;
                 }
 
-                // 2) If the global challenge is valid, check the user's progress
+                // If the global challenge is valid, check the user's progress
                 userChallengeProgressRef.addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot userSnap) {
@@ -234,13 +219,13 @@ public class WeeklyChallengeManager {
                                 ? userSnap.child("requiredCompletions").getValue(Long.class)
                                 : MIN_REQUIRED_COMPLETIONS;
 
-                        // 2a) If the user already did enough completions (or fullyCompleted is true)
+                        // If the user already did enough completions (or fullyCompleted is true)
                         if (fullyCompleted || completedCount >= requiredCompletions) {
                             callback.onResult("You've already completed this week's challenge! Come back for next week's challenge.");
                             return;
                         }
 
-                        // 2b) If the user is still on a 24-hour cooldown
+                        //If the user is still on a 24-hour cooldown
                         if (now < nextAvailableTime) {
                             long remaining = nextAvailableTime - now;
                             long hours = remaining / (1000 * 60 * 60);
@@ -254,7 +239,7 @@ public class WeeklyChallengeManager {
                             return;
                         }
 
-                        // 3) If none of the above conditions block them, they can complete the challenge now
+                        //  If none of the above conditions block them, they can complete the challenge now
                         long newCount = completedCount + 1;           // increment the user's completion count
                         long oneDay = 24L * 60L * 60L * 1000L;        // 24 hours in milliseconds
                         long newNextAvailableTime = now + oneDay;     // user can do it again after 24 hours
@@ -270,7 +255,7 @@ public class WeeklyChallengeManager {
                             updateWeeklyChallengePoints(true);
                         }
 
-                        // 4) Write the updates back to the user's progress node
+                        //  Write the updates back to the user's progress node
                         userChallengeProgressRef.updateChildren(updates)
                                 .addOnCompleteListener(task -> {
                                     if (!task.isSuccessful()) {
@@ -279,9 +264,8 @@ public class WeeklyChallengeManager {
                                         return;
                                     }
 
-                                    // 5) Successfully updated. Compose a success message:
+                                    // Successfully updated. Compose a success message:
                                     if (newCount >= requiredCompletions) {
-                                        // The user has now fully completed the challenge for this week
                                         callback.onResult("Congratulations! You've completed the weekly challenge. See you next week!");
                                     } else {
                                         // Show how many completions they have done so far
@@ -297,7 +281,6 @@ public class WeeklyChallengeManager {
 
                     @Override
                     public void onCancelled(@NonNull DatabaseError error) {
-                        // If something went wrong reading the user's node
                         callback.onResult("Error loading user progress: " + error.getMessage());
                     }
                 });
@@ -311,9 +294,6 @@ public class WeeklyChallengeManager {
         });
     }
 
-    // ------------------------------------------------------------------------
-    // HELPER METHODS
-    // ------------------------------------------------------------------------
 
     /**
      * Picks a random weekly challenge from the predefined list.
@@ -427,9 +407,6 @@ public class WeeklyChallengeManager {
         });
     }
 
-    // ------------------------------------------------------------------------
-    // CALLBACK INTERFACES
-    // ------------------------------------------------------------------------
 
     /**
      * Callback interface so the UI (e.g., your HomeFragment) can receive a

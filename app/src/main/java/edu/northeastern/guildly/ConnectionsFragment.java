@@ -894,7 +894,7 @@ public class ConnectionsFragment extends Fragment {
         chatItemsList.clear();
 
         if (TextUtils.isEmpty(searchText)) {
-            // Show only active chats with messages (already handled in loadAllChats)
+            // Show only active chats with messages
             chatItemsList.addAll(originalChatItemsList);
             chatListAdapter.notifyDataSetChanged();
             return;
