@@ -1,6 +1,6 @@
 # Guildly - Habit Tracking Social App
 
-![Guildly Logo](https://via.placeholder.com/200x100?text=Guildly)
+![Guildly Logo](app/src/main/res/drawable/app_logo.png)
 
 ## Overview
 
