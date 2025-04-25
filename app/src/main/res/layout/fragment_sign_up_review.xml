@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="24dp"
+    android:background="#F5F5F5">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/review_your_information"
+            android:textSize="16sp"
+            android:fontFamily="@font/montserrat_black"
+            android:textColor="#1B1F3B"
+            android:textStyle="bold"
+            android:layout_marginBottom="16dp" />
+
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:elevation="4dp"
+            android:background="#F4F4F4">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <de.hdodenhof.circleimageview.CircleImageView
+                        android:id="@+id/ivAvatar"
+                        android:layout_width="60dp"
+                        android:layout_height="60dp"
+                        android:src="@drawable/unknown_profile"
+                        app:civ_border_width="2dp"
+                        app:civ_border_color="#1B1F3B" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:layout_marginStart="16dp">
+
+                        <TextView
+                            android:id="@+id/tvUsername"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/username"
+                            android:textSize="16sp"
+                            android:fontFamily="@font/montserrat_black"
+                            android:textColor="#1B1F3B"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tvEmail"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/email_example_com"
+                            android:textSize="12sp"
+                            android:fontFamily="@font/montserrat_black"
+                            android:textColor="#757575" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="#E0E0E0"
+                    android:layout_marginTop="16dp"
+                    android:layout_marginBottom="16dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/about_me"
+                    android:textSize="14sp"
+                    android:fontFamily="@font/montserrat_black"
+                    android:textColor="#1B1F3B"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvAboutMe"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/no_about_me_provided"
+                    android:textSize="12sp"
+                    android:fontFamily="@font/montserrat_black"
+                    android:layout_marginTop="4dp"
+                    android:layout_marginBottom="16dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/selected_habits"
+                    android:textSize="14sp"
+                    android:fontFamily="@font/montserrat_black"
+                    android:textColor="#1B1F3B"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvHabits"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/no_habits_selected"
+                    android:textSize="12sp"
+                    android:fontFamily="@font/montserrat_black"
+                    android:layout_marginTop="4dp" />
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/ready_to_create_your_account_click_create_account_below_to_get_started"
+            android:textSize="12sp"
+            android:fontFamily="@font/montserrat_black"
+            android:textColor="#757575"
+            android:layout_marginTop="8dp"
+            android:textAlignment="center" />
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

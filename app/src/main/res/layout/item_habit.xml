@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/item_habit"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/habit_item_border"
+    android:layout_margin="10dp"
+    android:orientation="horizontal"
+    android:padding="8dp"
+    android:gravity="center_vertical">
+
+    <!-- Icon -->
+    <ImageView
+        android:id="@+id/habit_image"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginEnd="8dp"
+        android:contentDescription="Habit icon"
+        android:src="@drawable/sticker_star"
+        android:scaleType="centerCrop" />
+
+    <!-- Vertical area for name + streak text, if you have it -->
+    <LinearLayout
+        android:id="@+id/habit_info_container"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/habit_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Habit Name"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/habit_streak"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Streak: 0"
+            android:textSize="14sp"
+            android:layout_marginTop="4dp"/>
+    </LinearLayout>
+
+    <!-- The "Mark Completed" CheckBox -->
+    <CheckBox
+        android:id="@+id/habit_item"
+        android:layout_width="48dp"
+        android:layout_height="48dp" />
+
+
+    <!-- A message for "Come back in 24 hours" or something -->
+    <TextView
+        android:id="@+id/lockMessage"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Please come back in 24 hours"
+        android:visibility="gone"
+        android:layout_marginStart="8dp"
+        android:textSize="14sp" />
+</LinearLayout>

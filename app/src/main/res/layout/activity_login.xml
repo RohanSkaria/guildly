@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/layoutLogin"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F5F5F5"
+    android:padding="16dp">
+
+    <ImageView
+        android:id="@+id/imageViewLogo"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_marginTop="32dp"
+        android:src="@drawable/app_logo"
+        android:contentDescription="@string/app_logo"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+    <TextView
+        android:id="@+id/textViewAppName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/guildly"
+        android:textSize="40sp"
+        android:fontFamily="@font/montserrat_black"
+        android:textColor="#1B1F3B"
+        android:layout_marginTop="12dp"
+        app:layout_constraintTop_toBottomOf="@id/imageViewLogo"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+    <TextView
+        android:id="@+id/textViewSlogan"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/build_habits_together"
+        android:textSize="16sp"
+        android:fontFamily="@font/montserrat_black"
+        android:textColor="#365486"
+        android:layout_marginTop="4dp"
+        app:layout_constraintTop_toBottomOf="@id/textViewAppName"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp"
+        android:background="@drawable/rounded_card_bg"
+        android:elevation="4dp"
+        app:layout_constraintTop_toBottomOf="@id/textViewSlogan"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="24dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="LOGIN 🚀"
+            android:textSize="16sp"
+            android:fontFamily="@font/montserrat_black"
+            android:textColor="#D1C0E0"
+            android:layout_marginBottom="16dp"/>
+
+        <EditText
+            android:id="@+id/editTextEmailLogin"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/email"
+            android:background="@drawable/rounded_input_bg"
+            android:inputType="textEmailAddress"
+            android:textColor="#1B1F3B"
+            android:textColorHint="#999999"
+            android:fontFamily="@font/montserrat_black"
+            android:textSize="16sp"
+            android:padding="14dp"
+            android:layout_marginBottom="12dp"/>
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp">
+
+            <EditText
+                android:id="@+id/editTextPasswordLogin"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/password"
+                android:background="@drawable/rounded_input_bg"
+                android:inputType="textPassword"
+                android:textColor="#1B1F3B"
+                android:textColorHint="#999999"
+                android:fontFamily="@font/montserrat_black"
+                android:textSize="16sp"
+                android:padding="14dp"/>
+
+            <ImageView
+                android:id="@+id/togglePasswordLogin"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_gravity="end|center_vertical"
+                android:layout_marginEnd="12dp"
+                android:src="@drawable/ic_eye"
+                android:contentDescription="toggle password visibility"/>
+        </FrameLayout>
+
+        <TextView
+            android:id="@+id/textViewForgotPassword"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/forgot"
+            android:textColor="#FFAD05"
+            android:textSize="16sp"
+            android:fontFamily="@font/montserrat_black"
+            android:layout_gravity="end"
+            android:layout_marginBottom="16dp"/>
+
+        <Button
+            android:id="@+id/buttonLogin"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/enter"
+            android:fontFamily="@font/montserrat_black"
+            android:textColor="#FDF6E3"
+            android:backgroundTint="#4DD0E1"
+            android:background="@drawable/rounded_button_bg"
+            android:textSize="16sp"
+            android:padding="14dp"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="24dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/no_account"
+            android:textSize="16sp"
+            android:textColor="#888888"
+            android:fontFamily="@font/montserrat_black"/>
+
+        <TextView
+            android:id="@+id/buttonGoToSignUp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/join"
+            android:textColor="#F26CA7"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:fontFamily="@font/montserrat_black"
+            android:clickable="true"
+            android:focusable="true"/>
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

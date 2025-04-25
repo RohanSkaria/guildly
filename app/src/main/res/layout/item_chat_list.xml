@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="8dp"
+    android:layout_marginVertical="6dp"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="4dp"
+    android:backgroundTint="@android:color/white">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="12dp">
+
+        <ImageView
+            android:id="@+id/imageFriendAvatar"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:src="@drawable/unknown_profile"
+            android:scaleType="centerCrop"
+            android:background="@drawable/circle_button"
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"
+            android:contentDescription="@string/friend_avatar_2" />
+
+        <TextView
+            android:id="@+id/textTimestamp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/_12_45_pm"
+            android:textSize="12sp"
+            android:textColor="#888"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentEnd="true" />
+
+        <TextView
+            android:id="@+id/textUnreadCount"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_below="@id/textTimestamp"
+            android:layout_alignParentEnd="true"
+            android:layout_marginTop="8dp"
+            android:text="@string/_5"
+            android:gravity="center"
+            android:textColor="@android:color/white"
+            android:textSize="12sp"
+            android:background="@drawable/unread_count"
+            android:visibility="visible"
+            android:backgroundTint="@color/man_bg" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_toEndOf="@id/imageFriendAvatar"
+            android:layout_marginStart="12dp"
+            android:layout_toStartOf="@id/textTimestamp"
+            android:orientation="vertical"
+            android:layout_alignParentTop="true"
+            android:layout_marginEnd="8dp">
+
+            <TextView
+                android:id="@+id/textFriendUsername"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/friend_name"
+                android:textStyle="bold"
+                android:textSize="16sp"
+                android:textColor="#111"
+                android:fontFamily="@font/montserrat_black"/>
+
+            <TextView
+                android:id="@+id/textLastMessage"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="@string/hey_how_s_it_going"
+                android:textSize="14sp"
+                android:textColor="#666" />
+        </LinearLayout>
+    </RelativeLayout>
+</androidx.cardview.widget.CardView>

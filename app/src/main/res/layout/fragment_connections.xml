@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/fragment_connections"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#F5F5F5"
+    android:padding="0dp">
+
+    <!-- Header Title Bar -->
+    <TextView
+        android:id="@+id/global_header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@android:color/white"
+        android:elevation="4dp"
+        android:fontFamily="@font/montserrat_black"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="12dp"
+        android:text="Connections"
+        android:textColor="@android:color/black"
+        android:textSize="22sp"
+        android:textStyle="bold" />
+
+    <!-- Search and Add Friend Row -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_margin="16dp">
+
+        <!-- Search Bar -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="2dp"
+            android:backgroundTint="@android:color/white">
+
+            <EditText
+                android:id="@+id/editTextFriendUsername"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:autofillHints="Search "
+                android:hint="Start typing to find a friend"
+                android:paddingHorizontal="16dp"
+                android:background="@android:color/transparent"
+                android:inputType="text"
+                android:textColor="#000000"
+                android:textColorHint="#888888"/>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Add Friend Button -->
+        <ImageButton
+            android:id="@+id/buttonAddFriend"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_marginStart="12dp"
+            android:layout_marginTop="10dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Add Friend"
+            android:scaleType="centerInside"
+            android:src="@drawable/add_friend_icon" />
+    </LinearLayout>
+
+    <!-- Friend Requests Badge Button -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cardFriendRequests"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginBottom="8dp"
+        app:cardCornerRadius="8dp"
+        app:cardElevation="1dp"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:id="@+id/buttonFriendRequests"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="?attr/selectableItemBackground"
+            android:orientation="horizontal"
+            android:padding="12dp">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/bell_icon" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                android:text="Friend Requests"
+                android:textColor="@android:color/black"
+                android:textSize="16sp" />
+
+            <TextView
+                android:id="@+id/friendRequestsBadge"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:background="@drawable/unread_count"
+                android:gravity="center"
+                android:text="0"
+                android:textColor="@android:color/white"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:backgroundTint="@color/red"/>
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+    <!-- Chats Header -->
+    <TextView
+        android:id="@+id/textViewChatListHeader"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
+        android:text="Direct Messages"
+        android:textSize="18sp"
+        android:textColor="@android:color/black"
+        android:textStyle="bold"/>
+
+    <!-- Chat List -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerViewChatList"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:paddingHorizontal="16dp"
+        android:clipToPadding="false" />
+
+</LinearLayout>

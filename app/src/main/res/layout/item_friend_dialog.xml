@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:padding="8dp">
+
+    <de.hdodenhof.circleimageview.CircleImageView
+        android:id="@+id/ivFriendAvatar"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:src="@drawable/unknown_profile" />
+
+    <TextView
+        android:id="@+id/textFriendName"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="Friend"
+        android:textSize="16sp"
+        android:layout_marginStart="8dp" />
+
+    <!-- Profile button -->
+    <ImageView
+        android:id="@+id/iconProfile"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_person"
+        android:contentDescription="View Profile"
+        android:padding="8dp" />
+
+    <!-- Message button -->
+    <ImageView
+        android:id="@+id/iconMessage"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_chat"
+        android:contentDescription="Send Message"
+        android:padding="8dp" />
+
+    <!-- Delete button -->
+    <ImageView
+        android:id="@+id/iconTrash"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_delete"
+        android:contentDescription="Remove Friend"
+        android:padding="8dp" />
+
+</LinearLayout>

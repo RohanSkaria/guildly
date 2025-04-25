@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F5F5F5"
+    android:padding="24dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/your_profile_info"
+            android:textSize="14sp"
+            android:fontFamily="@font/montserrat_black"
+            android:textColor="#1B1F3B"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Username -->
+        <EditText
+            android:id="@+id/etUsername"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:autofillHints=""
+            android:hint="@string/username"
+            android:inputType="text"
+            android:background="@drawable/rounded_input_bg"
+            android:textColor="#1B1F3B"
+            android:textColorHint="#999999"
+            android:fontFamily="@font/montserrat_black"
+            android:textSize="12sp"
+            android:padding="14dp"
+            android:layout_marginTop="8dp" />
+
+        <!-- Email -->
+        <EditText
+            android:id="@+id/etEmail"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:autofillHints=""
+            android:hint="@string/email"
+            android:inputType="textEmailAddress"
+            android:background="@drawable/rounded_input_bg"
+            android:textColor="#1B1F3B"
+            android:textColorHint="#999999"
+            android:fontFamily="@font/montserrat_black"
+            android:textSize="12sp"
+            android:padding="14dp"
+            android:layout_marginTop="16dp" />
+
+        <!-- Password -->
+        <EditText
+            android:id="@+id/etPassword"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:autofillHints=""
+            android:hint="@string/password"
+            android:inputType="textPassword"
+            android:background="@drawable/rounded_input_bg"
+            android:textColor="#1B1F3B"
+            android:textColorHint="#999999"
+            android:fontFamily="@font/montserrat_black"
+            android:textSize="12sp"
+            android:padding="14dp"
+            android:layout_marginTop="16dp" />
+
+        <!-- Confirm Password -->
+        <EditText
+            android:id="@+id/etConfirmPassword"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:autofillHints=""
+            android:hint="@string/confirm_password"
+            android:inputType="textPassword"
+            android:background="@drawable/rounded_input_bg"
+            android:textColor="#1B1F3B"
+            android:textColorHint="#999999"
+            android:fontFamily="@font/montserrat_black"
+            android:textSize="12sp"
+            android:padding="14dp"
+            android:layout_marginTop="16dp" />
+
+        <!-- About Me -->
+        <EditText
+            android:id="@+id/etAboutMe"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:autofillHints=""
+            android:hint="@string/about_me_optional"
+            android:inputType="textMultiLine"
+            android:minLines="3"
+            android:background="@drawable/rounded_input_bg"
+            android:textColor="#1B1F3B"
+            android:textColorHint="#999999"
+            android:fontFamily="@font/montserrat_black"
+            android:textSize="12sp"
+            android:padding="14dp"
+            android:layout_marginTop="16dp" />
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

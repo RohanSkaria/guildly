@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    package="edu.northeastern.guildly">
+
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <application
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Guildly"
+        android:forceDarkAllowed="false"
+        tools:targetApi="31">
+
+        <service
+            android:name=".services.NotificationListenerService"
+            android:enabled="true"
+            android:exported="false" />
+
+        <activity
+            android:name=".LoginActivity"
+            android:screenOrientation="portrait"
+            android:exported="true"
+            tools:ignore="DiscouragedApi">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".MainActivity"
+            android:screenOrientation="portrait"
+            android:exported="true"
+            tools:ignore="DiscouragedApi" />
+
+        <activity
+            android:name=".SettingsActivity"
+            android:exported="false"
+            android:parentActivityName=".MainActivity" />
+
+        <activity
+            android:name=".ChatDetailActivity"
+            android:screenOrientation="portrait"
+            android:exported="true"
+            tools:ignore="DiscouragedApi" />
+
+        <activity
+            android:name=".ForgotPasswordActivity"
+            android:screenOrientation="portrait"
+            tools:ignore="DiscouragedApi"
+            android:exported="true" />
+
+        <activity
+            android:name=".signUpFragments.MultiStepSignUpActivity"
+            android:label="Create Account"
+            android:exported="true"
+            android:parentActivityName=".LoginActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".LoginActivity" />
+        </activity>
+
+        <!-- NEW: Full friends list with actions -->
+        <activity
+            android:name=".AllFriendsActionsActivity"
+            android:exported="true"
+            android:parentActivityName=".MainActivity" />
+
+        <!-- NEW: Shows a friend’s profile -->
+        <activity
+            android:name=".FriendProfileActivity"
+            android:exported="true"
+            android:parentActivityName=".AllFriendsActionsActivity" />
+
+    </application>
+
+</manifest>
